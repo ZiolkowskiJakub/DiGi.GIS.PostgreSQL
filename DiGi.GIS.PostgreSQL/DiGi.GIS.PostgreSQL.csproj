@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<LangVersion>latest</LangVersion>
+	<OutputPath>..\bin\</OutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<PropertyGroup>
+		<!-- Redirect AssemblyAttributes.cs so each project has its own -->
+		<TargetFrameworkMonikerAssemblyAttributesPath>$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyAttributes.cs</TargetFrameworkMonikerAssemblyAttributesPath>
+		<!-- Avoid duplicate TargetFrameworkAttribute -->
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- Prevent duplicate 'Compile' inclusion of the generated AssemblyAttributes.cs -->
+		<Compile Remove="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyAttributes.cs" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+  </ItemGroup>
+
+</Project>
