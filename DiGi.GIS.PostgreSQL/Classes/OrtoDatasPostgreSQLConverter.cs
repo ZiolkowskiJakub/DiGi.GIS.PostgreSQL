@@ -28,7 +28,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (!dictionary.TryGetValue(reference, out string? name) || string.IsNullOrWhiteSpace(name))
             {
-                name = Constans.Name.Partition.Unassigned;
+                name = Constants.Name.Partition.Unassigned;
             }
 
             e.PartitionReference = Create.PartitionReference(ortoDatas, name);

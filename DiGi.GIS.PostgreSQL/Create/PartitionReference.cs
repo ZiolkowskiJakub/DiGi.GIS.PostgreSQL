@@ -7,12 +7,7 @@ namespace DiGi.GIS.PostgreSQL
     {
         public static PartitionReference? PartitionReference(this GISModel? gISModel)
         {
-            if (gISModel?.Reference is not string reference)
-            {
-                return null;
-            }
-
-            return new PartitionReference(typeof(GISModel).Name, reference);
+            return PartitionReference_GISModel(gISModel?.Reference);
         }
 
         public static PartitionReference? PartitionReference(this OrtoDatas? ortoDatas, string? name)
@@ -28,6 +23,26 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             return new PartitionReference(name!, reference);
+        }
+
+        public static PartitionReference? PartitionReference(this GISModelAreal2DReference? gISModelAreal2DReference)
+        {
+            if (gISModelAreal2DReference is null)
+            {
+                return null;
+            }
+
+            return new PartitionReference(gISModelAreal2DReference.GISModelReference, gISModelAreal2DReference.Areal2DReference);
+        }
+
+        public static PartitionReference? PartitionReference_GISModel(string? reference)
+        {
+            if(string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return new PartitionReference(typeof(GISModel).Name, reference);
         }
     }
 }
