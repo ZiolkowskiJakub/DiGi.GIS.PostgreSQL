@@ -41,7 +41,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            dictionary[reference] = name!;
+            dictionary[reference] = name;
             return true;
         }
     }

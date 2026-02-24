@@ -1,5 +1,6 @@
 ﻿using DiGi.GIS.Classes;
 using DiGi.PostgreSQL.Classes;
+using DiGi.PostgreSQL.Enums;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
@@ -24,6 +25,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             e.PartitionReference = Create.PartitionReference(gISModel);
+        }
+
+        public override DataType GetDataType(string? name)
+        {
+            return DataType.Archive;
         }
     }
 }
