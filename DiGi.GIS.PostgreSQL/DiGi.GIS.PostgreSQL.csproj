@@ -19,6 +19,9 @@
 		<!-- Prevent duplicate 'Compile' inclusion of the generated AssemblyAttributes.cs -->
 		<Compile Remove="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyAttributes.cs" />
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Npgsql" Version="10.0.1" />
+	</ItemGroup>
 
   <ItemGroup>
     <Reference Include="DiGi.Core">
@@ -26,6 +29,9 @@
     </Reference>
     <Reference Include="DiGi.Core.Relation">
       <HintPath>..\..\DiGi.Core\bin\DiGi.Core.Relation.dll</HintPath>
+    </Reference>
+    <Reference Include="DiGi.Geometry">
+      <HintPath>..\..\DiGi.Geometry\bin\DiGi.Geometry.dll</HintPath>
     </Reference>
     <Reference Include="DiGi.GIS">
       <HintPath>..\..\DiGi.GIS\bin\DiGi.GIS.dll</HintPath>
