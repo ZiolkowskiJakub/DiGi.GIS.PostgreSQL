@@ -61,7 +61,7 @@ namespace DiGi.GIS.PostgreSQL
                 CREATE TABLE IF NOT EXISTS building_2D (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
                     county_id INT NOT NULL,
-                    reference TEXT NOT NULL UNIQUE,
+                    reference TEXT NOT NULL,
                     code TEXT,
                     min_x DOUBLE PRECISION,
                     min_y DOUBLE PRECISION,
@@ -70,7 +70,9 @@ namespace DiGi.GIS.PostgreSQL
                     subdivision_id INT,
                     object JSONB,
                     created_at timestamptz DEFAULT now(),
-                    PRIMARY KEY (id, county_id)
+                    PRIMARY KEY (id, county_id),
+                    -- The unique constraint must include the partition key (county_id)
+                    UNIQUE (reference, county_id)
                 ) PARTITION BY LIST (county_id);";
 
             try

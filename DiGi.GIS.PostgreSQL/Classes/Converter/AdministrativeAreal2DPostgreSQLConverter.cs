@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
@@ -18,6 +19,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
+        /// <summary>
+        /// Gets AdministrativeAreal2D for given AdministrativeArealType (not iterative way). It will check all records with given AdministrativeArealType
+        /// </summary>
+        /// <param name="npgsqlConnection">NpgsqlConnection</param>
+        /// <param name="boundingBox2D">BoundingBox2D</param>
+        /// <param name="administrativeArealType">AdministrativeArealType</param>
+        /// <param name="tolerance">Tolerance</param>
+        /// <returns>AdministrativeAreal2D list</returns>
         public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
@@ -45,6 +54,80 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             return await ReadAsync(npgsqlCommand);
+        }
+
+        /// <summary>
+        /// Gets AdministrativeAreal2D for given AdministrativeArealTypes (Iterative way). It will iterate in order through Country, Voivodeship, County, Municipality to reduce number of objects. BoundingBox2D in range Country check, then Voivodeship in this specific Country etc..
+        /// </summary>
+        /// <param name="npgsqlConnection">NpgsqlConnection</param>
+        /// <param name="boundingBox2D">BoundingBox2D</param>
+        /// <param name="administrativeArealTypes">AdministrativeArealTypes</param>
+        /// <param name="tolerance">Tolerance</param>
+        /// <returns>AdministrativeAreal2D list</returns>
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        {
+            if(npgsqlConnection is null || boundingBox2D is null)
+            {
+                return null;
+            }
+
+            List<AdministrativeArealType> administrativeArealTypes_All = [.. Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>()];
+            administrativeArealTypes_All.Remove(AdministrativeArealType.Undefined);
+            administrativeArealTypes_All.Sort();
+
+            int maxIndex = int.MaxValue;
+            if (administrativeArealTypes is not null && administrativeArealTypes.Any())
+            {
+                maxIndex = (int)administrativeArealTypes.Max();
+            }
+
+            List<AdministrativeAreal2D>? result = [];
+
+            HashSet<int> excludedIds = [];
+            HashSet<int> parentIds = [];
+            foreach (AdministrativeArealType administrativeArealType in administrativeArealTypes_All)
+            {
+                if ((int)administrativeArealType > maxIndex)
+                {
+                    break;
+                }
+
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, parentIds, excludedIds, tolerance);
+                if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+                {
+                    return result;
+                }
+
+                parentIds = [];
+                foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
+                {
+                    if (administrativeAreal2D is null)
+                    {
+                        continue;
+                    }
+
+                    excludedIds.Add(administrativeAreal2D.Id);
+                    parentIds.Add(administrativeAreal2D.Id);
+
+                    if (administrativeArealTypes is not null && !administrativeArealTypes.Contains(administrativeAreal2D.AdministrativeArealType))
+                    {
+                        continue;
+                    }
+
+                    GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi<GIS.Classes.AdministrativeAreal2D>();
+                    if (administrativeAreal2D_GIS is null)
+                    {
+                        continue;
+                    }
+
+                    if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && boundingBox2D.InRange(polygonalFace2D.ExternalEdge, tolerance))
+                    {
+                        result.Add(administrativeAreal2D);
+                    }
+                }
+            }
+
+            return result;
         }
 
         public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -204,63 +287,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            List<AdministrativeArealType> administrativeArealTypes_All = [.. Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>()];
-            administrativeArealTypes_All.Remove(AdministrativeArealType.Undefined);
-            administrativeArealTypes_All.Sort();
-
-            int maxIndex = int.MaxValue;
-            if (administrativeArealTypes is not null && administrativeArealTypes.Any())
-            {
-                maxIndex = (int)administrativeArealTypes.Max();
-            }
-
-            List<AdministrativeAreal2D>? result = [];
-
-            HashSet<int> excludedIds = [];
-            HashSet<int> parentIds = [];
-            foreach (AdministrativeArealType administrativeArealType in administrativeArealTypes_All)
-            {
-                if ((int)administrativeArealType > maxIndex)
-                {
-                    break;
-                }
-
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, parentIds, excludedIds, tolerance);
-                if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
-                {
-                    return result;
-                }
-
-                parentIds = [];
-                foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
-                {
-                    if (administrativeAreal2D is null)
-                    {
-                        continue;
-                    }
-
-                    excludedIds.Add(administrativeAreal2D.Id);
-                    parentIds.Add(administrativeAreal2D.Id);
-
-                    if (administrativeArealTypes is not null && !administrativeArealTypes.Contains(administrativeAreal2D.AdministrativeArealType))
-                    {
-                        continue;
-                    }
-
-                    GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi<GIS.Classes.AdministrativeAreal2D>();
-                    if (administrativeAreal2D_GIS is null)
-                    {
-                        continue;
-                    }
-
-                    if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && boundingBox2D.InRange(polygonalFace2D.ExternalEdge, tolerance))
-                    {
-                        result.Add(administrativeAreal2D);
-                    }
-                }
-            }
-
-            return result;
+            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance);
         }
 
         public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -557,7 +584,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<bool> RefreshAsync(double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<bool> RefreshAsync(double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             Dictionary<AdministrativeArealType, List<AdministrativeAreal2D>?> dictionary = [];
 
@@ -583,6 +610,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     {
                         foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
                         {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
+
                             if (administrativeAreal2D_Current.BoundingBox2D?.GetCentroid() is not Point2D point2D)
                             {
                                 continue;
