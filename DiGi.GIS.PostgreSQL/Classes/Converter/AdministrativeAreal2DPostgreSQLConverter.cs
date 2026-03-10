@@ -14,6 +14,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     public class AdministrativeAreal2DPostgreSQLConverter : PostgreSQLConverter<AdministrativeAreal2D>
     {
+        private static readonly IEnumerable<AdministrativeArealType> administrativeArealTypes = Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>().Where(t => t != AdministrativeArealType.Undefined).OrderBy(t => t);
+
         public AdministrativeAreal2DPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
         {
@@ -66,26 +68,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>AdministrativeAreal2D list</returns>
         public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
-            if(npgsqlConnection is null || boundingBox2D is null)
+            if (npgsqlConnection is null || boundingBox2D is null)
             {
                 return null;
             }
 
-            List<AdministrativeArealType> administrativeArealTypes_All = [.. Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>()];
-            administrativeArealTypes_All.Remove(AdministrativeArealType.Undefined);
-            administrativeArealTypes_All.Sort();
+            HashSet<AdministrativeArealType>? administrativeArealTypes_Temp = administrativeArealTypes is not null ? [.. administrativeArealTypes] : null;
 
-            int maxIndex = int.MaxValue;
-            if (administrativeArealTypes is not null && administrativeArealTypes.Any())
-            {
-                maxIndex = (int)administrativeArealTypes.Max();
-            }
+            int maxIndex = (administrativeArealTypes_Temp is not null && administrativeArealTypes_Temp.Count > 0) ? (int)administrativeArealTypes_Temp.Max() : int.MaxValue;
 
             List<AdministrativeAreal2D>? result = [];
 
             HashSet<int> excludedIds = [];
             HashSet<int> parentIds = [];
-            foreach (AdministrativeArealType administrativeArealType in administrativeArealTypes_All)
+            foreach (AdministrativeArealType administrativeArealType in AdministrativeAreal2DPostgreSQLConverter.administrativeArealTypes)
             {
                 if ((int)administrativeArealType > maxIndex)
                 {
@@ -98,7 +94,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return result;
                 }
 
-                parentIds = [];
+                parentIds.Clear();
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
                 {
                     if (administrativeAreal2D is null)
@@ -109,7 +105,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     excludedIds.Add(administrativeAreal2D.Id);
                     parentIds.Add(administrativeAreal2D.Id);
 
-                    if (administrativeArealTypes is not null && !administrativeArealTypes.Contains(administrativeAreal2D.AdministrativeArealType))
+                    if (administrativeArealTypes_Temp is not null && !administrativeArealTypes_Temp.Contains(administrativeAreal2D.AdministrativeArealType))
                     {
                         continue;
                     }
@@ -991,33 +987,41 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
+            // 1. Prepare the dynamic part of the query for Excluded IDs
+            // We check if we actually have any IDs to exclude to avoid the ALL() trap
+            bool hasExclusions = excludedIds != null && excludedIds.Count > 0;
+            string excludedFilter = hasExclusions ? "AND id != ALL(@excludedIds)" : "";
+
+            // 2. Build the command text using the safe fragment
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM administrative_areal_2D
                 WHERE type_id = @typeId
-                    AND id != ALL(@excludedIds)
+                    {excludedFilter}
                     AND ({parentIdColumnName} = ANY(@parentIds) OR {parentIdColumnName} IS NULL)
                     AND (@x + @tolerance) >= min_x AND (@x - @tolerance) <= max_x
                     AND (@y + @tolerance) >= min_y AND (@y - @tolerance) <= max_y;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
+            // 3. Add parameters - we only add excludedIds if it's actually used in the query
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Double) { Value = point2D.X });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Double) { Value = point2D.Y });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            // Passing the IEnumerable<int> as an array parameter
-            // Npgsql automatically maps C# arrays/collections to PostgreSQL arrays
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)
             {
                 Value = parentIds.ToArray()
             });
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("excludedIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+            if (hasExclusions)
             {
-                Value = excludedIds?.ToArray() ?? []
-            });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("excludedIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+                {
+                    Value = excludedIds!.ToArray()
+                });
+            }
 
             return await ReadAsync(npgsqlCommand);
         }

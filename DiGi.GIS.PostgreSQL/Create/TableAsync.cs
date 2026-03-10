@@ -56,7 +56,8 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            // Using timestamptz to ensure consistent time tracking across different time zones
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
             const string commandText = @"
                 CREATE TABLE IF NOT EXISTS building_2D (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -71,9 +72,13 @@ namespace DiGi.GIS.PostgreSQL
                     object JSONB,
                     created_at timestamptz DEFAULT now(),
                     PRIMARY KEY (id, county_id),
-                    -- The unique constraint must include the partition key (county_id)
                     UNIQUE (reference, county_id)
-                ) PARTITION BY LIST (county_id);";
+                ) PARTITION BY LIST (county_id);
+
+                -- This index handles both: subdivision_id = ANY(@ids) AND subdivision_id IS NULL
+                CREATE INDEX IF NOT EXISTS index_building_2d_subdivision_id 
+                ON building_2D (subdivision_id);
+                ";
 
             try
             {

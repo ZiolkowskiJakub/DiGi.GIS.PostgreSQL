@@ -6,25 +6,24 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class Areal2D : SerializableObject, IAreal2D
+    public abstract class OrtoData : SerializableObject, IOrtoData
     {
-        public Areal2D(JsonObject? jsonObject)
+        public OrtoData(JsonObject? jsonObject)
             : base(jsonObject)
         {
         }
 
-        public Areal2D(Areal2D? areal2D)
-            : base(areal2D)
+        public OrtoData(OrtoData? ortoData)
+            : base(ortoData)
         {
-            if (areal2D is not null)
+            if (ortoData is not null)
             {
-                BoundingBox2D = areal2D.BoundingBox2D;
-                Reference = areal2D.Reference;
-                Object = areal2D.Object;
+                BoundingBox2D = ortoData.BoundingBox2D;
+                Object = ortoData.Object;
             }
         }
 
-        public Areal2D()
+        public OrtoData()
         {
         }
 
@@ -36,9 +35,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         [JsonInclude, JsonPropertyName("Object")]
         public JsonObject? Object { get; set; }
-
-        [JsonInclude, JsonPropertyName("Reference")]
-        public string? Reference { get; set; }
 
         [JsonInclude, JsonPropertyName("CreatedAt")]
         public System.DateTime? CreatedAt { get; set; } = System.DateTime.UtcNow;
