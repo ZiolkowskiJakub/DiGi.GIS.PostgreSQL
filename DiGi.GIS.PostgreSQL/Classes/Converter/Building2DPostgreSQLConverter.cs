@@ -2,6 +2,7 @@
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
+using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class Building2DPostgreSQLConverter : PostgreSQLConverter<Building2D>
+    public class Building2DPostgreSQLConverter : PostgreSQLConverter<Building2D>, IGISPostgreSQLConverter<Building2D>
     {
         public Building2DPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
@@ -71,7 +72,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 int countyId = administrativeAreal2D.Id;
                 int subdivisionId = administrativeAreal2D.Id;
 
-                await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+                await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
                 npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId);
                 npgsqlCommand.Parameters.AddWithValue("x", point2D.X);
@@ -129,8 +130,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
             {
                 // Extract IDs into arrays for Npgsql
-                int[] countyIds = administrativeAreal2Ds.Select(a => a.Id).Distinct().ToArray();
-                int[] subdivisionIds = administrativeAreal2Ds.Select(a => a.Id).Distinct().ToArray();
+                int[] countyIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
+                int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
 
                 await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("county_ids", countyIds);
@@ -201,7 +202,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND (@x + @effectiveRadius) >= min_x AND (@x - @effectiveRadius) <= max_x
                     AND (@y + @effectiveRadius) >= min_y AND (@y - @effectiveRadius) <= max_y;";
 
-            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
 
             npgsqlCommand.Parameters.AddWithValue("county_ids", countyIds);
             npgsqlCommand.Parameters.AddWithValue("subdivision_ids", subdivisionIds);
@@ -251,7 +252,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand_Select.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
 
-            List<(long Id, int CountyId, int SubdivisionId)> updatesBuffer = new(building2DPostgreSQLRefreshOptions.BatchSize);
+            List<(long Id, int CountyId, int SubdivisionId)> updatesBuffer = [];//new(building2DPostgreSQLRefreshOptions.BatchSize);
 
             try
             {

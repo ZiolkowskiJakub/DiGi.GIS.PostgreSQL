@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
@@ -15,7 +14,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             if (zoneOrtoData is not null)
             {
-
             }
         }
 

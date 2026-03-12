@@ -76,7 +76,7 @@ namespace DiGi.GIS.PostgreSQL
                 ) PARTITION BY LIST (county_id);
 
                 -- This index handles both: subdivision_id = ANY(@ids) AND subdivision_id IS NULL
-                CREATE INDEX IF NOT EXISTS index_building_2d_subdivision_id 
+                CREATE INDEX IF NOT EXISTS index_building_2d_subdivision_id
                 ON building_2D (subdivision_id);
                 ";
 

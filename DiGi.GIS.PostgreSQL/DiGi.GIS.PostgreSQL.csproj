@@ -23,6 +23,20 @@
 	  <PackageReference Include="Npgsql" Version="10.0.1" />
 	</ItemGroup>
 
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<!-- List files to copy -->
+		<ItemGroup Condition="Exists('$(ProjectDir)..\user files\GIS_PostgreSQL_Main.conf')">
+			<Files Include="$(ProjectDir)..\user files\GIS_PostgreSQL_Main.conf" />
+		</ItemGroup>
+
+		<ItemGroup Condition="Exists('$(ProjectDir)..\user files\GIS_PostgreSQL_Storage.conf')">
+			<Files Include="$(ProjectDir)..\user files\GIS_PostgreSQL_Storage.conf" />
+		</ItemGroup>
+
+		<!-- Copy them to bin directory -->
+		<Copy SourceFiles="@(Files)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+	</Target>
+
   <ItemGroup>
     <Reference Include="DiGi.Core">
       <HintPath>..\..\DiGi.Core\bin\DiGi.Core.dll</HintPath>
