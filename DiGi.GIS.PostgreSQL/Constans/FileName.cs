@@ -1,5 +1,4 @@
-﻿
-namespace DiGi.GIS.PostgreSQL.Constans
+﻿namespace DiGi.GIS.PostgreSQL.Constans
 {
     public static class FileName
     {

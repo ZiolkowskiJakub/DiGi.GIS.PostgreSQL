@@ -15,12 +15,12 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            GISPostgreSQLConverterManager result = new ();
+            GISPostgreSQLConverterManager result = new();
 
             string path;
 
             path = Path.Combine(directory_ExecutingAssembly, Constans.FileName.PostgreSQL_Main);
-            if(!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile)
+            if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile)
             {
                 ConnectionData? connectionData = DiGi.PostgreSQL.Create.ConnectionData(postgreSQLConfigurationFile);
                 if (connectionData is not null)
@@ -33,9 +33,7 @@ namespace DiGi.GIS.PostgreSQL
             path = Path.Combine(directory_ExecutingAssembly, Constans.FileName.PostgreSQL_Storage);
             if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path))
             {
-
             }
-
 
             return result;
         }

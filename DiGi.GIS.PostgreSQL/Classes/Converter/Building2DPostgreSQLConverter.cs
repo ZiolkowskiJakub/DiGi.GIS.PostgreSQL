@@ -1,5 +1,4 @@
-﻿using DiGi.Core.Interfaces;
-using DiGi.Geometry.Planar.Classes;
+﻿using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -72,7 +71,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 int countyId = administrativeAreal2D.Id;
                 int subdivisionId = administrativeAreal2D.Id;
 
-                await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
                 npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId);
                 npgsqlCommand.Parameters.AddWithValue("x", point2D.X);
@@ -122,7 +121,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = @"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                 FROM building_2d
-                WHERE county_id = ANY(@county_ids) 
+                WHERE county_id = ANY(@county_ids)
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
                     AND @minX <= max_x AND @maxX >= min_x
                     AND @minY <= max_y AND @maxY >= min_y;";
@@ -133,7 +132,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 int[] countyIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
                 int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
 
-                await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("county_ids", countyIds);
                 npgsqlCommand.Parameters.AddWithValue("subdivision_ids", subdivisionIds);
                 npgsqlCommand.Parameters.AddWithValue("minX", minX);
@@ -156,7 +155,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return [.. dictionary.Values];
         }
-        
+
         public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (circle2D?.Center is null)
@@ -197,12 +196,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = @"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                 FROM building_2d
-                WHERE county_id = ANY(@county_ids) 
+                WHERE county_id = ANY(@county_ids)
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
                     AND (@x + @effectiveRadius) >= min_x AND (@x - @effectiveRadius) <= max_x
                     AND (@y + @effectiveRadius) >= min_y AND (@y - @effectiveRadius) <= max_y;";
 
-            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             npgsqlCommand.Parameters.AddWithValue("county_ids", countyIds);
             npgsqlCommand.Parameters.AddWithValue("subdivision_ids", subdivisionIds);
@@ -224,111 +223,116 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return [.. dictionary.Values];
         }
 
-        public async Task<bool> RefreshAsync(Building2DPostgreSQLRefreshOptions? building2DPostgreSQLRefreshOptions = default, CancellationToken cancellationToken = default)
+        public async Task<bool> RefreshAsync(Building2DPostgreSQLRefreshOptions? building2DPostgreSQLRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
         {
-            await using NpgsqlConnection? npgsqlConnection_Building2D = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection_Building2D is null)
-            {
-                return false;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection_AdministrativeAreal2D = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection_AdministrativeAreal2D is null)
-            {
-                return false;
-            }
-
             building2DPostgreSQLRefreshOptions ??= new Building2DPostgreSQLRefreshOptions();
 
-            await npgsqlConnection_Building2D.OpenAsync(cancellationToken);
-            await npgsqlConnection_AdministrativeAreal2D.OpenAsync(cancellationToken);
+            int totalUpdated = 0;
 
-            await using NpgsqlTransaction sourceTransaction = await npgsqlConnection_Building2D.BeginTransactionAsync(cancellationToken);
-
-            string whereClause = building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds ? "" : "WHERE subdivision_id IS NULL ";
-            string commandText_Select = $"SELECT id, county_id, object, subdivision_id FROM building_2D {whereClause}FOR UPDATE SKIP LOCKED";
-
-            await using NpgsqlCommand npgsqlCommand_Select = new(commandText_Select, npgsqlConnection_Building2D, sourceTransaction);
-
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand_Select.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
-
-            List<(long Id, int CountyId, int SubdivisionId)> updatesBuffer = [];//new(building2DPostgreSQLRefreshOptions.BatchSize);
-
-            try
+            // Loop until all records are processed or cancellation is requested
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+                if (npgsqlConnection is null)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    return false;
+                }
+
+                await npgsqlConnection.OpenAsync(cancellationToken);
+
+                // Open a transaction to hold FOR UPDATE SKIP LOCKED locks
+                await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
+
+                // 1. Fetch a batch of records and lock them so other instances skip them
+                string whereClause = building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds ? "" : "AND subdivision_id IS NULL ";
+                string commandText_Select = $@"SELECT id, county_id, object FROM building_2D WHERE true {whereClause} FOR UPDATE SKIP LOCKED LIMIT @batchSize";
+
+                List<(long Id, int CountyId, string Json)> ids = [];
+
+                try
+                {
+                    await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
+                    {
+                        npgsqlCommand.Parameters.AddWithValue("batchSize", building2DPostgreSQLRefreshOptions.BatchSize);
+
+                        // Use SequentialAccess for high performance with large strings/json
+                        await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
+                        while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                        {
+                            ids.Add((npgsqlDataReader.GetInt64(0), npgsqlDataReader.GetInt32(1), npgsqlDataReader.GetString(2)));
+                        }
+                    } // Reader is disposed here, freeing the connection for the next command
+
+                    // If no more records are available, exit the loop
+                    if (ids.Count == 0)
                     {
                         break;
                     }
 
-                    long id = npgsqlDataReader.GetInt64(0);
-                    int countyId = npgsqlDataReader.GetInt32(1);
-                    string json = npgsqlDataReader.GetString(2);
-                    bool isSubdivisionNull = await npgsqlDataReader.IsDBNullAsync(3, cancellationToken);
+                    List<(long Id, int CountyId, int SubdivisionId)> updates = [];
 
-                    if (!building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds && !isSubdivisionNull) continue;
-
-                    GIS.Classes.Building2D? building2D = Core.Convert.ToDiGi<GIS.Classes.Building2D>(json)?.FirstOrDefault();
-                    if (building2D is null) continue;
-
-                    // Przekazujemy ct do zapytań pomocniczych
-                    int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection_AdministrativeAreal2D, building2D, building2DPostgreSQLRefreshOptions.Tolerance);
-
-                    if (subdivisionId.HasValue)
+                    // 2. Process data in memory using your C# DLL logic
+                    foreach (var (Id, CountyId, Json) in ids)
                     {
-                        updatesBuffer.Add((id, countyId, subdivisionId.Value));
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
+                        GIS.Classes.Building2D? building = Core.Convert.ToDiGi<GIS.Classes.Building2D>(Json)?.FirstOrDefault();
+                        if (building is null)
+                        {
+                            continue;
+                        }
+
+                        // Note: GetSubdivisionIdAsync should use the same connection if it needs DB access
+                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, building2DPostgreSQLRefreshOptions.Tolerance);
+                        if (subdivisionId.HasValue)
+                        {
+                            updates.Add((Id, CountyId, subdivisionId.Value));
+                        }
                     }
 
-                    if (updatesBuffer.Count >= building2DPostgreSQLRefreshOptions.BatchSize)
+                    // 3. Execute updates within the same transaction that holds the locks
+                    if (updates.Count > 0 && !cancellationToken.IsCancellationRequested)
                     {
-                        await UpdateSubdivisionIdBatchAsync(npgsqlConnection_AdministrativeAreal2D, updatesBuffer, cancellationToken);
-                        updatesBuffer.Clear();
+                        await ExecuteUpdateBatchAsync(updates, cancellationToken);
+                        totalUpdated += updates.Count;
+                        progress?.Report(totalUpdated);
                     }
+
+                    // 4. Commit releases the FOR UPDATE locks for the current batch
+                    await npgsqlTransaction.CommitAsync(cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Transaction will rollback automatically on dispose if not committed
+                    return false;
+                }
+                catch (Exception)
+                {
+                    // Log error here if necessary
+                    throw;
                 }
 
-                if (updatesBuffer.Count > 0 && !cancellationToken.IsCancellationRequested)
+                async Task ExecuteUpdateBatchAsync(List<(long Id, int CountyId, int SubdivisionId)> updates, CancellationToken cancellationToken)
                 {
-                    await UpdateSubdivisionIdBatchAsync(npgsqlConnection_AdministrativeAreal2D, updatesBuffer, cancellationToken);
-                }
+                    // We use NpgsqlBatch for optimal performance (sends all commands in one network roundtrip)
+                    await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection, npgsqlTransaction);
 
-                await sourceTransaction.CommitAsync(cancellationToken);
-
-                return !cancellationToken.IsCancellationRequested;
-            }
-            catch (OperationCanceledException)
-            {
-                return false;
-            }
-            finally
-            {
-            }
-
-            static async Task UpdateSubdivisionIdBatchAsync(NpgsqlConnection connection, List<(long Id, int CountyId, int SubdivisionId)> updates, CancellationToken cancellationToken)
-            {
-                await using NpgsqlTransaction npgsqlTransaction = await connection.BeginTransactionAsync(cancellationToken);
-                try
-                {
-                    await using NpgsqlBatch npgsqlBatch = new(connection, npgsqlTransaction);
                     foreach (var (Id, CountyId, SubdivisionId) in updates)
                     {
                         NpgsqlBatchCommand npgsqlBatchCommand = new("UPDATE building_2D SET subdivision_id = @subdivision_id WHERE id = @id AND county_id = @county_id");
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("subdivision_id", NpgsqlDbType.Integer) { Value = SubdivisionId });
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("id", NpgsqlDbType.Bigint) { Value = Id });
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = CountyId });
+                        npgsqlBatchCommand.Parameters.AddWithValue("subdivision_id", SubdivisionId);
+                        npgsqlBatchCommand.Parameters.AddWithValue("id", Id);
+                        npgsqlBatchCommand.Parameters.AddWithValue("county_id", CountyId);
                         npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
                     }
-
                     await npgsqlBatch.ExecuteNonQueryAsync(cancellationToken);
-                    await npgsqlTransaction.CommitAsync(cancellationToken);
-                }
-                catch
-                {
-                    await npgsqlTransaction.RollbackAsync(cancellationToken);
-                    throw;
                 }
             }
+
+            return !cancellationToken.IsCancellationRequested;
         }
 
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building2D>? building2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance)
