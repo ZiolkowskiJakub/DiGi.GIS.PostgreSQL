@@ -34,6 +34,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public bool OverrideExistingSubdivisionIds { get; set; } = false;
 
         [JsonInclude, JsonPropertyName("Tolerance")]
-        public double Tolerance { get; set; } = Core.Constants.Tolerance.MacroDistance;
+        public double Tolerance { get; set; } = Core.Constans.Tolerance.MacroDistance;
     }
 }

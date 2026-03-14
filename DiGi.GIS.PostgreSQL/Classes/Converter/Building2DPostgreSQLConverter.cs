@@ -34,7 +34,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await DiGi.PostgreSQL.Modify.Clear(npgsqlConnection, "building_2D");
         }
 
-        public async Task<Building2D?> GetBuilding2DbyPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<Building2D?> GetBuilding2DbyPoint2DAsync(Point2D? point2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
         {
             if (point2D is null)
             {
@@ -89,7 +89,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return null;
         }
 
-        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
         {
             if (boundingBox2D is null)
             {
@@ -156,7 +156,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return [.. dictionary.Values];
         }
 
-        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
         {
             if (circle2D?.Center is null)
             {
@@ -335,7 +335,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return !cancellationToken.IsCancellationRequested;
         }
 
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building2D>? building2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building2D>? building2Ds, double tolerance = Core.Constans.Tolerance.MacroDistance)
         {
             if (building2Ds is null)
             {
@@ -584,7 +584,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             };
         }
 
-        private static async Task<int?> GetSubdivisionIdAsync(NpgsqlConnection npgsqlConnection, GIS.Classes.Building2D? building2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        private static async Task<int?> GetSubdivisionIdAsync(NpgsqlConnection npgsqlConnection, GIS.Classes.Building2D? building2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
         {
             if (npgsqlConnection is null || building2D?.PolygonalFace2D is not PolygonalFace2D polygonalFace2D)
             {
