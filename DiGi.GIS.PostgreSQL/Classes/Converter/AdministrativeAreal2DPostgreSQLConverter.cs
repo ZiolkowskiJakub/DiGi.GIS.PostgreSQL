@@ -30,7 +30,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealType">AdministrativeArealType</param>
         /// <param name="tolerance">Tolerance</param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -67,7 +67,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealTypes">AdministrativeArealTypes</param>
         /// <param name="tolerance">Tolerance</param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -127,7 +127,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (npgsqlConnection is null || point2D is null)
             {
@@ -251,7 +251,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (boundingBox2D is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -269,7 +269,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, [administrativeArealType], tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (boundingBox2D is null)
             {
@@ -287,12 +287,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, null, tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (circle2D is null)
             {
@@ -302,7 +302,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealTypes, circle2D.Radius + tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (circle2D is null)
             {
@@ -312,7 +312,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealType, circle2D.Radius + tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (circle2D is null)
             {
@@ -386,7 +386,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (point2D is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -404,12 +404,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, [administrativeArealType], tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, null, tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (point2D is null)
             {
@@ -894,7 +894,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             };
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             // Check if point2D or the list of IDs is null/empty
             if (npgsqlConnection is null || boundingBox2D is null)
@@ -961,7 +961,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constans.Tolerance.MacroDistance)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             // Check if point2D or the list of IDs is null/empty
             if (npgsqlConnection is null || point2D is null)

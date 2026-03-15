@@ -26,6 +26,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         [JsonInclude, JsonPropertyName("Tolerance")]
-        public double Tolerance { get; set; } = Core.Constans.Tolerance.MacroDistance;
+        public double Tolerance { get; set; } = Core.Constants.Tolerance.MacroDistance;
     }
 }

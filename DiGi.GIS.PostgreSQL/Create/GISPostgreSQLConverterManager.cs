@@ -19,7 +19,7 @@ namespace DiGi.GIS.PostgreSQL
 
             string path;
 
-            path = Path.Combine(directory_ExecutingAssembly, Constans.FileName.PostgreSQL_Main);
+            path = Path.Combine(directory_ExecutingAssembly, Constants.FileName.PostgreSQL_Main);
             if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile)
             {
                 ConnectionData? connectionData = DiGi.PostgreSQL.Create.ConnectionData(postgreSQLConfigurationFile);
@@ -30,7 +30,7 @@ namespace DiGi.GIS.PostgreSQL
                 }
             }
 
-            path = Path.Combine(directory_ExecutingAssembly, Constans.FileName.PostgreSQL_Storage);
+            path = Path.Combine(directory_ExecutingAssembly, Constants.FileName.PostgreSQL_Storage);
             if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path))
             {
             }
