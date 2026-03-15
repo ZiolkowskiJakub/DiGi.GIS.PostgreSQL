@@ -27,7 +27,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Concrete implementation of the background work.
         /// </summary>
-        protected override async Task<bool> RunAsync(IProgress<long> progress, CancellationToken cancellationToken)
+        protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             // We pass the token to your C# DLL to ensure the
             // PostgreSQL command can be aborted mid-execution.
