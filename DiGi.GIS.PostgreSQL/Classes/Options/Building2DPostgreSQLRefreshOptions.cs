@@ -21,9 +21,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             if (building2DPostgreSQLRefreshOptions is not null)
             {
-                this.BatchSize = building2DPostgreSQLRefreshOptions.BatchSize;
-                this.Tolerance = building2DPostgreSQLRefreshOptions.Tolerance;
-                this.OverrideExistingSubdivisionIds = building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds;
+                BatchSize = building2DPostgreSQLRefreshOptions.BatchSize;
+                Tolerance = building2DPostgreSQLRefreshOptions.Tolerance;
+                OverrideExistingSubdivisionIds = building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds;
             }
         }
 

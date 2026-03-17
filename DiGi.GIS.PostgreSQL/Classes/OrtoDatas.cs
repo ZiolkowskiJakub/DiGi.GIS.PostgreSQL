@@ -6,24 +6,24 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class OrtoData : SerializableObject, IOrtoData
+    public abstract class OrtoDatas : SerializableObject, IOrtoData
     {
-        public OrtoData(JsonObject? jsonObject)
+        public OrtoDatas(JsonObject? jsonObject)
             : base(jsonObject)
         {
         }
 
-        public OrtoData(OrtoData? ortoData)
-            : base(ortoData)
+        public OrtoDatas(OrtoDatas? ortoDatas)
+            : base(ortoDatas)
         {
-            if (ortoData is not null)
+            if (ortoDatas is not null)
             {
-                BoundingBox2D = ortoData.BoundingBox2D;
-                Object = ortoData.Object;
+                BoundingBox2D = ortoDatas.BoundingBox2D;
+                Object = ortoDatas.Object;
             }
         }
 
-        public OrtoData()
+        public OrtoDatas()
         {
         }
 
