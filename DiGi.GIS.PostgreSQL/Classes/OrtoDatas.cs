@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class OrtoDatas : SerializableObject, IOrtoData
+    public class OrtoDatas : SerializableObject, IOrtoData
     {
         public OrtoDatas(JsonObject? jsonObject)
             : base(jsonObject)
@@ -19,24 +19,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
             if (ortoDatas is not null)
             {
                 BoundingBox2D = ortoDatas.BoundingBox2D;
+                CountyId = ortoDatas.CountyId;
+                CreatedAt = ortoDatas.CreatedAt;
+                Id = ortoDatas.Id;
                 Object = ortoDatas.Object;
+                Reference = ortoDatas.Reference;
             }
         }
 
         public OrtoDatas()
         {
-        }
 
-        [JsonInclude, JsonPropertyName("Code")]
-        public string? Code { get; set; } = null;
+        }
 
         [JsonInclude, JsonPropertyName("BoundingBox2D")]
         public BoundingBox2D? BoundingBox2D { get; set; }
 
-        [JsonInclude, JsonPropertyName("Object")]
-        public JsonObject? Object { get; set; }
+        [JsonInclude, JsonPropertyName("CountyId")]
+        public int? CountyId { get; set; }
 
         [JsonInclude, JsonPropertyName("CreatedAt")]
         public System.DateTime? CreatedAt { get; set; } = System.DateTime.UtcNow;
+
+        [JsonInclude, JsonPropertyName("Id")]
+        public long Id { get; set; }
+
+        [JsonInclude, JsonPropertyName("Object")]
+        public JsonObject? Object { get; set; }
+
+        [JsonInclude, JsonPropertyName("Reference")]
+        public string? Reference { get; set; }
     }
 }

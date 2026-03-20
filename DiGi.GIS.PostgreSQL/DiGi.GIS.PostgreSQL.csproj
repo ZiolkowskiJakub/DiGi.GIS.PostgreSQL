@@ -20,7 +20,7 @@
 		<Compile Remove="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyAttributes.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Npgsql" Version="10.0.1" />
+	  <PackageReference Include="Npgsql" Version="10.0.2" />
 	</ItemGroup>
 
 	<Target Name="CopyUserFiles" AfterTargets="Build">

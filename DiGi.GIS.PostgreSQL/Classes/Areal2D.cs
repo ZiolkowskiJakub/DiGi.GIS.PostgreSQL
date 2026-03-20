@@ -19,8 +19,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             if (areal2D is not null)
             {
                 BoundingBox2D = areal2D.BoundingBox2D;
-                Reference = areal2D.Reference;
+                Code = areal2D.Code;
+                CreatedAt = areal2D.CreatedAt;
                 Object = areal2D.Object;
+                Reference = areal2D.Reference;
             }
         }
 
@@ -28,19 +30,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        [JsonInclude, JsonPropertyName("Code")]
-        public string? Code { get; set; } = null;
-
         [JsonInclude, JsonPropertyName("BoundingBox2D")]
         public BoundingBox2D? BoundingBox2D { get; set; }
+
+        [JsonInclude, JsonPropertyName("Code")]
+        public string? Code { get; set; } = null;
+        
+        [JsonInclude, JsonPropertyName("CreatedAt")]
+        public System.DateTime? CreatedAt { get; set; } = System.DateTime.UtcNow;
 
         [JsonInclude, JsonPropertyName("Object")]
         public JsonObject? Object { get; set; }
 
         [JsonInclude, JsonPropertyName("Reference")]
         public string? Reference { get; set; }
-
-        [JsonInclude, JsonPropertyName("CreatedAt")]
-        public System.DateTime? CreatedAt { get; set; } = System.DateTime.UtcNow;
     }
 }

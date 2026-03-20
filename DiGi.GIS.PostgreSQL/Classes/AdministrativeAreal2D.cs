@@ -11,9 +11,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public AdministrativeAreal2D(AdministrativeAreal2D? postgreSQLAdministrativeAreal2D)
-            : base(postgreSQLAdministrativeAreal2D)
+        public AdministrativeAreal2D(AdministrativeAreal2D? administrativeAreal2D)
+            : base(administrativeAreal2D)
         {
+            if(administrativeAreal2D is not null)
+            {
+                AdministrativeArealType = administrativeAreal2D.AdministrativeArealType;
+                CountyId = administrativeAreal2D.CountyId;
+                Id = administrativeAreal2D.Id;
+                MunicipalityId = administrativeAreal2D.MunicipalityId;
+                Name = administrativeAreal2D.Name;
+                VoivodeshipId = administrativeAreal2D?.VoivodeshipId;
+            }
+
         }
 
         public AdministrativeAreal2D()
