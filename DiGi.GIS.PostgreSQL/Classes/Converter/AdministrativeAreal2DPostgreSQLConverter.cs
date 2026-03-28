@@ -154,30 +154,39 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType administrativeArealType)
+        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            // 1. We add LIMIT 1 to the query for database-side optimization
-            string commantText = @"SELECT id FROM administrative_areal_2D
-                WHERE type_id = @typeId AND code = @code LIMIT 1;";
+            // If @typeId is NULL, the first part of OR is true, effectively ignoring the type_id filter.
+            // If @typeId has a value, it must match the column type_id.
+            string commandText = @"
+                SELECT id 
+                FROM administrative_areal_2D
+                WHERE (@typeId IS NULL OR type_id = @typeId)
+                  AND code = @code 
+                LIMIT 1;";
 
-            await using NpgsqlCommand npgsqlCommand = new(commantText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
 
-            // Explicit parameter definition as you preferred
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+            // Explicitly handling the nullable parameter for the SQL query
+            object typeValue = (object?)administrativeArealType != null ? (short)administrativeArealType.Value : DBNull.Value;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint)
+            {
+                Value = typeValue
+            });
+
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("code", NpgsqlDbType.Text)
             {
                 Value = (object?)code ?? DBNull.Value
             });
 
-            // 2. ExecuteScalarAsync returns the first column of the first row or null
             object? result = await npgsqlCommand.ExecuteScalarAsync();
 
-            // Handling the result and conversion to nullable int
             if (result is null || result == DBNull.Value)
             {
                 return null;
@@ -511,7 +520,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return codes;
         }
 
-        public async Task<int?> GetIdByCode(string? code, AdministrativeArealType administrativeArealType)
+        public async Task<int?> GetIdByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null)
         {
             if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
