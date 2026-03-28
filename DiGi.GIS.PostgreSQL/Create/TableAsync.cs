@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL
@@ -113,6 +114,115 @@ namespace DiGi.GIS.PostgreSQL
             await npgsqlCommand.ExecuteNonQueryAsync();
 
             return true;
+        }
+
+        public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
+            const string commandText = @"
+                CREATE TABLE IF NOT EXISTS orto_datas (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    min_x DOUBLE PRECISION,
+                    min_y DOUBLE PRECISION,
+                    max_x DOUBLE PRECISION,
+                    max_y DOUBLE PRECISION,
+                    subdivision_id INT,
+                    object JSONB,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                ) PARTITION BY LIST (county_id);
+
+                -- Index for subdivision (already in your code)
+                CREATE INDEX IF NOT EXISTS idx_orto_datas_subdivision
+                ON orto_datas (subdivision_id);
+
+                -- Optimization: Composite index for County + Reference
+                -- This is highly effective because of your partitioning strategy.
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_orto_datas_ref
+                ON orto_datas (county_id, reference);
+                ";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error (OrtoDatas): {ex.Message}");
+                return false;
+            }
+        }
+
+        public static async Task<bool> TableAsync_OrtoDatas_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS orto_datas_{countyId} PARTITION OF orto_datas
+                    FOR VALUES IN ({countyId});
+                ";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            await npgsqlCommand.ExecuteNonQueryAsync();
+
+            return true;
+        }
+
+        public static async Task<bool> TableAsync_LocationReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {tableName} (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    subdivision_id INT,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                )
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
+                    ON {tableName} (county_id, reference);
+                
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_created_at 
+                    ON {tableName} (created_at ASC);
+            ";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error ({tableName}): {ex.Message}");
+                return false;
+            }
         }
     }
 }

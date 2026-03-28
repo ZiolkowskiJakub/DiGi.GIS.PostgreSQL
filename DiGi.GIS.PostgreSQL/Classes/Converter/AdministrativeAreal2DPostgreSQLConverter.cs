@@ -154,7 +154,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        public static async Task<int?> GetIdByCode(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType administrativeArealType)
+        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType administrativeArealType)
         {
             if (npgsqlConnection is null)
             {
@@ -186,7 +186,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return System.Convert.ToInt32(result);
         }
 
-        public async Task<bool> Clear()
+        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -194,9 +194,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await DiGi.PostgreSQL.Modify.Clear(npgsqlConnection, "administrative_areal_2D");
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "administrative_areal_2D", cancellationToken);
         }
 
         public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code)
@@ -511,6 +511,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return codes;
         }
 
+        public async Task<int?> GetIdByCode(string? code, AdministrativeArealType administrativeArealType)
+        {
+            if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            return await GetIdByCodeAsync(npgsqlConnection, code, administrativeArealType);
+        }
+
         public async Task<HashSet<int>?> GetIdsAsync()
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -530,6 +548,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
+            {
+                // Reading only the first column (index 0)
+                int id = reader.GetInt32(0);
+                ids.Add(id);
+            }
+
+            return ids;
+        }
+
+        public async Task<HashSet<int>?> GetIdsAsync(AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            HashSet<int> ids = [];
+
+            // We only select the 'id' column to minimize data transfer
+            string query = "SELECT id FROM administrative_areal_2D WHERE type_id = @typeId;";
+
+            await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
             {
                 // Reading only the first column (index 0)
                 int id = reader.GetInt32(0);
@@ -581,9 +628,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<bool> RefreshAsync(AdministrativeAreal2DPostgreSQLRefreshOptions? administrativeAreal2DPostgreSQLRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
+        public async Task<bool> RefreshAsync(PostgreSQLAdministrativeAreal2DRefreshOptions? postgreSQLAdministrativeAreal2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
         {
-            administrativeAreal2DPostgreSQLRefreshOptions ??= new AdministrativeAreal2DPostgreSQLRefreshOptions();
+            postgreSQLAdministrativeAreal2DRefreshOptions ??= new PostgreSQLAdministrativeAreal2DRefreshOptions();
 
             Dictionary<AdministrativeArealType, List<AdministrativeAreal2D>?> dictionary = [];
 
@@ -626,7 +673,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                             GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS_Current = null;
 
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, administrativeAreal2DPostgreSQLRefreshOptions.Tolerance));
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
                             if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
                             {
                                 administrativeAreal2D_GIS_Current = Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(administrativeAreal2D_Current);
@@ -637,7 +684,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                                 point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
 
-                                administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, administrativeAreal2DPostgreSQLRefreshOptions.Tolerance));
+                                administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
                             }
 
                             if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
@@ -656,7 +703,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 continue;
                             }
 
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered.FindAll(x => point2Ds.TrueForAll(y => x.BoundingBox2D!.InRange(y, administrativeAreal2DPostgreSQLRefreshOptions.Tolerance)));
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered.FindAll(x => point2Ds.TrueForAll(y => x.BoundingBox2D!.InRange(y, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance)));
                             if (administrativeAreal2Ds_Filtered_Temp is not null)
                             {
                                 if (administrativeAreal2Ds_Filtered_Temp.Count == 1)
@@ -681,7 +728,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                             List<GIS.Classes.AdministrativeAreal2D?> administrativeAreal2Ds_GIS_Filtered = administrativeAreal2Ds_Filtered_Temp!.ConvertAll(x => Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(x));
 
-                            List<GIS.Classes.AdministrativeAreal2D?>? administrativeAreal2Ds_GIS_Filtered_Temp = administrativeAreal2Ds_GIS_Filtered.FindAll(x => x?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, administrativeAreal2DPostgreSQLRefreshOptions.Tolerance));
+                            List<GIS.Classes.AdministrativeAreal2D?>? administrativeAreal2Ds_GIS_Filtered_Temp = administrativeAreal2Ds_GIS_Filtered.FindAll(x => x?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
                             administrativeAreal2Ds_GIS_Filtered_Temp?.RemoveAll(x => x?.PolygonalFace2D is null);
 
                             if (administrativeAreal2Ds_GIS_Filtered_Temp is null || administrativeAreal2Ds_GIS_Filtered_Temp.Count == 0)

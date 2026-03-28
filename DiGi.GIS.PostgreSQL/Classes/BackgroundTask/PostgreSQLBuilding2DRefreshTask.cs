@@ -14,7 +14,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Configuration for the PostgreSQL operation.
         /// These options will be used when RunAsync is triggered.
         /// </summary>
-        public Building2DPostgreSQLRefreshOptions Building2DPostgreSQLRefreshOptions { get; set; } = new Building2DPostgreSQLRefreshOptions() { OverrideExistingSubdivisionIds = true };
+        public PostgreSQLBuilding2DRefreshOptions PostgreSQLBuilding2DRefreshOptions { get; set; } = new PostgreSQLBuilding2DRefreshOptions() { OverrideExistingSubdivisionIds = true };
 
         /// <summary>
         /// Constructor with Dependency Injection.
@@ -31,7 +31,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             // We pass the token to your C# DLL to ensure the
             // PostgreSQL command can be aborted mid-execution.
-            return await building2DPostgreSQLConverter.RefreshAsync(Building2DPostgreSQLRefreshOptions, progress, cancellationToken);
+            return await building2DPostgreSQLConverter.RefreshAsync(PostgreSQLBuilding2DRefreshOptions, progress, cancellationToken);
         }
     }
 }

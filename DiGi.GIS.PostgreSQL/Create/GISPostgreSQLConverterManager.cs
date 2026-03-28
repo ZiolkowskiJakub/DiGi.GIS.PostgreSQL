@@ -20,19 +20,24 @@ namespace DiGi.GIS.PostgreSQL
             string path;
 
             path = Path.Combine(directory_ExecutingAssembly, Constants.FileName.PostgreSQL_Main);
-            if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile)
+            if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile_Main)
             {
-                ConnectionData? connectionData = DiGi.PostgreSQL.Create.ConnectionData(postgreSQLConfigurationFile);
+                ConnectionData? connectionData = DiGi.PostgreSQL.Create.ConnectionData(postgreSQLConfigurationFile_Main);
                 if (connectionData is not null)
                 {
-                    result.Add(new AdministrativeAreal2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile);
-                    result.Add(new Building2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile);
+                    result.Add(new AdministrativeAreal2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
+                    result.Add(new Building2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                 }
             }
 
             path = Path.Combine(directory_ExecutingAssembly, Constants.FileName.PostgreSQL_Storage);
-            if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path))
+            if (!string.IsNullOrWhiteSpace(path) && Path.Exists(path) && DiGi.PostgreSQL.Create.PostgreSQLConfigurationFile(path) is PostgreSQLConfigurationFile postgreSQLConfigurationFile_Storage)
             {
+                ConnectionData? connectionData = DiGi.PostgreSQL.Create.ConnectionData(postgreSQLConfigurationFile_Storage);
+                if (connectionData is not null)
+                {
+                    result.Add(new OrtoDatasPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
+                }
             }
 
             return result;

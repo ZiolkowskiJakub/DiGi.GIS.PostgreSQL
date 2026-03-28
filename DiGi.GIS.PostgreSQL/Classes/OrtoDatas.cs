@@ -24,12 +24,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Id = ortoDatas.Id;
                 Object = ortoDatas.Object;
                 Reference = ortoDatas.Reference;
+                SubdivisionId = ortoDatas.SubdivisionId;
             }
         }
 
         public OrtoDatas()
         {
-
         }
 
         [JsonInclude, JsonPropertyName("BoundingBox2D")]
@@ -49,5 +49,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         [JsonInclude, JsonPropertyName("Reference")]
         public string? Reference { get; set; }
+
+        [JsonInclude, JsonPropertyName("SubdivisionId")]
+        public int? SubdivisionId { get; set; }
     }
 }

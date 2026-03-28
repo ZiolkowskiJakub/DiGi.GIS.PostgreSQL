@@ -13,7 +13,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public Building2D(Building2D? building2D)
             : base(building2D)
         {
-            if(building2D is not null)
+            if (building2D is not null)
             {
                 CountyId = building2D.CountyId;
                 Id = building2D.Id;

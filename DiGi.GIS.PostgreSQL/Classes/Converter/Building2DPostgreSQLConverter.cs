@@ -8,6 +8,7 @@ using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public async Task<bool> Clear()
+        public async Task<bool> ClearAsync()
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -31,7 +32,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            return await DiGi.PostgreSQL.Modify.Clear(npgsqlConnection, "building_2D");
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "building_2D");
         }
 
         public async Task<Building2D?> GetBuilding2DbyPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -223,9 +224,139 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return [.. dictionary.Values];
         }
 
-        public async Task<bool> RefreshAsync(Building2DPostgreSQLRefreshOptions? building2DPostgreSQLRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Retrieves all LocationReferences for a specific county, with an optional exclusion list.
+        /// Optimized for partitioned tables using the partition key (county_id).
+        /// </summary>
+        /// <param name="countyId">The ID of the county (Partition Key).</param>
+        /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
+        /// <returns>A list of LocationReference objects, or null if connection fails.</returns>
+        public async Task<List<LocationReference>?> GetLocationReferencesAsync(int countyId, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
         {
-            building2DPostgreSQLRefreshOptions ??= new Building2DPostgreSQLRefreshOptions();
+            // 1. Check early if cancellation was already requested to avoid unnecessary allocations
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            // 2. Critical: Pass the token to the connection opening process
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = @"
+                SELECT id, county_id, reference, subdivision_id
+                FROM building_2d
+                WHERE county_id = @countyId";
+
+            bool hasExcluded = excludedReferences != null && excludedReferences.Any();
+
+            if (hasExcluded)
+            {
+                commandText += " AND NOT (reference = ANY(@excluded))";
+            }
+
+            List<LocationReference> results = [];
+
+            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            if (hasExcluded)
+            {
+                // Using explicit typing and collection expression for performance
+                string[] excludedArray = [.. excludedReferences!];
+                npgsqlCommand.Parameters.AddWithValue("excluded", excludedArray);
+            }
+
+            // 3. Execution with token is correct
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            // 4. Reading loop with token is correct
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                LocationReference locationReference = new ()
+                {
+                    Id = reader.GetInt64(0),
+                    CountyId = reader.IsDBNull(1) ? null : (int?)reader.GetInt32(1),
+                    Reference = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    SubdivisionId = reader.IsDBNull(3) ? null : (int?)reader.GetInt32(3)
+                };
+                results.Add(locationReference);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Retrieves full LocationReference data from building_2d table based on input references.
+        /// Performs batch processing using UNNEST to avoid N+1 query performance issues.
+        /// </summary>
+        /// <param name="locationReferences">Collection of partial references (must have Reference, optional CountyId).</param>
+        /// <returns>A list of populated LocationReference objects found in the database.</returns>
+        public async Task<List<LocationReference>?> GetLocationReferencesAsync(IEnumerable<LocationReference> locationReferences)
+        {
+            if (locationReferences == null)
+            {
+                return null;
+            }
+
+            if (!locationReferences.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            // Prepare arrays to send as parameters for the UNNEST function
+            string[] references = [.. locationReferences.Select(l => l.Reference ?? string.Empty)];
+            int?[] countyIds = [.. locationReferences.Select(l => l.CountyId)];
+
+            // SQL Logic:
+            // 1. UNNEST creates a virtual table from the input arrays.
+            // 2. INNER JOIN matches input with building_2d table.
+            // 3. The WHERE clause handles optional CountyId (if null in input, matches only by reference).
+            // 4. DISTINCT ON ensures we get only one result per input record even if multiple matches exist.
+            const string commandText = @"
+                SELECT DISTINCT ON (input.ref, input.cnty)
+                       b.id, b.county_id, b.reference, b.subdivision_id
+                FROM UNNEST(@refs, @counties) AS input(ref, cnty)
+                INNER JOIN building_2d b ON b.reference = input.ref
+                WHERE (input.cnty IS NULL OR b.county_id = input.cnty)
+                ORDER BY input.ref, input.cnty, b.id ASC;";
+
+            List<LocationReference> result = [];
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("refs", references);
+            npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
+
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                // Mapping the flat row back to a LocationReference object
+                LocationReference locationReference = new()
+                {
+                    Id = reader.GetInt64(0),
+                    CountyId = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                    Reference = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    SubdivisionId = reader.IsDBNull(3) ? null : reader.GetInt32(3)
+                };
+                result.Add(locationReference);
+            }
+
+            return result;
+        }
+
+        public async Task<bool> RefreshAsync(PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
+        {
+            postgreSQLBuilding2DRefreshOptions ??= new PostgreSQLBuilding2DRefreshOptions();
 
             int totalUpdated = 0;
 
@@ -244,7 +375,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
 
                 // 1. Fetch a batch of records and lock them so other instances skip them
-                string whereClause = building2DPostgreSQLRefreshOptions.OverrideExistingSubdivisionIds ? "" : "AND subdivision_id IS NULL ";
+                string whereClause = postgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds ? "" : "AND subdivision_id IS NULL ";
                 string commandText_Select = $@"SELECT id, county_id, object FROM building_2D WHERE true {whereClause} FOR UPDATE SKIP LOCKED LIMIT @batchSize";
 
                 List<(long Id, int CountyId, string Json)> ids = [];
@@ -253,7 +384,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
                     {
-                        npgsqlCommand.Parameters.AddWithValue("batchSize", building2DPostgreSQLRefreshOptions.BatchSize);
+                        npgsqlCommand.Parameters.AddWithValue("batchSize", postgreSQLBuilding2DRefreshOptions.BatchSize);
 
                         // Use SequentialAccess for high performance with large strings/json
                         await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
@@ -286,7 +417,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
 
                         // Note: GetSubdivisionIdAsync should use the same connection if it needs DB access
-                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, building2DPostgreSQLRefreshOptions.Tolerance);
+                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, postgreSQLBuilding2DRefreshOptions.Tolerance);
                         if (subdivisionId.HasValue)
                         {
                             updates.Add((Id, CountyId, subdivisionId.Value));
@@ -386,7 +517,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
                         else
                         {
-                            if (await AdministrativeAreal2DPostgreSQLConverter.GetIdByCode(npgsqlConnection, building2D.Code, Enums.AdministrativeArealType.County) is int countyId_Code)
+                            if (await AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(npgsqlConnection, building2D.Code, Enums.AdministrativeArealType.County) is int countyId_Code)
                             {
                                 countyId = countyId_Code;
                                 dictionary_Code[building2D.Code] = countyId_Code;

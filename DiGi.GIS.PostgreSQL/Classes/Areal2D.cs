@@ -35,7 +35,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         [JsonInclude, JsonPropertyName("Code")]
         public string? Code { get; set; } = null;
-        
+
         [JsonInclude, JsonPropertyName("CreatedAt")]
         public System.DateTime? CreatedAt { get; set; } = System.DateTime.UtcNow;
 

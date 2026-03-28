@@ -1,31 +1,28 @@
-﻿using DiGi.GIS.PostgreSQL.Classes;
+﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.GIS.PostgreSQL.Classes;
 
 namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Convert
     {
-        public static OrtoDatas? ToPostgreSQL(this GIS.Classes.OrtoDatas? ortoDatas)
+        public static OrtoDatas? ToPostgreSQL(this GIS.Classes.OrtoDatas? ortoDatas, int? countyId)
         {
             if (ortoDatas is null)
             {
                 return null;
             }
 
-            throw new System.NotImplementedException();
+            BoundingBox2D? boundingBox2D = ortoDatas.GetBoundingBox(GIS.Enums.GeometryContext.Global);
 
-            //ortoDatas.
+            OrtoDatas result = new()
+            {
+                Reference = ortoDatas.Reference,
+                BoundingBox2D = boundingBox2D,
+                Object = ortoDatas.ToJsonObject(),
+                CountyId = countyId
+            };
 
-            //AdministrativeAreal2D result = new()
-            //{
-            //    Reference = ortoDatas.Reference,
-            //    BoundingBox2D = ortoDatas.PolygonalFace2D?.GetBoundingBox(),
-            //    AdministrativeArealType = Query.AdministrativeArealType(ortoDatas),
-            //    Object = ortoDatas.ToJsonObject(),
-            //    Code = ortoDatas.Code,
-            //    Name = ortoDatas.Name
-            //};
-
-            //return result;
+            return result;
         }
     }
 }

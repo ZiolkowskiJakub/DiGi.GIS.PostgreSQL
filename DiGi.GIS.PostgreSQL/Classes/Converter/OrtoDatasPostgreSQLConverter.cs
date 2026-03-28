@@ -1,25 +1,507 @@
-﻿using DiGi.GIS.PostgreSQL.Interfaces;
+﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.GIS.Classes;
+using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
+using Npgsql;
+using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
     public class OrtoDatasPostgreSQLConverter : PostgreSQLConverter<OrtoDatas>, IGISPostgreSQLConverter<OrtoDatas>
     {
-        private ConnectionData? connectionData_Main;
-
-        public OrtoDatasPostgreSQLConverter(ConnectionData? connectionData_Storage, ConnectionData? connectionData_Main)
-            : base(connectionData_Storage)
+        public OrtoDatasPostgreSQLConverter(ConnectionData? connectionData)
+            : base(connectionData)
         {
-            this.connectionData_Main = connectionData_Main;
         }
 
+        public static async Task<List<LocationReference>?> GetExistingLocationReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<LocationReference>? locationReferences, bool inverted = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || locationReferences is null)
+            {
+                return null;
+            }
+
+            if (!locationReferences.Any())
+            {
+                return [];
+            }
+
+            // 1. Prepare data for UNNEST
+            int[] countyIds = [.. locationReferences.Select(l => l.CountyId ?? 0)];
+            string[] references = [.. locationReferences.Select(l => l.Reference ?? string.Empty)];
+
+            // 2. We use a LEFT JOIN between the input list (UNNEST) and the actual table.
+            // If u.reference IS NULL, it means the item does NOT exist in the database.
+            const string commandText = @"
+                SELECT input.c, input.r
+                FROM UNNEST(@counties, @refs) AS input(c, r)
+                LEFT JOIN orto_datas u ON u.county_id = input.c AND u.reference = input.r
+                WHERE (@inverted = false AND u.reference IS NOT NULL)  -- Item exists
+                   OR (@inverted = true AND u.reference IS NULL);     -- Item does not exist";
+
+            List<LocationReference> results = [];
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
+                npgsqlCommand.Parameters.AddWithValue("refs", references);
+                npgsqlCommand.Parameters.AddWithValue("inverted", inverted);
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    results.Add(new LocationReference { CountyId = npgsqlDataReader.GetInt32(0), Reference = npgsqlDataReader.GetString(1) });
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error (GetExistingAsync): {ex.Message}");
+                return null;
+            }
+
+            return results;
+
+        }
+        
+        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas", cancellationToken);
+            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas_location_reference_update", cancellationToken);
+
+            return result_1 || result_2;
+        }
+
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            if (!references.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<string> result = [];
+
+            const string commandText = @"
+                SELECT input_ref
+                FROM UNNEST(@refs) AS input_ref
+                LEFT JOIN orto_datas u ON u.reference = input_ref 
+                    AND (@county_id IS NULL OR u.county_id = @county_id)
+                WHERE 
+                    (@inverted = false AND u.reference IS NOT NULL)
+                    OR 
+                    (@inverted = true AND u.reference IS NULL);";
+
+            try
+            {
+                await npgsqlConnection.OpenAsync(cancellationToken);
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                string[] referenceArray = [.. references.Distinct()];
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
+
+                await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    result.Add(reader.GetString(0));
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error in ContainsByReferences: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
+
+        public async Task<List<LocationReference>?> GetExistingLocationReferencesAsync(IEnumerable<LocationReference>? locationReferences, bool inverted = false, CancellationToken cancellationToken = default)
+        {
+            if (locationReferences == null)
+            {
+                return null;
+            }
+
+            if (!locationReferences.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetExistingLocationReferencesAsync(npgsqlConnection, locationReferences, inverted, cancellationToken);
+        }
+
+        public async Task<List<LocationReference>?> GetNextLocationReferencesAsync(int count = 100)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, "orto_datas_location_reference_update");
+            if (!exists)
+            {
+                return null;
+            }
+
+            string sql = $@"
+                DELETE FROM orto_datas_location_reference_update
+                WHERE id = (
+                    SELECT id FROM orto_datas_location_reference_update
+                    ORDER BY created_at ASC
+                    FOR UPDATE SKIP LOCKED
+                    LIMIT {count}
+                )
+                RETURNING id, county_id, reference, subdivision_id;";
+
+
+            List<LocationReference> result = [];
+
+            try
+            {
+                await using NpgsqlCommand command = new(sql, npgsqlConnection);
+
+                await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    LocationReference locationReference = new()
+                    {
+                        Id = reader.GetInt64(reader.GetOrdinal("id"))
+                    };
+
+                    int countyIdOrdinal = reader.GetOrdinal("county_id");
+                    locationReference.CountyId = reader.IsDBNull(countyIdOrdinal) ? null : reader.GetInt32(countyIdOrdinal);
+
+                    int referenceOrdinal = reader.GetOrdinal("reference");
+                    locationReference.Reference = reader.IsDBNull(referenceOrdinal) ? null : reader.GetString(referenceOrdinal);
+
+                    int subdivisionIdOrdinal = reader.GetOrdinal("subdivision_id");
+                    locationReference.SubdivisionId = reader.IsDBNull(subdivisionIdOrdinal) ? null : reader.GetInt32(subdivisionIdOrdinal);
+
+                    result.Add(locationReference);
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                // In a real Web API scenario, you would use ILogger here
+                Console.WriteLine($"Database error during GetNextAndRemove: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
+        
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
-            throw new NotImplementedException();
+            if (ortoDatas is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool succeded = await Create.TableAsync_OrtoDatas(npgsqlConnection);
+            if (!succeded)
+            {
+                return null;
+            }
+
+            HashSet<long> result = [];
+
+            if (!ortoDatas.Any())
+            {
+                return result;
+            }
+
+            Dictionary<int, List<OrtoDatas>> dictionary_OrtoDatas = [];
+
+            foreach (OrtoDatas ortoDatas_Temp in ortoDatas)
+            {
+                if (ortoDatas_Temp is null)
+                {
+                    continue;
+                }
+
+                int? countyId = ortoDatas_Temp.CountyId;
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    BoundingBox2D? boundingBox2D = ortoDatas_Temp.BoundingBox2D;
+                    if (boundingBox2D is null)
+                    {
+                        continue;
+                    }
+
+                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                    if (administrativeAreal2Ds != null)
+                    {
+                        int count = administrativeAreal2Ds.Count;
+                        if (count == 1)
+                        {
+                            countyId = administrativeAreal2Ds[0].Id;
+                        }
+                        else if (count > 1)
+                        {
+                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi<GIS.Classes.AdministrativeAreal2D>()?.PolygonalFace2D?.ExternalEdge));
+                            tuples_AdministrativeAreal2D.RemoveAll(x => x?.Item2 is null);
+
+                            if (tuples_AdministrativeAreal2D.Count == 1)
+                            {
+                                countyId = tuples_AdministrativeAreal2D[0].Item1.Id;
+                            }
+                            else if (count > 1)
+                            {
+                                List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2_Temp = tuples_AdministrativeAreal2D.FindAll(x => x.Item2!.InRange(boundingBox2D, tolerance));
+                                if (tuples_AdministrativeAreal2_Temp.Count == 0)
+                                {
+                                    List<Tuple<AdministrativeAreal2D, double>> tuples_Distance = [];
+                                    foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2D)
+                                    {
+                                        Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
+
+                                        double distance = Geometry.Planar.Query.Distance(boundingBox2D, polygonal2D_AdministrativeAreal2D, out _, out _, tolerance);
+
+                                        tuples_Distance.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, distance));
+                                    }
+
+                                    if (tuples_Distance.Count != 0)
+                                    {
+                                        tuples_Distance.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+                                        countyId = tuples_Distance[0].Item1.Id;
+                                    }
+                                }
+                                else if (tuples_AdministrativeAreal2_Temp.Count == 1)
+                                {
+                                    countyId = tuples_AdministrativeAreal2_Temp[0].Item1.Id;
+                                }
+                                else
+                                {
+                                    if ((Polygon2D?)boundingBox2D is Polygon2D polygon2D)
+                                    {
+                                        List<Tuple<AdministrativeAreal2D, double>> tuples_Area = [];
+                                        foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2_Temp)
+                                        {
+                                            Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
+
+                                            List<Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<Geometry.Planar.Interfaces.IPolygonal2D, Geometry.Planar.Interfaces.IPolygonal2D>([polygonal2D_AdministrativeAreal2D, polygon2D], tolerance);
+
+                                            double area = 0;
+                                            if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
+                                            {
+                                                area = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
+                                            }
+
+                                            if (area <= tolerance)
+                                            {
+                                                continue;
+                                            }
+
+                                            tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
+                                        }
+
+                                        if (tuples_Area.Count != 0)
+                                        {
+                                            tuples_Area.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+                                            countyId = tuples_Area[0].Item1.Id;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    continue;
+                }
+
+                if (!dictionary_OrtoDatas.TryGetValue(countyId.Value, out List<OrtoDatas>? OrtoDatas_CountyId) || OrtoDatas_CountyId is null)
+                {
+                    OrtoDatas_CountyId = [];
+                    dictionary_OrtoDatas[countyId.Value] = OrtoDatas_CountyId;
+                }
+
+                OrtoDatas_CountyId.Add(ortoDatas_Temp);
+            }
+
+            await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+
+            foreach (KeyValuePair<int, List<OrtoDatas>> keyValuePair in dictionary_OrtoDatas)
+            {
+                int countyId = keyValuePair.Key;
+
+                succeded = await Create.TableAsync_OrtoDatas_Partition(npgsqlConnection, countyId);
+                if (!succeded)
+                {
+                    continue;
+                }
+
+                foreach (OrtoDatas ortoDatas_Temp in keyValuePair.Value)
+                {
+                    // SQL with full update on conflict (excluding ID)
+                    NpgsqlBatchCommand npgsqlBatchCommand = new($@"
+                    INSERT INTO orto_datas (county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object)
+                    VALUES (@county_id, @reference, @min_x, @min_y, @max_x, @max_y, @subdivision_id, @object)
+                    ON CONFLICT (reference, county_id)
+                    DO UPDATE SET
+                        min_x = EXCLUDED.min_x,
+                        min_y = EXCLUDED.min_y,
+                        max_x = EXCLUDED.max_x,
+                        max_y = EXCLUDED.max_y,
+                        subdivision_id = EXCLUDED.subdivision_id,
+                        object = EXCLUDED.object
+                    RETURNING id;");
+
+                    BoundingBox2D? boundingBox2D = ortoDatas_Temp.BoundingBox2D;
+
+                    // Adding parameters with explicit NpgsqlDbType
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = ortoDatas_Temp.Reference });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("min_x", NpgsqlDbType.Double) { Value = boundingBox2D is null ? double.NaN : boundingBox2D.Min.X });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("min_y", NpgsqlDbType.Double) { Value = boundingBox2D is null ? double.NaN : boundingBox2D.Min.Y });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("max_x", NpgsqlDbType.Double) { Value = boundingBox2D is null ? double.NaN : boundingBox2D.Max.X });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("max_y", NpgsqlDbType.Double) { Value = boundingBox2D is null ? double.NaN : boundingBox2D.Max.Y });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("subdivision_id", NpgsqlDbType.Integer) { Value = (object?)ortoDatas_Temp.SubdivisionId ?? DBNull.Value });
+
+                    // Handling potential null for JSONB object
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb)
+                    {
+                        Value = (object?)ortoDatas_Temp.Object?.ToJsonString() ?? DBNull.Value
+                    });
+
+                    npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
+                }
+            }
+
+            // Execute batch and collect IDs
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+
+            do
+            {
+                while (await npgsqlDataReader.ReadAsync())
+                {
+                    // The RETURNING id works for both INSERT and UPDATE cases
+                    long id = npgsqlDataReader.GetInt64(0);
+                    result.Add(id);
+                }
+            }
+            while (await npgsqlDataReader.NextResultAsync());
+
+            return result;
         }
 
+        public async Task<List<LocationReference>?> UpdateLocationReferencesAsync(IEnumerable<LocationReference> locationReferences, CancellationToken cancellationToken = default)
+        {
+            // Ensure we have a valid connection
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Check if table exists before proceeding
+            bool created = await Create.TableAsync_LocationReference(npgsqlConnection, "orto_datas_location_reference_update", cancellationToken);
+            if (!created)
+            {
+                return null;
+            }
+
+            // ON CONFLICT (county_id, reference) DO NOTHING ensures we don't add duplicates.
+            // RETURNING * will only return rows that were actually inserted.
+            string sql = $@"
+                INSERT INTO orto_datas_location_reference_update (county_id, reference, subdivision_id)
+                SELECT * FROM UNNEST(@counties, @refs, @subs)
+                ON CONFLICT (county_id, reference) DO NOTHING
+                RETURNING id, county_id, reference, subdivision_id;";
+
+            List<LocationReference> result = [];
+
+            try
+            {
+                await using NpgsqlCommand command = new (sql, npgsqlConnection);
+
+                // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
+                int[] countyIds = [.. locationReferences.Select(x => x.CountyId ?? 0)];
+                string[] references = [.. locationReferences.Select(x => x.Reference ?? string.Empty)];
+                int?[] subdivisionIds = [.. locationReferences.Select(x => x.SubdivisionId)];
+
+                command.Parameters.AddWithValue("counties", countyIds);
+                command.Parameters.AddWithValue("refs", references);
+                command.Parameters.AddWithValue("subs", subdivisionIds);
+
+                await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    LocationReference location = new ()
+                    {
+                        Id = reader.GetInt64(reader.GetOrdinal("id")),
+                        CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),
+                        Reference = reader.IsDBNull(reader.GetOrdinal("reference")) ? null : reader.GetString(reader.GetOrdinal("reference")),
+                        SubdivisionId = reader.IsDBNull(reader.GetOrdinal("subdivision_id")) ? null : reader.GetInt32(reader.GetOrdinal("subdivision_id"))
+                    };
+
+                    result.Add(location);
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error during UpdateAsync: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
     }
 }
