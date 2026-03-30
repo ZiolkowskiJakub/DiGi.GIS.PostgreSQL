@@ -24,6 +24,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 CountyIds = postgreSQLOrtoDatasRefreshOptions.CountyIds == null ? null : [.. postgreSQLOrtoDatasRefreshOptions.CountyIds];
                 OverrideExistsing = postgreSQLOrtoDatasRefreshOptions.OverrideExistsing;
+                UpdateSubdivisionIds = postgreSQLOrtoDatasRefreshOptions.UpdateSubdivisionIds;
             }
         }
 
@@ -32,5 +33,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         [JsonInclude, JsonPropertyName("OverrideExistsing")]
         public bool OverrideExistsing { get; set; } = false;
+
+        [JsonInclude, JsonPropertyName("UpdateSubdivisionIds")]
+        public bool UpdateSubdivisionIds { get; set; } = true;
     }
 }

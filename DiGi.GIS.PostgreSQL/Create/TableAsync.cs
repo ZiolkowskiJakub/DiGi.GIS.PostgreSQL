@@ -192,6 +192,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
+            // Added semicolons after each SQL statement to fix the 42601 syntax error
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -200,27 +201,27 @@ namespace DiGi.GIS.PostgreSQL
                     subdivision_id INT,
                     created_at timestamptz DEFAULT now(),
                     PRIMARY KEY (id, county_id)
-                )
+                );
 
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
                     ON {tableName} (county_id, reference);
-                
+        
                 CREATE INDEX IF NOT EXISTS idx_{tableName}_created_at 
                     ON {tableName} (created_at ASC);
-            ";
+                ";
 
             try
             {
-                // Explicitly using NpgsqlCommand type instead of implicit typing
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                // Explicitly specifying NpgsqlCommand type
+                await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
 
                 await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
             {
-                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({tableName}): {ex.Message}");
+                // For engineering plugins (Revit/Rhino), logging to a dedicated console or file is key
+                Console.WriteLine($"Postgres Error during table creation ({tableName}): {ex.Message}");
                 return false;
             }
         }

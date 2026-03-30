@@ -1,12 +1,10 @@
 ﻿using DiGi.Geometry.Planar.Classes;
-using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -183,7 +181,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            string sql = $@"
+            string commandText = $@"
                 DELETE FROM orto_datas_location_reference_update
                 WHERE id = (
                     SELECT id FROM orto_datas_location_reference_update
@@ -198,7 +196,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand command = new(sql, npgsqlConnection);
+                await using NpgsqlCommand command = new(commandText, npgsqlConnection);
 
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
 
@@ -224,7 +222,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             catch (NpgsqlException ex)
             {
                 // In a real Web API scenario, you would use ILogger here
-                Console.WriteLine($"Database error during GetNextAndRemove: {ex.Message}");
+                Console.WriteLine($"Database error during {nameof(GetNextLocationReferencesAsync)}: {ex.Message}");
                 throw;
             }
 
@@ -435,6 +433,108 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
             while (await npgsqlDataReader.NextResultAsync());
+
+            return result;
+        }
+
+        public async Task<List<LocationReference>?> UpdateSubdivisionIds(IEnumerable<LocationReference>? locationReferences, CancellationToken cancellationToken = default)
+        {
+            if (locationReferences == null)
+            {
+                return null;
+            }
+
+            if(!locationReferences.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Rozdzielamy dane na te, które mają CountyId i te, które go nie mają
+            List<LocationReference> withCounty = [.. locationReferences.Where(x => x.CountyId.HasValue)];
+            List<LocationReference> withoutCounty = [.. locationReferences.Where(x => !x.CountyId.HasValue)];
+
+            // Jeśli brakuje CountyId, musimy je dociągnąć z bazy danych przed aktualizacją
+            if (withoutCounty.Count > 0)
+            {
+                string[] missingRefs = [.. withoutCounty.Select(x => x.Reference ?? string.Empty)];
+
+                // Szukamy county_id dla podanych referencji
+                const string findSql = @"
+                    SELECT reference, county_id 
+                    FROM orto_datas 
+                    WHERE reference = ANY(@refs)";
+
+                await using NpgsqlCommand npgsqlCommand = new (findSql, npgsqlConnection);
+                npgsqlCommand.Parameters.AddWithValue("refs", missingRefs);
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    string @ref = npgsqlDataReader.GetString(0);
+                    int cid = npgsqlDataReader.GetInt32(1);
+
+                    // Uzupełniamy brakujące ID w obiektach wejściowych
+                    LocationReference? match = withoutCounty.FirstOrDefault(x => x.Reference == @ref);
+                    if (match != null)
+                    {
+                        match.CountyId = cid;
+                        withCounty.Add(match);
+                    }
+                }
+                await npgsqlDataReader.CloseAsync();
+            }
+
+            if (withCounty.Count == 0)
+            {
+                return [];
+            }
+
+            // Teraz wykonujemy właściwy UPDATE na kompletnych danych
+            const string updateSql = @"
+                UPDATE orto_datas u
+                SET subdivision_id = data.new_sub_id
+                FROM (
+                    SELECT * FROM UNNEST(@counties, @refs, @subs) AS t(c_id, r_text, new_sub_id)
+                ) AS data
+                WHERE u.county_id = data.c_id  -- To gwarantuje Partition Pruning
+                  AND u.reference = data.r_text
+                RETURNING u.id, u.county_id, u.reference, u.subdivision_id;";
+
+            List<LocationReference> result = [];
+
+            try
+            {
+                await using NpgsqlCommand command = new (updateSql, npgsqlConnection);
+
+                command.Parameters.AddWithValue("counties", withCounty.Select(x => x.CountyId ?? 0).ToArray());
+                command.Parameters.AddWithValue("refs", withCounty.Select(x => x.Reference ?? string.Empty).ToArray());
+                command.Parameters.AddWithValue("subs", withCounty.Select(x => x.SubdivisionId).ToArray());
+
+                await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    result.Add(new LocationReference
+                    {
+                        Id = reader.GetInt64(0),
+                        CountyId = reader.GetInt32(1),
+                        Reference = reader.GetString(2),
+                        SubdivisionId = reader.IsDBNull(3) ? null : (int?)reader.GetInt32(3)
+                    });
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error in GetUpdateSubdivisionIds: {ex.Message}");
+                throw;
+            }
 
             return result;
         }

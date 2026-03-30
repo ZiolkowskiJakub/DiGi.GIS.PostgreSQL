@@ -173,7 +173,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
 
             // Explicitly handling the nullable parameter for the SQL query
-            object typeValue = (object?)administrativeArealType != null ? (short)administrativeArealType.Value : DBNull.Value;
+            object typeValue = administrativeArealType is not null ? (short)administrativeArealType.Value : DBNull.Value;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint)
             {

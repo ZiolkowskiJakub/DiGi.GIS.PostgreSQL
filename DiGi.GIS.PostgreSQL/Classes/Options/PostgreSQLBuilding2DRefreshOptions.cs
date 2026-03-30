@@ -28,7 +28,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         [JsonInclude, JsonPropertyName("BatchSize")]
-        public int BatchSize { get; set; } = 1000;
+        public int BatchSize { get; set; } = 500;
 
         [JsonInclude, JsonPropertyName("OverrideExistingSubdivisionIds")]
         public bool OverrideExistingSubdivisionIds { get; set; } = false;

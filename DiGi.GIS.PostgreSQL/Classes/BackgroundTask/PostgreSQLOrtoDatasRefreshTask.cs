@@ -71,6 +71,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     progress.Report(count);
 
+
+                    if (PostgreSQLOrtoDatasRefreshOptions.UpdateSubdivisionIds)
+                    {
+                        await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(locationReferences, cancellationToken);
+                    }
+
                     if (!PostgreSQLOrtoDatasRefreshOptions.OverrideExistsing)
                     {
                         locationReferences = await ortoDatasPostgreSQLConverter.GetExistingLocationReferencesAsync(locationReferences, true, cancellationToken);
