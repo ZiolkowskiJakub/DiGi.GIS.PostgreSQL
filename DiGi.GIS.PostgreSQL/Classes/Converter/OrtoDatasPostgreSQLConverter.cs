@@ -60,7 +60,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             catch (NpgsqlException ex)
             {
-                Console.WriteLine($"Postgres Error (GetExistingAsync): {ex.Message}");
+                Console.WriteLine($"Postgres Error {nameof(GetExistingLocationReferencesAsync)}: {ex.Message}");
                 return null;
             }
 
