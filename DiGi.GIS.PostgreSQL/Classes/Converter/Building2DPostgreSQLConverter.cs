@@ -259,7 +259,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("refs", references);
                 npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
 
@@ -325,7 +325,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             List<LocationReference> results = [];
 
-            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
 
             if (hasExcluded)
@@ -341,7 +341,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // 4. Reading loop with token is correct
             while (await reader.ReadAsync(cancellationToken))
             {
-                LocationReference locationReference = new ()
+                LocationReference locationReference = new()
                 {
                     Id = reader.GetInt64(0),
                     CountyId = reader.IsDBNull(1) ? null : (int?)reader.GetInt32(1),
@@ -448,18 +448,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     : "id > @lastId AND subdivision_id IS NULL";
 
                 string commandText_Select = $@"
-                    SELECT id, county_id, object 
-                    FROM building_2D 
-                    WHERE {filterClause} 
-                    ORDER BY id ASC 
-                    FOR UPDATE SKIP LOCKED 
+                    SELECT id, county_id, object
+                    FROM building_2D
+                    WHERE {filterClause}
+                    ORDER BY id ASC
+                    FOR UPDATE SKIP LOCKED
                     LIMIT @batchSize";
 
                 List<(long Id, int CountyId, string Json)> records = [];
 
                 try
                 {
-                    await using (NpgsqlCommand npgsqlCommand = new (commandText_Select, npgsqlConnection, npgsqlTransaction))
+                    await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
                     {
                         npgsqlCommand.Parameters.AddWithValue("batchSize", postgreSQLBuilding2DRefreshOptions.BatchSize);
                         npgsqlCommand.Parameters.AddWithValue("lastId", lastProcessedId);
@@ -483,7 +483,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     {
                         if (cancellationToken.IsCancellationRequested) break;
 
-                        // CRITICAL: Always update the anchor to the current ID. 
+                        // CRITICAL: Always update the anchor to the current ID.
                         // This prevents the loop from getting stuck on records that fail processing.
                         if (Id > lastProcessedId)
                         {
@@ -526,11 +526,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             async static Task ExecuteUpdateBatchAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, List<(long Id, int CountyId, int SubdivisionId)> updates, CancellationToken cancellationToken)
             {
-                await using NpgsqlBatch npgsqlBatch = new (connection, transaction);
+                await using NpgsqlBatch npgsqlBatch = new(connection, transaction);
 
                 foreach ((long Id, int CountyId, int SubdivisionId) in updates)
                 {
-                    NpgsqlBatchCommand npgsqlBatchCommand = new ("UPDATE building_2D SET subdivision_id = @subdivision_id WHERE id = @id AND county_id = @county_id");
+                    NpgsqlBatchCommand npgsqlBatchCommand = new("UPDATE building_2D SET subdivision_id = @subdivision_id WHERE id = @id AND county_id = @county_id");
                     npgsqlBatchCommand.Parameters.AddWithValue("subdivision_id", SubdivisionId);
                     npgsqlBatchCommand.Parameters.AddWithValue("id", Id);
                     npgsqlBatchCommand.Parameters.AddWithValue("county_id", CountyId);

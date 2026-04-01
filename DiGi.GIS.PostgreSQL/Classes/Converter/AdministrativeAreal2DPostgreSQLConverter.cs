@@ -164,13 +164,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // If @typeId is NULL, the first part of OR is true, effectively ignoring the type_id filter.
             // If @typeId has a value, it must match the column type_id.
             string commandText = @"
-                SELECT id 
+                SELECT id
                 FROM administrative_areal_2D
                 WHERE (@typeId IS NULL OR type_id = @typeId)
-                  AND code = @code 
+                  AND code = @code
                 LIMIT 1;";
 
-            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             // Explicitly handling the nullable parameter for the SQL query
             object typeValue = administrativeArealType is not null ? (short)administrativeArealType.Value : DBNull.Value;

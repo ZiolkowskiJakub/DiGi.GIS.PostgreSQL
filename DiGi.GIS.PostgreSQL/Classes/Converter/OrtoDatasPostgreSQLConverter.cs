@@ -65,9 +65,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return results;
-
         }
-        
+
         public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -107,11 +106,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = @"
                 SELECT input_ref
                 FROM UNNEST(@refs) AS input_ref
-                LEFT JOIN orto_datas u ON u.reference = input_ref 
+                LEFT JOIN orto_datas u ON u.reference = input_ref
                     AND (@county_id IS NULL OR u.county_id = @county_id)
-                WHERE 
+                WHERE
                     (@inverted = false AND u.reference IS NOT NULL)
-                    OR 
+                    OR
                     (@inverted = true AND u.reference IS NULL);";
 
             try
@@ -191,7 +190,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 )
                 RETURNING id, county_id, reference, subdivision_id;";
 
-
             List<LocationReference> result = [];
 
             try
@@ -228,7 +226,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-        
+
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (ortoDatas is null)
@@ -444,7 +442,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            if(!locationReferences.Any())
+            if (!locationReferences.Any())
             {
                 return [];
             }
@@ -468,11 +466,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 // Szukamy county_id dla podanych referencji
                 const string findSql = @"
-                    SELECT reference, county_id 
-                    FROM orto_datas 
+                    SELECT reference, county_id
+                    FROM orto_datas
                     WHERE reference = ANY(@refs)";
 
-                await using NpgsqlCommand npgsqlCommand = new (findSql, npgsqlConnection);
+                await using NpgsqlCommand npgsqlCommand = new(findSql, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("refs", missingRefs);
 
                 await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
@@ -512,7 +510,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand command = new (updateSql, npgsqlConnection);
+                await using NpgsqlCommand command = new(updateSql, npgsqlConnection);
 
                 command.Parameters.AddWithValue("counties", withCounty.Select(x => x.CountyId ?? 0).ToArray());
                 command.Parameters.AddWithValue("refs", withCounty.Select(x => x.Reference ?? string.Empty).ToArray());
@@ -569,7 +567,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand command = new (sql, npgsqlConnection);
+                await using NpgsqlCommand command = new(sql, npgsqlConnection);
 
                 // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
                 int[] countyIds = [.. locationReferences.Select(x => x.CountyId ?? 0)];
@@ -584,7 +582,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    LocationReference location = new ()
+                    LocationReference location = new()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id")),
                         CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),

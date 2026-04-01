@@ -40,7 +40,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             PostgreSQLOrtoDatasRefreshOptions ??= new PostgreSQLOrtoDatasRefreshOptions();
 
-
             HashSet<int>? countyIds = PostgreSQLOrtoDatasRefreshOptions.CountyIds;
 
             try
@@ -71,7 +70,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     progress.Report(count);
 
-
                     if (PostgreSQLOrtoDatasRefreshOptions.UpdateSubdivisionIds)
                     {
                         await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(locationReferences, cancellationToken);
@@ -100,8 +98,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 // Log error here if necessary
                 throw;
             }
-
-
 
             return !cancellationToken.IsCancellationRequested;
         }
