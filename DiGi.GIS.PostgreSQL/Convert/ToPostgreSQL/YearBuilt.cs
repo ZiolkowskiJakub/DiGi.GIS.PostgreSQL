@@ -1,5 +1,4 @@
 ﻿using DiGi.GIS.PostgreSQL.Classes;
-using System.Collections.Generic;
 
 namespace DiGi.GIS.PostgreSQL
 {

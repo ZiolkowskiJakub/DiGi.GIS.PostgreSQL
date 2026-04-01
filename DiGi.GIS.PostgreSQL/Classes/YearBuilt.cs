@@ -41,6 +41,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         [JsonInclude, JsonPropertyName("Id")]
         public long Id { get; set; }
 
+        [JsonInclude, JsonPropertyName("Object")]
+        public JsonObject? Object { get; set; }
+
         [JsonInclude, JsonPropertyName("Reference")]
         public string? Reference { get; set; }
 
@@ -49,8 +52,5 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         [JsonInclude, JsonPropertyName("Year")]
         public short? Year { get; set; }
-
-        [JsonInclude, JsonPropertyName("Object")]
-        public JsonObject? Object { get; set; }
     }
 }

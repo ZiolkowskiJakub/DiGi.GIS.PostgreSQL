@@ -15,18 +15,17 @@ namespace DiGi.GIS.PostgreSQL
             Dictionary<string, List<GIS.Interfaces.IYearBuilt>> dictionary = [];
             foreach (YearBuilt yearBuilt in yearBuilts)
             {
-                if(yearBuilt?.Reference is not string reference)
+                if (yearBuilt?.Reference is not string reference)
                 {
                     continue;
                 }
-
 
                 if (yearBuilt.ToDiGi() is not GIS.Interfaces.IYearBuilt yearBuilt_GIS)
                 {
                     continue;
                 }
 
-                if(!dictionary.TryGetValue(reference, out List<GIS.Interfaces.IYearBuilt> yearBuilts_Reference) || yearBuilts_Reference is null)
+                if (!dictionary.TryGetValue(reference, out List<GIS.Interfaces.IYearBuilt> yearBuilts_Reference) || yearBuilts_Reference is null)
                 {
                     yearBuilts_Reference = [];
                     dictionary[reference] = yearBuilts_Reference;
@@ -36,10 +35,10 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             List<GIS.Classes.YearBuiltData> result = [];
-            foreach(KeyValuePair<string, List<GIS.Interfaces.IYearBuilt>> keyValuePair in dictionary)
+            foreach (KeyValuePair<string, List<GIS.Interfaces.IYearBuilt>> keyValuePair in dictionary)
             {
                 GIS.Classes.YearBuiltData yearBuiltData = new GIS.Classes.YearBuiltData(keyValuePair.Key);
-                foreach(GIS.Interfaces.IYearBuilt yearBuilt in keyValuePair.Value)
+                foreach (GIS.Interfaces.IYearBuilt yearBuilt in keyValuePair.Value)
                 {
                     yearBuiltData.Add(yearBuilt);
                 }
