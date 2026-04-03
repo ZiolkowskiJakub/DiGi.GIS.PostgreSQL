@@ -18,21 +18,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public static async Task<List<LocationReference>?> GetExistingLocationReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<LocationReference>? locationReferences, bool inverted = false, CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null || locationReferences is null)
+            if (npgsqlConnection is null || building2DReferences is null)
             {
                 return null;
             }
 
-            if (!locationReferences.Any())
+            if (!building2DReferences.Any())
             {
                 return [];
             }
 
             // 1. Prepare data for UNNEST
-            int[] countyIds = [.. locationReferences.Select(l => l.CountyId ?? 0)];
-            string[] references = [.. locationReferences.Select(l => l.Reference ?? string.Empty)];
+            int[] countyIds = [.. building2DReferences.Select(l => l.CountyId ?? 0)];
+            string[] references = [.. building2DReferences.Select(l => l.Reference ?? string.Empty)];
 
             // 2. We use a LEFT JOIN between the input list (UNNEST) and the actual table.
             // If u.reference IS NULL, it means the item does NOT exist in the database.
@@ -43,7 +43,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE (@inverted = false AND u.reference IS NOT NULL)  -- Item exists
                    OR (@inverted = true AND u.reference IS NULL);     -- Item does not exist";
 
-            List<LocationReference> results = [];
+            List<Building2DReference> results = [];
 
             try
             {
@@ -55,12 +55,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
                 while (await npgsqlDataReader.ReadAsync(cancellationToken))
                 {
-                    results.Add(new LocationReference { CountyId = npgsqlDataReader.GetInt32(0), Reference = npgsqlDataReader.GetString(1) });
+                    results.Add(new Building2DReference { CountyId = npgsqlDataReader.GetInt32(0), Reference = npgsqlDataReader.GetString(1) });
                 }
             }
             catch (NpgsqlException ex)
             {
-                Console.WriteLine($"Postgres Error {nameof(GetExistingLocationReferencesAsync)}: {ex.Message}");
+                Console.WriteLine($"Postgres Error {nameof(GetExistingBuilding2DReferencesAsync)}: {ex.Message}");
                 return null;
             }
 
@@ -78,7 +78,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas", cancellationToken);
-            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas_location_reference_update", cancellationToken);
+            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
 
             return result_1 || result_2;
         }
@@ -134,21 +134,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             catch (NpgsqlException ex)
             {
-                Console.WriteLine($"Database error in ContainsByReferences: {ex.Message}");
+                Console.WriteLine($"Database error in {nameof(ContainsByReferencesAsync)}: {ex.Message}");
                 throw;
             }
 
             return result;
         }
 
-        public async Task<List<LocationReference>?> GetExistingLocationReferencesAsync(IEnumerable<LocationReference>? locationReferences, bool inverted = false, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, CancellationToken cancellationToken = default)
         {
-            if (locationReferences == null)
+            if (building2DReferences == null)
             {
                 return null;
             }
 
-            if (!locationReferences.Any())
+            if (!building2DReferences.Any())
             {
                 return [];
             }
@@ -161,10 +161,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetExistingLocationReferencesAsync(npgsqlConnection, locationReferences, inverted, cancellationToken);
+            return await GetExistingBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, inverted, cancellationToken);
         }
 
-        public async Task<List<LocationReference>?> GetNextLocationReferencesAsync(int count = 100)
+        public async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(int count = 100)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection == null)
@@ -174,23 +174,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, "orto_datas_location_reference_update");
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, "orto_datas_building2D_reference_update");
             if (!exists)
             {
                 return null;
             }
 
             string commandText = $@"
-                DELETE FROM orto_datas_location_reference_update
+                DELETE FROM orto_datas_building2D_reference_update
                 WHERE id = (
-                    SELECT id FROM orto_datas_location_reference_update
+                    SELECT id FROM orto_datas_building2D_reference_update
                     ORDER BY created_at ASC
                     FOR UPDATE SKIP LOCKED
                     LIMIT {count}
                 )
                 RETURNING id, county_id, reference, subdivision_id;";
 
-            List<LocationReference> result = [];
+            List<Building2DReference> result = [];
 
             try
             {
@@ -200,27 +200,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 while (await reader.ReadAsync())
                 {
-                    LocationReference locationReference = new()
+                    Building2DReference building2DReference = new()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id"))
                     };
 
                     int countyIdOrdinal = reader.GetOrdinal("county_id");
-                    locationReference.CountyId = reader.IsDBNull(countyIdOrdinal) ? null : reader.GetInt32(countyIdOrdinal);
+                    building2DReference.CountyId = reader.IsDBNull(countyIdOrdinal) ? null : reader.GetInt32(countyIdOrdinal);
 
                     int referenceOrdinal = reader.GetOrdinal("reference");
-                    locationReference.Reference = reader.IsDBNull(referenceOrdinal) ? null : reader.GetString(referenceOrdinal);
+                    building2DReference.Reference = reader.IsDBNull(referenceOrdinal) ? null : reader.GetString(referenceOrdinal);
 
                     int subdivisionIdOrdinal = reader.GetOrdinal("subdivision_id");
-                    locationReference.SubdivisionId = reader.IsDBNull(subdivisionIdOrdinal) ? null : reader.GetInt32(subdivisionIdOrdinal);
+                    building2DReference.SubdivisionId = reader.IsDBNull(subdivisionIdOrdinal) ? null : reader.GetInt32(subdivisionIdOrdinal);
 
-                    result.Add(locationReference);
+                    result.Add(building2DReference);
                 }
             }
             catch (NpgsqlException ex)
             {
                 // In a real Web API scenario, you would use ILogger here
-                Console.WriteLine($"Database error during {nameof(GetNextLocationReferencesAsync)}: {ex.Message}");
+                Console.WriteLine($"Database error during {nameof(GetNextBuilding2DReferencesAsync)}: {ex.Message}");
                 throw;
             }
 
@@ -435,14 +435,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<List<LocationReference>?> UpdateSubdivisionIds(IEnumerable<LocationReference>? locationReferences, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> UpdateSubdivisionIds(IEnumerable<Building2DReference>? building2DReferences, CancellationToken cancellationToken = default)
         {
-            if (locationReferences == null)
+            if (building2DReferences == null)
             {
                 return null;
             }
 
-            if (!locationReferences.Any())
+            if (!building2DReferences.Any())
             {
                 return [];
             }
@@ -456,8 +456,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Rozdzielamy dane na te, które mają CountyId i te, które go nie mają
-            List<LocationReference> withCounty = [.. locationReferences.Where(x => x.CountyId.HasValue)];
-            List<LocationReference> withoutCounty = [.. locationReferences.Where(x => !x.CountyId.HasValue)];
+            List<Building2DReference> withCounty = [.. building2DReferences.Where(x => x.CountyId.HasValue)];
+            List<Building2DReference> withoutCounty = [.. building2DReferences.Where(x => !x.CountyId.HasValue)];
 
             // Jeśli brakuje CountyId, musimy je dociągnąć z bazy danych przed aktualizacją
             if (withoutCounty.Count > 0)
@@ -480,7 +480,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     int cid = npgsqlDataReader.GetInt32(1);
 
                     // Uzupełniamy brakujące ID w obiektach wejściowych
-                    LocationReference? match = withoutCounty.FirstOrDefault(x => x.Reference == @ref);
+                    Building2DReference? match = withoutCounty.FirstOrDefault(x => x.Reference == @ref);
                     if (match != null)
                     {
                         match.CountyId = cid;
@@ -506,7 +506,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND u.reference = data.r_text
                 RETURNING u.id, u.county_id, u.reference, u.subdivision_id;";
 
-            List<LocationReference> result = [];
+            List<Building2DReference> result = [];
 
             try
             {
@@ -519,7 +519,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    result.Add(new LocationReference
+                    result.Add(new Building2DReference
                     {
                         Id = reader.GetInt64(0),
                         CountyId = reader.GetInt32(1),
@@ -537,7 +537,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<List<LocationReference>?> UpdateLocationReferencesAsync(IEnumerable<LocationReference> locationReferences, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> UpdateBuilding2DReferencesAsync(IEnumerable<Building2DReference> building2DReferences, CancellationToken cancellationToken = default)
         {
             // Ensure we have a valid connection
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -549,7 +549,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Check if table exists before proceeding
-            bool created = await Create.TableAsync_LocationReference(npgsqlConnection, "orto_datas_location_reference_update", cancellationToken);
+            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
             if (!created)
             {
                 return null;
@@ -558,21 +558,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // ON CONFLICT (county_id, reference) DO NOTHING ensures we don't add duplicates.
             // RETURNING * will only return rows that were actually inserted.
             string sql = $@"
-                INSERT INTO orto_datas_location_reference_update (county_id, reference, subdivision_id)
+                INSERT INTO orto_datas_building2D_reference_update (county_id, reference, subdivision_id)
                 SELECT * FROM UNNEST(@counties, @refs, @subs)
                 ON CONFLICT (county_id, reference) DO NOTHING
                 RETURNING id, county_id, reference, subdivision_id;";
 
-            List<LocationReference> result = [];
+            List<Building2DReference> result = [];
 
             try
             {
                 await using NpgsqlCommand command = new(sql, npgsqlConnection);
 
                 // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
-                int[] countyIds = [.. locationReferences.Select(x => x.CountyId ?? 0)];
-                string[] references = [.. locationReferences.Select(x => x.Reference ?? string.Empty)];
-                int?[] subdivisionIds = [.. locationReferences.Select(x => x.SubdivisionId)];
+                int[] countyIds = [.. building2DReferences.Select(x => x.CountyId ?? 0)];
+                string[] references = [.. building2DReferences.Select(x => x.Reference ?? string.Empty)];
+                int?[] subdivisionIds = [.. building2DReferences.Select(x => x.SubdivisionId)];
 
                 command.Parameters.AddWithValue("counties", countyIds);
                 command.Parameters.AddWithValue("refs", references);
@@ -582,7 +582,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    LocationReference location = new()
+                    Building2DReference location = new()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id")),
                         CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),

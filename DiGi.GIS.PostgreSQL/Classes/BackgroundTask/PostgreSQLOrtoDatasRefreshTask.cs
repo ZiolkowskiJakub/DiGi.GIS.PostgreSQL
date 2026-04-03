@@ -60,32 +60,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 foreach (int countyId in countyIds)
                 {
-                    List<LocationReference>? locationReferences = await building2DPostgreSQLConverter.GetLocationReferencesAsync(countyId, cancellationToken: cancellationToken);
-                    if (locationReferences is null || locationReferences.Count == 0)
+                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(countyId, cancellationToken: cancellationToken);
+                    if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;
                     }
 
-                    count += locationReferences.Count;
+                    count += building2DReferences.Count;
 
                     progress.Report(count);
 
                     if (PostgreSQLOrtoDatasRefreshOptions.UpdateSubdivisionIds)
                     {
-                        await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(locationReferences, cancellationToken);
+                        await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(building2DReferences, cancellationToken);
                     }
 
                     if (!PostgreSQLOrtoDatasRefreshOptions.OverrideExistsing)
                     {
-                        locationReferences = await ortoDatasPostgreSQLConverter.GetExistingLocationReferencesAsync(locationReferences, true, cancellationToken);
+                        building2DReferences = await ortoDatasPostgreSQLConverter.GetExistingBuilding2DReferencesAsync(building2DReferences, true, cancellationToken);
                     }
 
-                    if (locationReferences is null || locationReferences.Count == 0)
+                    if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;
                     }
 
-                    await ortoDatasPostgreSQLConverter.UpdateLocationReferencesAsync(locationReferences, cancellationToken);
+                    await ortoDatasPostgreSQLConverter.UpdateBuilding2DReferencesAsync(building2DReferences, cancellationToken);
                 }
             }
             catch (OperationCanceledException)

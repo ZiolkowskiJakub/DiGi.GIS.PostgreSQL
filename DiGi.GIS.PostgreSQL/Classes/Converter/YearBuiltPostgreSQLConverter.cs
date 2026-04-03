@@ -17,14 +17,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public async Task<List<YearBuilt>?> GetYearBuiltsByLocationReferenceAsync(IEnumerable<LocationReference>? locationReferences)
+        public async Task<List<YearBuilt>?> GetYearBuiltsByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences)
         {
-            if (locationReferences is null)
+            if (building2DReferences is null)
             {
                 return null;
             }
 
-            if (!locationReferences.Any())
+            if (!building2DReferences.Any())
             {
                 return [];
             }
@@ -39,9 +39,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             List<YearBuilt> result = [];
 
-            IEnumerable<IGrouping<int, LocationReference>> groupings = locationReferences.Where(x => x.CountyId.HasValue && !string.IsNullOrEmpty(x.Reference)).GroupBy(x => x.CountyId!.Value);
+            IEnumerable<IGrouping<int, Building2DReference>> groupings = building2DReferences.Where(x => x.CountyId.HasValue && !string.IsNullOrEmpty(x.Reference)).GroupBy(x => x.CountyId!.Value);
 
-            foreach (IGrouping<int, LocationReference> grouping in groupings)
+            foreach (IGrouping<int, Building2DReference> grouping in groupings)
             {
                 int countyId = grouping.Key;
 

@@ -185,7 +185,7 @@ namespace DiGi.GIS.PostgreSQL
             return true;
         }
 
-        public static async Task<bool> TableAsync_LocationReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
+        public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
             {

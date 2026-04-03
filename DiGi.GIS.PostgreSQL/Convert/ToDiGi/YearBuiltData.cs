@@ -37,7 +37,7 @@ namespace DiGi.GIS.PostgreSQL
             List<GIS.Classes.YearBuiltData> result = [];
             foreach (KeyValuePair<string, List<GIS.Interfaces.IYearBuilt>> keyValuePair in dictionary)
             {
-                GIS.Classes.YearBuiltData yearBuiltData = new (keyValuePair.Key);
+                GIS.Classes.YearBuiltData yearBuiltData = new(keyValuePair.Key);
                 foreach (GIS.Interfaces.IYearBuilt yearBuilt in keyValuePair.Value)
                 {
                     yearBuiltData.Add(yearBuilt);
