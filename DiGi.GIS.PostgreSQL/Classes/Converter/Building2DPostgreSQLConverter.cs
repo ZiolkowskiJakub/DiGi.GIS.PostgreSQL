@@ -796,7 +796,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, polygonalFace2D.GetBoundingBox(), [Enums.AdministrativeArealType.Subdivison], tolerance);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, polygonalFace2D.GetBoundingBox(), [AdministrativeArealType.Subdivison], tolerance);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;

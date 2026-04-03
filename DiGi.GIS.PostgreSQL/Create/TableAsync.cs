@@ -45,7 +45,7 @@ namespace DiGi.GIS.PostgreSQL
             catch (NpgsqlException ex)
             {
                 // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error (AdministrativeArea2D): {ex.Message}");
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_AdministrativeArea2D)}): {ex.Message}");
                 return false;
             }
         }

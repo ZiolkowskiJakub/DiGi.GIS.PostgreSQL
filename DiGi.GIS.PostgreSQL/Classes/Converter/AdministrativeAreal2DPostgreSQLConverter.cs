@@ -22,6 +22,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
+        public static async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(NpgsqlConnection? npgsqlConnection, int id, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Added LIMIT 1 for optimization, although ID should be unique (PK)
+            string commandText = @"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
+                FROM administrative_areal_2D
+                WHERE id = @id
+                LIMIT 1;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            // Using strongly typed parameter to prevent SQL injection and ensure correct DB type mapping
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("id", NpgsqlDbType.Integer) { Value = id });
+
+            return (await ReadAsync(npgsqlCommand, cancellationToken))?.FirstOrDefault();
+        }
+
         /// <summary>
         /// Gets AdministrativeAreal2D for given AdministrativeArealType (not iterative way). It will check all records with given AdministrativeArealType
         /// </summary>
@@ -221,13 +245,87 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(int id)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByIdsAsync([id]);
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            return administrativeAreal2Ds[0];
+            await npgsqlConnection.OpenAsync();
+
+            return await GetAdministrativeAreal2DByIdAsync(npgsqlConnection, id);
+        }
+
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
+        {
+            if (administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return null;
+            }
+
+            if (administrativeArealType == AdministrativeArealType.Country && parentId.HasValue)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string additionalCondition = string.Empty;
+
+            if (parentId.HasValue)
+            {
+                AdministrativeAreal2D? administrativeAreal2D = await GetAdministrativeAreal2DByIdAsync(npgsqlConnection, parentId.Value, cancellationToken);
+
+                if (administrativeAreal2D is null)
+                {
+                    return null;
+                }
+
+                AdministrativeArealType administrativeArealType_Parent = administrativeAreal2D.AdministrativeArealType;
+                if (administrativeArealType_Parent >= administrativeArealType)
+                {
+                    return null;
+                }
+
+                // Determine column name based on parent type
+                string? columnName = administrativeArealType_Parent switch
+                {
+                    AdministrativeArealType.Country => "country_id",
+                    AdministrativeArealType.Voivodeship => "voivodeship_id",
+                    AdministrativeArealType.County => "county_id",
+                    AdministrativeArealType.Municipality => "municipality_id",
+                    _ => null
+                };
+
+                if (columnName is not null)
+                {
+                    additionalCondition = $"AND {columnName} = @parentId";
+                }
+            }
+
+            // Fixed query string and removed unused HashSet
+            string commandText = $@"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at 
+                FROM administrative_areal_2D 
+                WHERE type_id = @typeId {additionalCondition};";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            // Explicit typing for parameters
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+
+            if (!string.IsNullOrEmpty(additionalCondition))
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentId", NpgsqlDbType.Integer) { Value = parentId!.Value });
+            }
+
+            return await ReadAsync(npgsqlCommand, cancellationToken);
         }
 
         public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(AdministrativeArealType administrativeArealType)
@@ -491,7 +589,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-
+ 
         public async Task<HashSet<string>?> GetCodesAsync()
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -1090,23 +1188,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync(npgsqlCommand);
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> ReadAsync(NpgsqlCommand npgsqlCommand)
+        private static async Task<List<AdministrativeAreal2D>?> ReadAsync(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
         {
             if (npgsqlCommand is null)
             {
                 return null;
             }
 
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync();
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
-            return await ReadAsync(npgsqlDataReader);
+            return await ReadAsync(npgsqlDataReader, cancellationToken);
         }
 
-        private static async Task<List<AdministrativeAreal2D>> ReadAsync(NpgsqlDataReader npgsqlDataReader)
+        private static async Task<List<AdministrativeAreal2D>> ReadAsync(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
         {
             List<AdministrativeAreal2D> result = [];
 
-            while (await npgsqlDataReader.ReadAsync())
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
             {
                 result.Add(Create(npgsqlDataReader));
             }
