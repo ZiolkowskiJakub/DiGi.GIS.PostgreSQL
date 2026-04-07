@@ -897,104 +897,113 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 List<AdministrativeAreal2D>? administrativeAreal2Ds_Current = await GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(administrativeArealType);
                 administrativeAreal2Ds_Current?.RemoveAll(x => x.BoundingBox2D == null);
 
-                if (administrativeAreal2Ds_Current != null && administrativeAreal2Ds_Current.Count != 0 && i != 0)
+                if (administrativeAreal2Ds_Current != null && administrativeAreal2Ds_Current.Count != 0)
                 {
-                    AdministrativeArealType administrativeArealType_Previous = (AdministrativeArealType)(i - 1);
-
-                    List<AdministrativeAreal2D>? administrativeAreal2Ds_Previous = dictionary[administrativeArealType_Previous];
-                    if (administrativeAreal2Ds_Previous != null && administrativeAreal2Ds_Previous.Count != 0)
+                    foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
                     {
-                        foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
+                        administrativeAreal2D_Current.ResetIds();
+                    }
+
+                    if (i != 0)
+                    {
+                        AdministrativeArealType administrativeArealType_Previous = (AdministrativeArealType)(i - 1);
+
+                        List<AdministrativeAreal2D>? administrativeAreal2Ds_Previous = dictionary[administrativeArealType_Previous];
+                        if (administrativeAreal2Ds_Previous != null && administrativeAreal2Ds_Previous.Count != 0)
                         {
-                            if (cancellationToken.IsCancellationRequested)
+                            foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
                             {
-                                break;
-                            }
+                                if (cancellationToken.IsCancellationRequested)
+                                {
+                                    break;
+                                }
 
-                            totalUpdated++;
-                            progress?.Report(totalUpdated);
+                                totalUpdated++;
+                                progress?.Report(totalUpdated);
 
-                            if (administrativeAreal2D_Current.BoundingBox2D?.GetCentroid() is not Point2D point2D)
-                            {
-                                continue;
-                            }
-
-                            GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS_Current = null;
-
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                            if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
-                            {
-                                administrativeAreal2D_GIS_Current = Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(administrativeAreal2D_Current);
-                                if (administrativeAreal2D_GIS_Current is null)
+                                if (administrativeAreal2D_Current.BoundingBox2D?.GetCentroid() is not Point2D point2D)
                                 {
                                     continue;
+                                }
+
+                                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS_Current = null;
+
+                                List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
+                                if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
+                                {
+                                    administrativeAreal2D_GIS_Current = Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(administrativeAreal2D_Current);
+                                    if (administrativeAreal2D_GIS_Current is null)
+                                    {
+                                        continue;
+                                    }
+
+                                    point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
+
+                                    administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
+                                }
+
+                                if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                if (administrativeAreal2Ds_Filtered.Count == 1)
+                                {
+                                    Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered[0]);
+                                    continue;
+                                }
+
+                                if (administrativeAreal2D_Current.BoundingBox2D?.GetPoints() is not List<Point2D> point2Ds || point2Ds.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered.FindAll(x => point2Ds.TrueForAll(y => x.BoundingBox2D!.InRange(y, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance)));
+                                if (administrativeAreal2Ds_Filtered_Temp is not null)
+                                {
+                                    if (administrativeAreal2Ds_Filtered_Temp.Count == 1)
+                                    {
+                                        Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp[0]);
+                                        continue;
+                                    }
+
+                                    administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered;
+                                }
+
+                                if (administrativeAreal2D_GIS_Current is null)
+                                {
+                                    administrativeAreal2D_GIS_Current = Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(administrativeAreal2D_Current);
+                                    if (administrativeAreal2D_GIS_Current is null)
+                                    {
+                                        continue;
+                                    }
                                 }
 
                                 point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
 
-                                administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                            }
+                                List<GIS.Classes.AdministrativeAreal2D?> administrativeAreal2Ds_GIS_Filtered = administrativeAreal2Ds_Filtered_Temp!.ConvertAll(x => Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(x));
 
-                            if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
-                            {
-                                continue;
-                            }
+                                List<GIS.Classes.AdministrativeAreal2D?>? administrativeAreal2Ds_GIS_Filtered_Temp = administrativeAreal2Ds_GIS_Filtered.FindAll(x => x?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
+                                administrativeAreal2Ds_GIS_Filtered_Temp?.RemoveAll(x => x?.PolygonalFace2D is null);
 
-                            if (administrativeAreal2Ds_Filtered.Count == 1)
-                            {
-                                Modity.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered[0]);
-                                continue;
-                            }
-
-                            if (administrativeAreal2D_Current.BoundingBox2D?.GetPoints() is not List<Point2D> point2Ds || point2Ds.Count == 0)
-                            {
-                                continue;
-                            }
-
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered.FindAll(x => point2Ds.TrueForAll(y => x.BoundingBox2D!.InRange(y, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance)));
-                            if (administrativeAreal2Ds_Filtered_Temp is not null)
-                            {
-                                if (administrativeAreal2Ds_Filtered_Temp.Count == 1)
-                                {
-                                    Modity.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp[0]);
-                                    continue;
-                                }
-
-                                administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered;
-                            }
-
-                            if (administrativeAreal2D_GIS_Current is null)
-                            {
-                                administrativeAreal2D_GIS_Current = Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(administrativeAreal2D_Current);
-                                if (administrativeAreal2D_GIS_Current is null)
+                                if (administrativeAreal2Ds_GIS_Filtered_Temp is null || administrativeAreal2Ds_GIS_Filtered_Temp.Count == 0)
                                 {
                                     continue;
                                 }
+
+                                if (administrativeAreal2Ds_GIS_Filtered_Temp.Count == 1)
+                                {
+                                    Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
+                                    continue;
+                                }
+
+                                administrativeAreal2Ds_GIS_Filtered_Temp.Sort((x, y) => x!.PolygonalFace2D!.GetArea().CompareTo(y!.PolygonalFace2D!.GetArea()));
+
+                                Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
                             }
-
-                            point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
-
-                            List<GIS.Classes.AdministrativeAreal2D?> administrativeAreal2Ds_GIS_Filtered = administrativeAreal2Ds_Filtered_Temp!.ConvertAll(x => Convert.ToDiGi<GIS.Classes.AdministrativeAreal2D>(x));
-
-                            List<GIS.Classes.AdministrativeAreal2D?>? administrativeAreal2Ds_GIS_Filtered_Temp = administrativeAreal2Ds_GIS_Filtered.FindAll(x => x?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                            administrativeAreal2Ds_GIS_Filtered_Temp?.RemoveAll(x => x?.PolygonalFace2D is null);
-
-                            if (administrativeAreal2Ds_GIS_Filtered_Temp is null || administrativeAreal2Ds_GIS_Filtered_Temp.Count == 0)
-                            {
-                                continue;
-                            }
-
-                            if (administrativeAreal2Ds_GIS_Filtered_Temp.Count == 1)
-                            {
-                                Modity.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
-                                continue;
-                            }
-
-                            administrativeAreal2Ds_GIS_Filtered_Temp.Sort((x, y) => x!.PolygonalFace2D!.GetArea().CompareTo(y!.PolygonalFace2D!.GetArea()));
-
-                            Modity.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
                         }
                     }
+
                 }
 
                 dictionary[administrativeArealType] = administrativeAreal2Ds_Current;
@@ -1084,7 +1093,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            bool succeded = await PostgreSQL.Create.TableAsync_AdministrativeArea2D(npgsqlConnection);
+            bool succeded = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection);
             if (!succeded)
             {
                 return null;

@@ -2,7 +2,7 @@
 
 namespace DiGi.GIS.PostgreSQL
 {
-    public static partial class Modity
+    public static partial class Modify
     {
         public static bool UpdateIds(this AdministrativeAreal2D? administrativeAreal2D_Destination, AdministrativeAreal2D? administrativeAreal2D_Source)
         {
@@ -11,7 +11,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            administrativeAreal2D_Destination.CountryId = administrativeAreal2D_Source.CountyId;
+            administrativeAreal2D_Destination.CountryId = administrativeAreal2D_Source.CountryId;
             administrativeAreal2D_Destination.CountyId = administrativeAreal2D_Source.CountyId;
             administrativeAreal2D_Destination.MunicipalityId = administrativeAreal2D_Source.MunicipalityId;
             administrativeAreal2D_Destination.VoivodeshipId = administrativeAreal2D_Source.VoivodeshipId;

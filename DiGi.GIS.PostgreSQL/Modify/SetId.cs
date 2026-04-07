@@ -2,7 +2,7 @@
 
 namespace DiGi.GIS.PostgreSQL
 {
-    public static partial class Modity
+    public static partial class Modify
     {
         public static bool SetId(this AdministrativeAreal2D? administrativeAreal2D_Destination, AdministrativeAreal2D? administrativeAreal2D_Source)
         {
