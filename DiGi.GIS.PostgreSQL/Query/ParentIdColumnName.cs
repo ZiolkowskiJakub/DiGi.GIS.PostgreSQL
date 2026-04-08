@@ -6,13 +6,16 @@ namespace DiGi.GIS.PostgreSQL
     {
         public static string? ParentIdColumnName(this AdministrativeArealType administrativeArealType)
         {
-            return administrativeArealType switch
+            AdministrativeArealType administrativeArealType_Parent = ParentAdministrativeArealType(administrativeArealType) ?? Enums.AdministrativeArealType.Undefined;
+
+            return administrativeArealType_Parent switch
             {
-                Enums.AdministrativeArealType.Undefined or Enums.AdministrativeArealType.Country => null,
-                Enums.AdministrativeArealType.Voivodeship => "country_id",
-                Enums.AdministrativeArealType.County => "voivodeship_id",
-                Enums.AdministrativeArealType.Municipality => "county_id",
-                Enums.AdministrativeArealType.Subdivison => "municipality_id",
+                Enums.AdministrativeArealType.Undefined => null,
+                Enums.AdministrativeArealType.Country => "country_id",
+                Enums.AdministrativeArealType.Voivodeship => "voivodeship_id",
+                Enums.AdministrativeArealType.County => "county_id",
+                Enums.AdministrativeArealType.Municipality => "municipality_id",
+                Enums.AdministrativeArealType.Subdivison => null,
                 _ => null,
             };
         }

@@ -1,4 +1,5 @@
 ﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Spatial.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
@@ -29,8 +30,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
             // Added LIMIT 1 for optimization, although ID should be unique (PK)
             string commandText = @"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
@@ -56,14 +55,50 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, [id], cancellationToken))?.FirstOrDefault();
         }
 
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealType(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
+        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, AdministrativeAreal2DReference administrativeAreal2DReference, CancellationToken cancellationToken = default)
+        {
+            if(npgsqlConnection is null || administrativeAreal2DReference is null)
+            {
+                return null;
+            }
+
+            List<int> ids = administrativeAreal2DReference.GetIds();
+            if(ids is null || ids.Count == 0)
+            {
+                return null;
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            {
+                return null;
+            }
+
+            return new AdministrativeAreal2DReferencePath(administrativeAreal2DReferences);
+        }
+
+        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, int id, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync(cancellationToken);
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, cancellationToken);
+            if (administrativeAreal2DReference is null)
+            {
+                return null;
+            }
+
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
+        }
+
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, int? parentId = null, bool uniqueCode = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
 
             string additionalCondition = string.Empty;
 
@@ -82,7 +117,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return null;
                 }
 
-                // Determine column name based on parent type
                 string? columnName = administrativeArealType_Parent switch
                 {
                     AdministrativeArealType.Country => "country_id",
@@ -98,23 +132,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            // Fixed query string and removed unused HashSet
+            string distinctClause = uniqueCode ? "DISTINCT ON (code)" : string.Empty;
+            string orderByClause = uniqueCode ? "ORDER BY code, id ASC" : "ORDER BY id ASC";
+
             string commandText = $@"
-                SELECT
+                SELECT {distinctClause}
                     id,              -- index 0
                     reference,       -- index 1
-                    name,            -- index 2
-                    type_id,         -- index 3
-                    country_id,      -- index 4
-                    voivodeship_id,  -- index 5
-                    county_id,       -- index 6
-                    municipality_id  -- index 7
+                    code,            -- index 2
+                    name,            -- index 3
+                    type_id,         -- index 4
+                    country_id,      -- index 5
+                    voivodeship_id,  -- index 6
+                    county_id,       -- index 7
+                    municipality_id  -- index 8
                 FROM administrative_areal_2D
-                WHERE type_id = @typeId {additionalCondition};";
+                WHERE type_id = @typeId {additionalCondition}
+                {orderByClause};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            // Explicit typing for parameters
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             if (!string.IsNullOrEmpty(additionalCondition))
@@ -125,6 +162,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2DReference(npgsqlCommand, cancellationToken);
         }
 
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, CancellationToken cancellationToken = default)
+        {
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            if (ids is null)
+            {
+                return null;
+            }
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+        }
+
         public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -132,19 +185,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
             // Added LIMIT 1 for optimization, although ID should be unique (PK)
             string commandText = @"
                 SELECT
                     id,              -- index 0
                     reference,       -- index 1
-                    name,            -- index 2
-                    type_id,         -- index 3
-                    country_id,      -- index 4
-                    voivodeship_id,  -- index 5
-                    county_id,       -- index 6
-                    municipality_id  -- index 7
+                    code,            -- index 2
+                    name,            -- index 3
+                    type_id,         -- index 4
+                    country_id,      -- index 5
+                    voivodeship_id,  -- index 6
+                    county_id,       -- index 7
+                    municipality_id  -- index 8
                 FROM administrative_areal_2D
                 WHERE id = ANY(@ids)";
 
@@ -223,7 +275,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealType">AdministrativeArealType</param>
         /// <param name="tolerance">Tolerance</param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -249,7 +301,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
@@ -260,7 +312,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealTypes">AdministrativeArealTypes</param>
         /// <param name="tolerance">Tolerance</param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -282,7 +334,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     break;
                 }
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, parentIds, excludedIds, tolerance);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, parentIds, excludedIds, tolerance, cancellationToken);
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
                     return result;
@@ -347,25 +399,45 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
         }
 
-        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null)
+        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            // If @typeId is NULL, the first part of OR is true, effectively ignoring the type_id filter.
-            // If @typeId has a value, it must match the column type_id.
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, cancellationToken);
+            if (ids is null || ids.Count == 0)
+            {
+                return null;
+            }
+
+            return ids.ElementAt(0);
+        }
+
+        public static async Task<HashSet<int>?> GetIdsByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, int? limit = null, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Base query
             string commandText = @"
                 SELECT id
                 FROM administrative_areal_2D
                 WHERE (@typeId IS NULL OR type_id = @typeId)
-                  AND code = @code
-                LIMIT 1;";
+                  AND code = @code";
+
+            // Dynamically append LIMIT if provided
+            if (limit.HasValue)
+            {
+                commandText += $" LIMIT {limit.Value}";
+            }
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            // Explicitly handling the nullable parameter for the SQL query
+            // Handling the nullable parameter for the SQL query
             object typeValue = administrativeArealType is not null ? (short)administrativeArealType.Value : DBNull.Value;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint)
@@ -378,14 +450,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Value = (object?)code ?? DBNull.Value
             });
 
-            object? result = await npgsqlCommand.ExecuteScalarAsync();
+            // If limit is provided, we can pre-allocate the HashSet capacity to improve performance
+            HashSet<int> results = [];
 
-            if (result is null || result == DBNull.Value)
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
             {
-                return null;
+                if (!await npgsqlDataReader.IsDBNullAsync(0, cancellationToken))
+                {
+                    results.Add(npgsqlDataReader.GetInt32(0));
+                }
             }
 
-            return System.Convert.ToInt32(result);
+            return results;
         }
 
         public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
@@ -425,7 +502,62 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DByIdAsync(npgsqlConnection, id);
         }
 
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealType(AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, cancellationToken);
+            if (ids is null || ids.Count == 0)
+            {
+                return null;
+            }
+
+            return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken))?.FirstOrDefault();
+        }
+
+        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(AdministrativeAreal2DReference administrativeAreal2DReference, CancellationToken cancellationToken = default)
+        {
+            if (administrativeAreal2DReference is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
+        }
+
+        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(int id, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, id, cancellationToken);
+        }
+
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType administrativeArealType, int? parentId = null, bool uniqueCode = false, CancellationToken cancellationToken = default)
         {
             if (administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -443,7 +575,85 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return await GetAdministrativeAreal2DReferencesByAdministrativeArealType(npgsqlConnection, administrativeArealType, parentId, cancellationToken);
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, parentId, uniqueCode, cancellationToken);
+        }
+
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, CancellationToken cancellationToken = default)
+        {
+            if(string.IsNullOrWhiteSpace(code))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            if (ids is null)
+            {
+                return null;
+            }
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+        }
+        
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            if (ids is null)
+            {
+                return null;
+            }
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            {
+                return [];
+            }
+
+            List<AdministrativeAreal2DReference> result = [];
+            foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
+            {
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, administrativeAreal2DReference.Id, false, cancellationToken);
+                if (administrativeAreal2DReferences_Temp is null)
+                {
+                    continue;
+                }
+
+                result.AddRange(administrativeAreal2DReferences_Temp);
+            }
+
+            return result;
         }
 
         public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
@@ -517,7 +727,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, [administrativeArealType], tolerance);
         }
 
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -530,9 +740,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance);
+            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance, cancellationToken);
         }
 
         public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -596,7 +806,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             if (!noFilter)
             {
                 // Passing the whole collection as a PostgreSQL array
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = codes!.ToArray() });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Text)
+                {
+                    Value = codes!.ToArray()
+                });
             }
 
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
@@ -1204,16 +1417,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 Id = npgsqlDataReader.GetInt32(0),
                 Reference = npgsqlDataReader.GetString(1),
-                Name = npgsqlDataReader.GetString(2),
-                AdministrativeArealType = (AdministrativeArealType)npgsqlDataReader.GetInt32(3),
-                CountryId = npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetInt32(4),
-                VoivodeshipId = npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetInt32(5),
-                CountyId = npgsqlDataReader.IsDBNull(6) ? null : npgsqlDataReader.GetInt32(6),
-                MunicipalityId = npgsqlDataReader.IsDBNull(7) ? null : npgsqlDataReader.GetInt32(7),
+                Code = npgsqlDataReader.GetString(2),
+                Name = npgsqlDataReader.GetString(3),
+                AdministrativeArealType = (AdministrativeArealType)npgsqlDataReader.GetInt32(4),
+                CountryId = npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetInt32(5),
+                VoivodeshipId = npgsqlDataReader.IsDBNull(6) ? null : npgsqlDataReader.GetInt32(6),
+                CountyId = npgsqlDataReader.IsDBNull(7) ? null : npgsqlDataReader.GetInt32(7),
+                MunicipalityId = npgsqlDataReader.IsDBNull(8) ? null : npgsqlDataReader.GetInt32(8),
             };
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             // Check if point2D or the list of IDs is null/empty
             if (npgsqlConnection is null || boundingBox2D is null)
@@ -1233,7 +1447,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return [];
                 }
 
-                return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, tolerance);
+                return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, tolerance, cancellationToken);
             }
 
             if (parentIds is null || parentIds.Count == 0)
@@ -1277,7 +1491,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Value = excludedIds?.ToArray() ?? []
             });
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance)

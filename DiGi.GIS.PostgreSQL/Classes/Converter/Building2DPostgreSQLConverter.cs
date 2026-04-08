@@ -22,7 +22,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -57,7 +57,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "building_2D");
         }
 
-        public async Task<Building2D?> GetBuilding2DbyPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<Building2D?> GetBuilding2DByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+            
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            
+            string commandText = @"
+                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                    FROM building_2d
+                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
+
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("id", id);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            
+            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+            
+            return results?.FirstOrDefault();
+        }
+
+        public async Task<Building2D?> GetBuilding2DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (point2D is null)
             {
@@ -109,7 +134,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return null;
         }
 
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection == null)
@@ -133,7 +158,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealType(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
                     if (administrativeAreal2DReferences_Temp is not null)
                     {
                         administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
@@ -149,19 +174,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
             Dictionary<long, Building2DReference> dictionary = [];
             while (administrativeAreal2DReferences is not null && administrativeAreal2DReferences.Count > 0)
             {
-                administrativeAreal2DReferences.Filter(x => x?.CountyId == administrativeAreal2DReferences[0].CountyId, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_CountyId, out administrativeAreal2DReferences);
+                int? countyId = administrativeAreal2DReferences[0]?.CountyId;
+
+                administrativeAreal2DReferences.Filter(x => x?.CountyId == countyId, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_CountyId, out administrativeAreal2DReferences);
 
                 if (administrativeAreal2DReferences_CountyId is null || administrativeAreal2DReferences_CountyId.Count == 0)
                 {
                     break;
                 }
 
-                if (administrativeAreal2DReferences_CountyId[0].CountyId is not int countyId)
+                if (countyId is null || !countyId.HasValue)
                 {
                     continue;
                 }
 
-                List<Building2DReference>? building2DReferences = await GetBuilding2DReferencesAsync(npgsqlConnection, countyId, administrativeAreal2DReferences_CountyId.ConvertAll(x => x.Id).Distinct(), cancellationToken);
+                List<Building2DReference>? building2DReferences = await GetBuilding2DReferencesByCountyIdAsync(npgsqlConnection, countyId.Value, administrativeAreal2DReferences_CountyId.ConvertAll(x => x.Id).Distinct(), cancellationToken);
                 if (building2DReferences is not null)
                 {
                     foreach (Building2DReference building2DReference in building2DReferences)
@@ -614,7 +641,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            bool succeded = await PostgreSQL.Create.TableAsync_Building2D(npgsqlConnection);
+            bool succeded = await Create.TableAsync_Building2D(npgsqlConnection);
             if (!succeded)
             {
                 return null;
