@@ -1,5 +1,4 @@
 ﻿using DiGi.Geometry.Planar.Classes;
-using DiGi.Geometry.Spatial.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
@@ -57,19 +56,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, AdministrativeAreal2DReference administrativeAreal2DReference, CancellationToken cancellationToken = default)
         {
-            if(npgsqlConnection is null || administrativeAreal2DReference is null)
+            if (npgsqlConnection is null || administrativeAreal2DReference is null)
             {
                 return null;
             }
 
             List<int> ids = administrativeAreal2DReference.GetIds();
-            if(ids is null || ids.Count == 0)
+            if (ids is null || ids.Count == 0)
             {
                 return null;
             }
 
             List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
-            if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return null;
             }
@@ -544,6 +543,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
         }
 
+        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, cancellationToken);
+        }
+
         public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(int id, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -582,7 +594,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, CancellationToken cancellationToken = default)
         {
-            if(string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return null;
             }
@@ -608,7 +620,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
         }
-        
+
         public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -636,7 +648,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
-            if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return [];
             }
@@ -1216,7 +1228,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             }
                         }
                     }
-
                 }
 
                 dictionary[administrativeArealType] = administrativeAreal2Ds_Current;

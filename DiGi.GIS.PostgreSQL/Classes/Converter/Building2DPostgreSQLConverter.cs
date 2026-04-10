@@ -64,21 +64,73 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 return null;
             }
-            
+
             await npgsqlConnection.OpenAsync(cancellationToken);
-            
+
             string commandText = @"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM building_2d
                     WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
 
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("id", id);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+
+            return results?.FirstOrDefault();
+        }
+
+        public async Task<Building2DReference?> GetBuilding2DReferenceByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = @"
+                    SELECT id, county_id, reference, subdivision_id
+                    FROM building_2d
+                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-            
-            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-            
+
+            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
+
+            return results?.FirstOrDefault();
+        }
+
+        public async Task<Building2DReference?> GetBuilding2DReferenceByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = @"
+                    SELECT id, county_id, reference, subdivision_id
+                    FROM building_2d
+                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
+
             return results?.FirstOrDefault();
         }
 

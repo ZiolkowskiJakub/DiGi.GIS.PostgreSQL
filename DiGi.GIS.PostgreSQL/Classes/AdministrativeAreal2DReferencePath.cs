@@ -1,12 +1,13 @@
-﻿using DiGi.GIS.PostgreSQL.Enums;
-using Microsoft.VisualBasic;
+﻿using DiGi.Core.Classes;
+using DiGi.GIS.PostgreSQL.Enums;
+using DiGi.GIS.PostgreSQL.Interfaces;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class AdministrativeAreal2DReferencePath : Areal2D
+    public class AdministrativeAreal2DReferencePath : SerializableObject, IGISPostgreSQLSerializableObject
     {
         [JsonIgnore]
         private readonly Dictionary<AdministrativeArealType, AdministrativeAreal2DReference> dictionary = [];
@@ -46,7 +47,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public AdministrativeAreal2DReferencePath()
             : base()
         {
-
         }
 
         public bool Add(AdministrativeAreal2DReference? administrativeAreal2DReference)

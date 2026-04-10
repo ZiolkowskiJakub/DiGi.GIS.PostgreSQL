@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
@@ -17,7 +18,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public async Task<List<YearBuilt>?> GetYearBuiltsByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences)
+        public async Task<List<YearBuilt>?> GetYearBuiltsByBuilding2DReferenceAsync(Building2DReference? building2DReference, CancellationToken cancellationToken = default)
+        {
+            if (building2DReference is null)
+            {
+                return null;
+            }
+
+            return await GetYearBuiltsByBuilding2DReferencesAsync([building2DReference], cancellationToken);
+        }
+
+        public async Task<List<YearBuilt>?> GetYearBuiltsByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, CancellationToken cancellationToken = default)
         {
             if (building2DReferences is null)
             {
@@ -57,20 +68,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlCommand.Parameters.AddWithValue("county_id", countyId);
                 npgsqlCommand.Parameters.AddWithValue("references", references);
 
-                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync();
-
-                while (await npgsqlDataReader.ReadAsync())
+                List<YearBuilt>? yearBuilts = await ReadAsync_YearBuilt(npgsqlCommand, cancellationToken);
+                if (yearBuilts is not null)
                 {
-                    result.Add(new YearBuilt
-                    {
-                        Id = npgsqlDataReader.GetInt64(0),
-                        CountyId = npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1),
-                        Reference = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
-                        Source = npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetString(3),
-                        Year = npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetInt16(4),
-                        Object = JsonNode.Parse(npgsqlDataReader.GetString(5)) as JsonObject,
-                        CreatedAt = npgsqlDataReader.IsDBNull(6) ? null : npgsqlDataReader.GetDateTime(6)
-                    });
+                    result.AddRange(yearBuilts);
                 }
             }
 
@@ -146,6 +147,44 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         yearBuilt.Id = id;
                     }
                 }
+            }
+
+            return result;
+        }
+
+        private static YearBuilt Create_YearBuilt(NpgsqlDataReader npgsqlDataReader)
+        {
+            return new YearBuilt
+            {
+                Id = npgsqlDataReader.GetInt64(0),
+                CountyId = npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1),
+                Reference = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                Source = npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetString(3),
+                Year = npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetInt16(4),
+                Object = JsonNode.Parse(npgsqlDataReader.GetString(5)) as JsonObject,
+                CreatedAt = npgsqlDataReader.IsDBNull(6) ? null : npgsqlDataReader.GetDateTime(6)
+            };
+        }
+
+        private static async Task<List<YearBuilt>?> ReadAsync_YearBuilt(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlCommand is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            return await ReadAsync_YearBuilt(npgsqlDataReader, cancellationToken);
+        }
+
+        private static async Task<List<YearBuilt>> ReadAsync_YearBuilt(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
+        {
+            List<YearBuilt> result = [];
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(Create_YearBuilt(npgsqlDataReader));
             }
 
             return result;

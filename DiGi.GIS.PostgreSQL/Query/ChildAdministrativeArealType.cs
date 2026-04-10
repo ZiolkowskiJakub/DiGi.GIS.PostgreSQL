@@ -8,7 +8,7 @@ namespace DiGi.GIS.PostgreSQL
         {
             return administrativeArealType switch
             {
-                Enums.AdministrativeArealType.Undefined  => null,
+                Enums.AdministrativeArealType.Undefined => null,
                 Enums.AdministrativeArealType.Country => Enums.AdministrativeArealType.Voivodeship,
                 Enums.AdministrativeArealType.Voivodeship => Enums.AdministrativeArealType.County,
                 Enums.AdministrativeArealType.County => Enums.AdministrativeArealType.Municipality,

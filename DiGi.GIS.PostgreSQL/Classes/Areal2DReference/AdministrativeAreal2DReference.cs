@@ -55,7 +55,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public List<int> GetIds()
         {
             List<int> result = [];
-            if(CountryId is not null && CountryId.HasValue)
+            if (CountryId is not null && CountryId.HasValue)
             {
                 result.Add(CountryId.Value);
             }

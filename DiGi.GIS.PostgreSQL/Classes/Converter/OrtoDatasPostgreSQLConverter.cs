@@ -6,6 +6,7 @@ using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -65,6 +66,36 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return results;
+        }
+
+        public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            List<OrtoDatas>? result = [];
+
+            if (!references.Any())
+            {
+                return result;
+            }
+
+            const string commandText = @"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                FROM orto_datas
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync_OrtoDatas(npgsqlCommand, cancellationToken);
+
+            return result;
         }
 
         public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
@@ -225,6 +256,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+
+        public async Task<OrtoDatas?> GetOrtoDataByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetOrtoDatasByReferencesAsync([reference], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+        }
+
+        public async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetOrtoDatasByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
         }
 
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -435,6 +494,71 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
+        public async Task<List<Building2DReference>?> UpdateBuilding2DReferencesAsync(IEnumerable<Building2DReference> building2DReferences, CancellationToken cancellationToken = default)
+        {
+            // Ensure we have a valid connection
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Check if table exists before proceeding
+            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
+            if (!created)
+            {
+                return null;
+            }
+
+            // ON CONFLICT (county_id, reference) DO NOTHING ensures we don't add duplicates.
+            // RETURNING * will only return rows that were actually inserted.
+            string sql = $@"
+                INSERT INTO orto_datas_building2D_reference_update (county_id, reference, subdivision_id)
+                SELECT * FROM UNNEST(@counties, @refs, @subs)
+                ON CONFLICT (county_id, reference) DO NOTHING
+                RETURNING id, county_id, reference, subdivision_id;";
+
+            List<Building2DReference> result = [];
+
+            try
+            {
+                await using NpgsqlCommand command = new(sql, npgsqlConnection);
+
+                // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
+                int[] countyIds = [.. building2DReferences.Select(x => x.CountyId ?? 0)];
+                string[] references = [.. building2DReferences.Select(x => x.Reference ?? string.Empty)];
+                int?[] subdivisionIds = [.. building2DReferences.Select(x => x.SubdivisionId)];
+
+                command.Parameters.AddWithValue("counties", countyIds);
+                command.Parameters.AddWithValue("refs", references);
+                command.Parameters.AddWithValue("subs", subdivisionIds);
+
+                await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    Building2DReference location = new()
+                    {
+                        Id = reader.GetInt64(reader.GetOrdinal("id")),
+                        CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),
+                        Reference = reader.IsDBNull(reader.GetOrdinal("reference")) ? null : reader.GetString(reader.GetOrdinal("reference")),
+                        SubdivisionId = reader.IsDBNull(reader.GetOrdinal("subdivision_id")) ? null : reader.GetInt32(reader.GetOrdinal("subdivision_id"))
+                    };
+
+                    result.Add(location);
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error during UpdateAsync: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
+
         public async Task<List<Building2DReference>?> UpdateSubdivisionIds(IEnumerable<Building2DReference>? building2DReferences, CancellationToken cancellationToken = default)
         {
             if (building2DReferences == null)
@@ -537,69 +661,46 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<List<Building2DReference>?> UpdateBuilding2DReferencesAsync(IEnumerable<Building2DReference> building2DReferences, CancellationToken cancellationToken = default)
+        private static OrtoDatas Create_OrtoDatas(NpgsqlDataReader npgsqlDataReader)
         {
-            // Ensure we have a valid connection
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection == null)
+            return new OrtoDatas
             {
-                return null;
-            }
+                Id = npgsqlDataReader.GetInt64(0),
+                CountyId = npgsqlDataReader.IsDBNull(1) ? null : (int?)npgsqlDataReader.GetInt32(1),
+                Reference = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                BoundingBox2D = new BoundingBox2D(
+                        new Point2D(npgsqlDataReader.IsDBNull(3) ? double.NaN : npgsqlDataReader.GetDouble(3),
+                                    npgsqlDataReader.IsDBNull(4) ? double.NaN : npgsqlDataReader.GetDouble(4)),
+                        new Point2D(npgsqlDataReader.IsDBNull(5) ? double.NaN : npgsqlDataReader.GetDouble(5),
+                                    npgsqlDataReader.IsDBNull(6) ? double.NaN : npgsqlDataReader.GetDouble(6))),
+                SubdivisionId = npgsqlDataReader.IsDBNull(7) ? null : (int?)npgsqlDataReader.GetInt32(7),
+                Object = npgsqlDataReader.IsDBNull(8) ? null : JsonNode.Parse(npgsqlDataReader.GetString(8)) as JsonObject,
+                CreatedAt = npgsqlDataReader.IsDBNull(9) ? null : (DateTime?)npgsqlDataReader.GetDateTime(9)
+            };
+        }
 
-            await npgsqlConnection.OpenAsync(cancellationToken);
+        private static async Task<List<OrtoDatas>> ReadAsync_OrtoDatas(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
+        {
+            List<OrtoDatas> result = [];
 
-            // Check if table exists before proceeding
-            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
-            if (!created)
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
             {
-                return null;
-            }
-
-            // ON CONFLICT (county_id, reference) DO NOTHING ensures we don't add duplicates.
-            // RETURNING * will only return rows that were actually inserted.
-            string sql = $@"
-                INSERT INTO orto_datas_building2D_reference_update (county_id, reference, subdivision_id)
-                SELECT * FROM UNNEST(@counties, @refs, @subs)
-                ON CONFLICT (county_id, reference) DO NOTHING
-                RETURNING id, county_id, reference, subdivision_id;";
-
-            List<Building2DReference> result = [];
-
-            try
-            {
-                await using NpgsqlCommand command = new(sql, npgsqlConnection);
-
-                // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
-                int[] countyIds = [.. building2DReferences.Select(x => x.CountyId ?? 0)];
-                string[] references = [.. building2DReferences.Select(x => x.Reference ?? string.Empty)];
-                int?[] subdivisionIds = [.. building2DReferences.Select(x => x.SubdivisionId)];
-
-                command.Parameters.AddWithValue("counties", countyIds);
-                command.Parameters.AddWithValue("refs", references);
-                command.Parameters.AddWithValue("subs", subdivisionIds);
-
-                await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    Building2DReference location = new()
-                    {
-                        Id = reader.GetInt64(reader.GetOrdinal("id")),
-                        CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),
-                        Reference = reader.IsDBNull(reader.GetOrdinal("reference")) ? null : reader.GetString(reader.GetOrdinal("reference")),
-                        SubdivisionId = reader.IsDBNull(reader.GetOrdinal("subdivision_id")) ? null : reader.GetInt32(reader.GetOrdinal("subdivision_id"))
-                    };
-
-                    result.Add(location);
-                }
-            }
-            catch (NpgsqlException ex)
-            {
-                Console.WriteLine($"Database error during UpdateAsync: {ex.Message}");
-                throw;
+                result.Add(Create_OrtoDatas(npgsqlDataReader));
             }
 
             return result;
+        }
+
+        private static async Task<List<OrtoDatas>?> ReadAsync_OrtoDatas(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlCommand is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            return await ReadAsync_OrtoDatas(npgsqlDataReader, cancellationToken);
         }
     }
 }
