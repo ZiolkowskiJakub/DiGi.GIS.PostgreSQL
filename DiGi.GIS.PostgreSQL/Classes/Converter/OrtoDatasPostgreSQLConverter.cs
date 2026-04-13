@@ -258,7 +258,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        public async Task<OrtoDatas?> GetOrtoDataByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {

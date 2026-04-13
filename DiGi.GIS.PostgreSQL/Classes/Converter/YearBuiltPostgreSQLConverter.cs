@@ -18,6 +18,36 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
+        public static async Task<List<YearBuilt>?> GetYearBuiltsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            List<YearBuilt>? result = [];
+
+            if (!references.Any())
+            {
+                return result;
+            }
+
+            const string commandText = @"
+                SELECT id, county_id, reference, source, year, object, created_at
+                FROM year_built
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync_YearBuilt(npgsqlCommand, cancellationToken);
+
+            return result;
+        }
+
         public async Task<List<YearBuilt>?> GetYearBuiltsByBuilding2DReferenceAsync(Building2DReference? building2DReference, CancellationToken cancellationToken = default)
         {
             if (building2DReference is null)
@@ -76,6 +106,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+        
+        public async Task<YearBuilt?> GetYearBuiltsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetYearBuiltsByReferencesAsync([reference], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+        }
+
+        public async Task<List<YearBuilt>?> GetYearBuiltsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetYearBuiltsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
         }
 
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<YearBuilt>? yearBuilts)
