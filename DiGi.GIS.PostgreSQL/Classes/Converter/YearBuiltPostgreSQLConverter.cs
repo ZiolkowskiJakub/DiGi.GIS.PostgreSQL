@@ -107,8 +107,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-        
-        public async Task<YearBuilt?> GetYearBuiltsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+
+        public async Task<YearBuilt?> GetYearBuiltByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {

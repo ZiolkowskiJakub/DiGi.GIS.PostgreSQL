@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace DiGi.GIS.PostgreSQL
 {
-    public static partial class Convert
+    public static partial class Create
     {
-        public static List<GIS.Classes.YearBuiltData>? ToDiGi(this IEnumerable<YearBuilt>? yearBuilts)
+        public static List<GIS.Classes.YearBuiltData>? YearBuiltDatas(this IEnumerable<YearBuilt>? yearBuilts)
         {
             if (yearBuilts is null)
             {

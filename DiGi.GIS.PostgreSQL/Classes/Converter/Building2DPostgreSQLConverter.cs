@@ -729,7 +729,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
                         else
                         {
-                            if (await AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(npgsqlConnection, building2D.Code, Enums.AdministrativeArealType.County) is int countyId_Code)
+                            if (await AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(npgsqlConnection, building2D.Code, AdministrativeArealType.County) is int countyId_Code)
                             {
                                 countyId = countyId_Code;
                                 dictionary_Code[building2D.Code] = countyId_Code;
@@ -742,7 +742,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     BoundingBox2D? boundingBox2D = building2D.BoundingBox2D;
 
-                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.County, tolerance);
                     if (administrativeAreal2Ds != null)
                     {
                         int count = administrativeAreal2Ds.Count;
@@ -752,7 +752,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
                         else if (count > 1)
                         {
-                            GIS.Classes.Building2D? building2D_GIS = building2D.ToDiGi<GIS.Classes.Building2D>();
+                            GIS.Classes.Building2D? building2D_GIS = building2D.ToDiGi();
 
                             Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D_Building2D = building2D_GIS?.PolygonalFace2D?.ExternalEdge;
                             if (polygonal2D_Building2D is null)
@@ -760,7 +760,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 continue;
                             }
 
-                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi<GIS.Classes.AdministrativeAreal2D>()?.PolygonalFace2D?.ExternalEdge));
+                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi()?.PolygonalFace2D?.ExternalEdge));
                             tuples_AdministrativeAreal2D.RemoveAll(x => x?.Item2 is null);
 
                             if (tuples_AdministrativeAreal2D.Count == 1)
@@ -848,7 +848,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 int countyId = keyValuePair.Key;
 
-                succeded = await PostgreSQL.Create.TableAsync_Building2D_Partition(npgsqlConnection, countyId);
+                succeded = await Create.TableAsync_Building2D_Partition(npgsqlConnection, countyId);
                 if (!succeded)
                 {
                     continue;
@@ -961,7 +961,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
             {
-                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi<GIS.Classes.AdministrativeAreal2D>();
+                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi();
                 if (administrativeAreal2D_GIS is null)
                 {
                     continue;

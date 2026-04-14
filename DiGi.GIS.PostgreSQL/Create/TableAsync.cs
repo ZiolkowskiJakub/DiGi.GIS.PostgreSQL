@@ -116,6 +116,106 @@ namespace DiGi.GIS.PostgreSQL
             return true;
         }
 
+        public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
+            {
+                return false;
+            }
+
+            // Added semicolons after each SQL statement to fix the 42601 syntax error
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {tableName} (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    subdivision_id INT,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
+                    ON {tableName} (county_id, reference);
+
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_created_at
+                    ON {tableName} (created_at ASC);
+                ";
+
+            try
+            {
+                // Explicitly specifying NpgsqlCommand type
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // For engineering plugins (Revit/Rhino), logging to a dedicated console or file is key
+                Console.WriteLine($"Postgres Error during table creation ({tableName}): {ex.Message}");
+                return false;
+            }
+        }
+
+        public static async Task<bool> TableAsync_CountyReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {tableName} (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    object JSONB,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                ) PARTITION BY LIST (county_id);
+
+                -- Optimization: Composite index for County + Reference
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_ref
+                ON {tableName} (county_id, reference);
+                ";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_CountyReferencedObject)}): {ex.Message}");
+                return false;
+            }
+        }
+
+        public static async Task<bool> TableAsync_CountyReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {tableName}_{countyId} PARTITION OF {tableName}
+                    FOR VALUES IN ({countyId});
+                ";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            await npgsqlCommand.ExecuteNonQueryAsync();
+
+            return true;
+        }
+
         public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)
@@ -184,48 +284,7 @@ namespace DiGi.GIS.PostgreSQL
 
             return true;
         }
-
-        public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
-        {
-            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
-            {
-                return false;
-            }
-
-            // Added semicolons after each SQL statement to fix the 42601 syntax error
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {tableName} (
-                    id BIGINT GENERATED ALWAYS AS IDENTITY,
-                    county_id INT NOT NULL,
-                    reference TEXT NOT NULL,
-                    subdivision_id INT,
-                    created_at timestamptz DEFAULT now(),
-                    PRIMARY KEY (id, county_id)
-                );
-
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
-                    ON {tableName} (county_id, reference);
-
-                CREATE INDEX IF NOT EXISTS idx_{tableName}_created_at
-                    ON {tableName} (created_at ASC);
-                ";
-
-            try
-            {
-                // Explicitly specifying NpgsqlCommand type
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
-                return true;
-            }
-            catch (NpgsqlException ex)
-            {
-                // For engineering plugins (Revit/Rhino), logging to a dedicated console or file is key
-                Console.WriteLine($"Postgres Error during table creation ({tableName}): {ex.Message}");
-                return false;
-            }
-        }
-
+        
         public static async Task<bool> TableAsync_YearBuilt(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)

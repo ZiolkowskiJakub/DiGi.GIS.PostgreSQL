@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class AdministrativeAreal2D : Areal2D
+    public class AdministrativeAreal2D : Areal2D<GIS.Classes.AdministrativeAreal2D>
     {
         public AdministrativeAreal2D(JsonObject? jsonObject)
             : base(jsonObject)
