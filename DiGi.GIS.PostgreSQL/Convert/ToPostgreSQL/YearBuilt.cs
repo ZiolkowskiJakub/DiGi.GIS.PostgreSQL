@@ -15,8 +15,6 @@ namespace DiGi.GIS.PostgreSQL
             {
                 CountyId = countyId,
                 Reference = reference,
-                Source = yearBuilt.Source,
-                Year = yearBuilt.Year,
                 Object = yearBuilt.ToJsonObject(),
             };
         }

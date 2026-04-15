@@ -1,0 +1,226 @@
+﻿using DiGi.GIS.Interfaces;
+using DiGi.PostgreSQL.Classes;
+using Npgsql;
+using NpgsqlTypes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DiGi.GIS.PostgreSQL.Classes
+{
+    public abstract class Building2DReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TGISSerializableObject> : ReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TGISSerializableObject> where TBuilding2DReferencedObject : Building2DReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    {
+        public Building2DReferencedObjectPostgreSQLConverter(ConnectionData? connectionData)
+            : base(connectionData)
+        {
+        }
+
+        public async Task<TBuilding2DReferencedObject?> GetItemByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
+        {
+
+            return await GetItemsByIdsAsync([id], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+        }
+
+        public async Task<TBuilding2DReferencedObject?> GetItemByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetItemsByReferencesAsync([reference], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+        }
+        
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<long>? ids, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || ids is null)
+            {
+                return null;
+            }
+
+            List<TBuilding2DReferencedObject>? result = [];
+
+            if (!ids.Any())
+            {
+                return result;
+            }
+
+            string commandText = $@"
+                SELECT id, county_id, reference, object, created_at
+                FROM {TableName}
+                WHERE id = ANY(@ids)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("ids", ids.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync(npgsqlCommand, cancellationToken);
+
+            return result;
+        }
+
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdsAsync(IEnumerable<long>? ids, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (ids is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetItemsByIdsAsync(npgsqlConnection, ids, countyId, cancellationToken);
+        }
+
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetItemsByReferencesAsync([reference], countyId, cancellationToken);
+        }
+
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            List<TBuilding2DReferencedObject>? result = [];
+
+            if (!references.Any())
+            {
+                return result;
+            }
+
+            string commandText = $@"
+                SELECT id, county_id, reference, object, created_at
+                FROM {TableName}
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync(npgsqlCommand, cancellationToken);
+
+            return result;
+        }
+        
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
+        }
+        
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects)
+        {
+            if (building2DReferencedObjects is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool succeded = await npgsqlConnection.TableAsync_Building2DReferencedObject(TableName);
+            if (!succeded)
+            {
+                return null;
+            }
+
+            HashSet<long> result = [];
+            if (!building2DReferencedObjects.Any())
+            {
+                return result;
+            }
+
+            IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects.GroupBy(x => x.CountyId);
+
+            foreach (IGrouping<int?, TBuilding2DReferencedObject> grouping in groupings)
+            {
+                if (!grouping.Key.HasValue)
+                {
+                    continue;
+                }
+
+                await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, grouping.Key.Value);
+
+                string commandText = $@"
+                    INSERT INTO {TableName} (county_id, reference, object)
+                    VALUES (@county_id, @reference, @object)
+                    ON CONFLICT (county_id, reference)
+                    DO UPDATE SET
+                        object = EXCLUDED.object,
+                    RETURNING id;";
+
+                foreach (TBuilding2DReferencedObject? countyReferencedObject in grouping)
+                {
+                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                    npgsqlCommand.Parameters.AddWithValue("county_id", countyReferencedObject.CountyId!);
+                    npgsqlCommand.Parameters.AddWithValue("reference", countyReferencedObject.Reference ?? (object)DBNull.Value);
+
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb)
+                    {
+                        Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value
+                    });
+
+                    var returnedId = await npgsqlCommand.ExecuteScalarAsync();
+                    if (returnedId is long id)
+                    {
+                        result.Add(id);
+                        countyReferencedObject.Id = id;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        protected abstract TBuilding2DReferencedObject Create(long id, int? countyId, string? reference, JsonObject? @object, DateTime? createdAt);
+
+        protected override TBuilding2DReferencedObject Create(NpgsqlDataReader npgsqlDataReader)
+        {
+            return Create(
+                npgsqlDataReader.GetInt64(0),
+                npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1),
+                npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                JsonNode.Parse(npgsqlDataReader.GetString(3)) as JsonObject,
+                npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDateTime(4)
+                );
+        }
+    }
+}

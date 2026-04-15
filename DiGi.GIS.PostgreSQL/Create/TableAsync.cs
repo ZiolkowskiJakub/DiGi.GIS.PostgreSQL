@@ -50,6 +50,39 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {tableName} (
+                    id SERIAL PRIMARY KEY,
+                    reference TEXT NOT NULL,
+                    object JSONB,
+                    created_at timestamptz DEFAULT now()
+                );";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_AdministrativeArea2DReferencedObject)}): {ex.Message}");
+                return false;
+            }
+        }
+
         public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)
@@ -157,7 +190,7 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
-        public static async Task<bool> TableAsync_CountyReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
+        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
         {
             if (npgsqlConnection is null)
             {
@@ -192,12 +225,12 @@ namespace DiGi.GIS.PostgreSQL
             catch (NpgsqlException ex)
             {
                 // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_CountyReferencedObject)}): {ex.Message}");
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Building2DReferencedObject)}): {ex.Message}");
                 return false;
             }
         }
 
-        public static async Task<bool> TableAsync_CountyReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId)
+        public static async Task<bool> TableAsync_Building2DReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId)
         {
             if (npgsqlConnection is null)
             {
@@ -215,7 +248,7 @@ namespace DiGi.GIS.PostgreSQL
 
             return true;
         }
-
+        
         public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)
@@ -275,67 +308,6 @@ namespace DiGi.GIS.PostgreSQL
 
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS orto_datas_{countyId} PARTITION OF orto_datas
-                    FOR VALUES IN ({countyId});
-                ";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-            await npgsqlCommand.ExecuteNonQueryAsync();
-
-            return true;
-        }
-        
-        public static async Task<bool> TableAsync_YearBuilt(this NpgsqlConnection? npgsqlConnection)
-        {
-            if (npgsqlConnection is null)
-            {
-                return false;
-            }
-
-            // Combined command: Create partitioned table and the supporting index
-            // The index on the parent table will be inherited by all child partitions.
-            const string commandText = @"
-                CREATE TABLE IF NOT EXISTS year_built (
-                    id BIGINT GENERATED ALWAYS AS IDENTITY,
-                    county_id INT NOT NULL,
-                    reference TEXT NOT NULL,
-                    source TEXT,
-                    year SMALLINT,
-                    object JSONB,
-                    created_at timestamptz DEFAULT now(),
-                    PRIMARY KEY (id, county_id)
-                ) PARTITION BY LIST (county_id);
-
-                -- Optimization: Composite index for County + Reference
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_year_built_ref
-                ON year_built (county_id, reference);
-                ";
-
-            try
-            {
-                // Explicitly using NpgsqlCommand type instead of implicit typing
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-                await npgsqlCommand.ExecuteNonQueryAsync();
-                return true;
-            }
-            catch (NpgsqlException ex)
-            {
-                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_YearBuilt)}): {ex.Message}");
-                return false;
-            }
-        }
-
-        public static async Task<bool> TableAsync_YearBuilt_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
-        {
-            if (npgsqlConnection is null)
-            {
-                return false;
-            }
-
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS year_built_{countyId} PARTITION OF year_built
                     FOR VALUES IN ({countyId});
                 ";
 

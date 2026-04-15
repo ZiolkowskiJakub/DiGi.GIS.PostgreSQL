@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class OrtoDatas : CountyReferencedObject<GIS.Classes.OrtoDatas>
+    public class OrtoDatas : Building2DReferencedObject<GIS.Classes.OrtoDatas>
     {
         public OrtoDatas(JsonObject? jsonObject)
             : base(jsonObject)
