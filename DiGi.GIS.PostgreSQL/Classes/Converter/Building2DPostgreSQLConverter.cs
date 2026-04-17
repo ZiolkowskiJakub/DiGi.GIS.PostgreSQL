@@ -44,6 +44,58 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
 
+        public static async Task<List<Point2D>?> GetPoint2DsByReferences(NpgsqlConnection npgsqlConnection, IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandText = @"
+                    SELECT min_x, min_y, max_x, max_y
+                    FROM building_2d
+                    WHERE reference = ANY(@references) AND (county_id = @countyId OR county_id IS NULL);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            List<Point2D> result = [];
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                double min_x = npgsqlDataReader.IsDBNull(0) ? double.NaN : npgsqlDataReader.GetDouble(0);
+                if (double.IsNaN(min_x))
+                {
+                    continue;
+                }
+
+                double min_y = npgsqlDataReader.IsDBNull(1) ? double.NaN : npgsqlDataReader.GetDouble(1);
+                if (double.IsNaN(min_y))
+                {
+                    continue;
+                }
+
+                double max_x = npgsqlDataReader.IsDBNull(2) ? double.NaN : npgsqlDataReader.GetDouble(2);
+                if (double.IsNaN(max_x))
+                {
+                    continue;
+                }
+
+                double max_y = npgsqlDataReader.IsDBNull(3) ? double.NaN : npgsqlDataReader.GetDouble(3);
+                if (double.IsNaN(max_y))
+                {
+                    continue;
+                }
+
+                result.Add(new Point2D((min_x + max_x) / 2, (min_y + max_y) / 2));
+            }
+
+            return result;
+        }
+
         public async Task<bool> ClearAsync()
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -77,59 +129,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
 
             List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-
-            return results?.FirstOrDefault();
-        }
-
-        public async Task<Building2DReference?> GetBuilding2DReferenceByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
-        {
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            string commandText = @"
-                    SELECT id, county_id, reference, subdivision_id
-                    FROM building_2d
-                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("id", id);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-
-            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
-
-            return results?.FirstOrDefault();
-        }
-
-        public async Task<Building2DReference?> GetBuilding2DReferenceByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(reference))
-            {
-                return null;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            string commandText = @"
-                    SELECT id, county_id, reference, subdivision_id
-                    FROM building_2d
-                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("reference", reference);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-
-            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
 
             return results?.FirstOrDefault();
         }
@@ -186,71 +185,57 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return null;
         }
 
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken = default)
+        public async Task<Building2DReference?> GetBuilding2DReferenceByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection == null)
+            if (npgsqlConnection is null)
             {
                 return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken);
-            if (administrativeAreal2DReferences is null)
+            string commandText = @"
+                    SELECT id, county_id, reference, subdivision_id
+                    FROM building_2d
+                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("id", id);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
+
+            return results?.FirstOrDefault();
+        }
+
+        public async Task<Building2DReference?> GetBuilding2DReferenceByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivison, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
-
-            administrativeAreal2DReferences ??= [];
-
-            if (administrativeAreal2DReferences_Out is not null && administrativeAreal2DReferences_Out.Count != 0)
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
             {
-                foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
-                {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
-                    if (administrativeAreal2DReferences_Temp is not null)
-                    {
-                        administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
-                    }
-                }
+                return null;
             }
 
-            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
-            {
-                return [];
-            }
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            Dictionary<long, Building2DReference> dictionary = [];
-            while (administrativeAreal2DReferences is not null && administrativeAreal2DReferences.Count > 0)
-            {
-                int? countyId = administrativeAreal2DReferences[0]?.CountyId;
+            string commandText = @"
+                    SELECT id, county_id, reference, subdivision_id
+                    FROM building_2d
+                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
 
-                administrativeAreal2DReferences.Filter(x => x?.CountyId == countyId, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_CountyId, out administrativeAreal2DReferences);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
 
-                if (administrativeAreal2DReferences_CountyId is null || administrativeAreal2DReferences_CountyId.Count == 0)
-                {
-                    break;
-                }
+            List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
 
-                if (countyId is null || !countyId.HasValue)
-                {
-                    continue;
-                }
-
-                List<Building2DReference>? building2DReferences = await GetBuilding2DReferencesByCountyIdAsync(npgsqlConnection, countyId.Value, administrativeAreal2DReferences_CountyId.ConvertAll(x => x.Id).Distinct(), cancellationToken);
-                if (building2DReferences is not null)
-                {
-                    foreach (Building2DReference building2DReference in building2DReferences)
-                    {
-                        dictionary[building2DReference.Id] = building2DReference;
-                    }
-                }
-            }
-
-            return [.. dictionary.Values];
+            return results?.FirstOrDefault();
         }
 
         /// <summary>
@@ -364,6 +349,73 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken);
+            if (administrativeAreal2DReferences is null)
+            {
+                return null;
+            }
+
+            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivison, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
+
+            administrativeAreal2DReferences ??= [];
+
+            if (administrativeAreal2DReferences_Out is not null && administrativeAreal2DReferences_Out.Count != 0)
+            {
+                foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
+                {
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
+                    if (administrativeAreal2DReferences_Temp is not null)
+                    {
+                        administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
+                    }
+                }
+            }
+
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            {
+                return [];
+            }
+
+            Dictionary<long, Building2DReference> dictionary = [];
+            while (administrativeAreal2DReferences is not null && administrativeAreal2DReferences.Count > 0)
+            {
+                int? countyId = administrativeAreal2DReferences[0]?.CountyId;
+
+                administrativeAreal2DReferences.Filter(x => x?.CountyId == countyId, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_CountyId, out administrativeAreal2DReferences);
+
+                if (administrativeAreal2DReferences_CountyId is null || administrativeAreal2DReferences_CountyId.Count == 0)
+                {
+                    break;
+                }
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    continue;
+                }
+
+                List<Building2DReference>? building2DReferences = await GetBuilding2DReferencesByCountyIdAsync(npgsqlConnection, countyId.Value, administrativeAreal2DReferences_CountyId.ConvertAll(x => x.Id).Distinct(), cancellationToken);
+                if (building2DReferences is not null)
+                {
+                    foreach (Building2DReference building2DReference in building2DReferences)
+                    {
+                        dictionary[building2DReference.Id] = building2DReference;
+                    }
+                }
+            }
+
+            return [.. dictionary.Values];
         }
 
         public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
@@ -556,6 +608,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return [.. dictionary.Values];
+        }
+
+        public async Task<List<Point2D>?> GetPoint2DsByReferences(IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            return await GetPoint2DsByReferences(npgsqlConnection, references, countyId, cancellationToken);
         }
 
         public async Task<bool> RefreshAsync(PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)

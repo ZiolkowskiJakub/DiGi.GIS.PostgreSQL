@@ -1,17 +1,17 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class AdministrativeAreal2DReferencedObject<TGISSerializableObject> : ReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class AdministrativeAreal2DReferencedObject<TUniqueObject> : ReferencedObject<TUniqueObject> where TUniqueObject : IUniqueObject
     {
         public AdministrativeAreal2DReferencedObject(JsonObject? jsonObject)
             : base(jsonObject)
         {
         }
 
-        public AdministrativeAreal2DReferencedObject(AdministrativeAreal2DReferencedObject<TGISSerializableObject> administrativeAreal2DReferencedObject)
+        public AdministrativeAreal2DReferencedObject(AdministrativeAreal2DReferencedObject<TUniqueObject>? administrativeAreal2DReferencedObject)
             : base(administrativeAreal2DReferencedObject)
         {
             if (administrativeAreal2DReferencedObject is not null)
@@ -24,7 +24,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             : base()
         {
         }
-
 
         [JsonInclude, JsonPropertyName("Id")]
         public int Id { get; set; }

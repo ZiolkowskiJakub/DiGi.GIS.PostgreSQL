@@ -92,6 +92,81 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
         }
 
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, IEnumerable<int> parentIds, bool uniqueCode = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || parentIds is null)
+            {
+                return null;
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, parentIds, cancellationToken);
+            if (administrativeAreal2DReferences is null)
+            {
+                return null;
+            }
+
+            List<AdministrativeAreal2DReference>? result = [];
+            foreach (IGrouping<AdministrativeArealType, AdministrativeAreal2DReference> grouping in administrativeAreal2DReferences.GroupBy(x => x.AdministrativeArealType))
+            {
+                AdministrativeArealType administrativeArealType_Parent = grouping.Key;
+                if (administrativeArealType_Parent >= administrativeArealType)
+                {
+                    continue;
+                }
+
+                HashSet<int> parentIds_AdministrativeArealType = [];
+                foreach (AdministrativeAreal2DReference administrativeAreal2DReference in grouping)
+                {
+                    parentIds_AdministrativeArealType.Add(administrativeAreal2DReference.Id);
+                }
+
+                string? columnName = administrativeArealType_Parent switch
+                {
+                    AdministrativeArealType.Country => "country_id",
+                    AdministrativeArealType.Voivodeship => "voivodeship_id",
+                    AdministrativeArealType.County => "county_id",
+                    AdministrativeArealType.Municipality => "municipality_id",
+                    _ => null
+                };
+
+                if (columnName is null)
+                {
+                    continue;
+                }
+
+                string distinctClause = uniqueCode ? "DISTINCT ON (code)" : string.Empty;
+                string orderByClause = uniqueCode ? "ORDER BY code, id ASC" : "ORDER BY id ASC";
+
+                string commandText = $@"
+                SELECT {distinctClause}
+                    id,              -- index 0
+                    reference,       -- index 1
+                    code,            -- index 2
+                    name,            -- index 3
+                    type_id,         -- index 4
+                    country_id,      -- index 5
+                    voivodeship_id,  -- index 6
+                    county_id,       -- index 7
+                    municipality_id  -- index 8
+                FROM administrative_areal_2D
+                WHERE type_id = @typeId AND {columnName} = ANY(@parentIds)
+                {orderByClause};";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds_AdministrativeArealType!.ToArray() });
+
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_AdministrativeArealType = await ReadAsync_AdministrativeAreal2DReference(npgsqlCommand, cancellationToken);
+                if (administrativeAreal2DReferences_AdministrativeArealType is not null)
+                {
+                    result.AddRange(administrativeAreal2DReferences_AdministrativeArealType);
+                }
+            }
+
+            return result;
+        }
+
         public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, int? parentId = null, bool uniqueCode = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -695,9 +770,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             List<AdministrativeAreal2DReference> result = [];
-            foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
+
+            IEnumerable<IGrouping<AdministrativeArealType, AdministrativeAreal2DReference>> groupings = administrativeAreal2DReferences.GroupBy(x => x.AdministrativeArealType);
+            foreach (IGrouping<AdministrativeArealType, AdministrativeAreal2DReference> grouping in groupings)
             {
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, administrativeAreal2DReference.Id, false, cancellationToken);
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, grouping.ToList().ConvertAll(x => x.Id), false, cancellationToken);
                 if (administrativeAreal2DReferences_Temp is null)
                 {
                     continue;

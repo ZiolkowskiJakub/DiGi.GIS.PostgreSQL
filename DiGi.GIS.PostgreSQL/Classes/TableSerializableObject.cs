@@ -1,19 +1,19 @@
 ﻿using DiGi.Core.Classes;
-using DiGi.GIS.Interfaces;
+using DiGi.Core.Interfaces;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class TableSerializableObject<TGISSerializableObject> : SerializableObject, ITableSerializableObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class TableSerializableObject<TSerializableObject> : SerializableObject, ITableSerializableObject<TSerializableObject> where TSerializableObject : ISerializableObject
     {
         public TableSerializableObject(JsonObject? jsonObject)
             : base(jsonObject)
         {
         }
 
-        public TableSerializableObject(TableSerializableObject<TGISSerializableObject>? tableSerializableObject)
+        public TableSerializableObject(TableSerializableObject<TSerializableObject>? tableSerializableObject)
             : base(tableSerializableObject)
         {
             if (tableSerializableObject is not null)
@@ -30,14 +30,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         [JsonInclude, JsonPropertyName("Object")]
         public JsonObject? Object { get; set; }
 
-        public TGISSerializableObject? ToDiGi()
+        public TSerializableObject? ToDiGi()
         {
             if (Object is not JsonObject jsonObject)
             {
                 return default;
             }
 
-            return Core.Create.SerializableObject<TGISSerializableObject>(jsonObject);
+            return Core.Create.SerializableObject<TSerializableObject>(jsonObject);
+        }
+
+        public void FromDiGi(TSerializableObject? gISSerializableObject)
+        {
+            Object = gISSerializableObject?.ToJsonObject();
         }
     }
 }

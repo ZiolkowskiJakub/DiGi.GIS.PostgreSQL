@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class ReferencedObjectPostgreSQLConverter<TReferencedObject, TGISSerializableObject> : PostgreSQLConverter<TReferencedObject>, IGISPostgreSQLConverter<TReferencedObject> where TReferencedObject : ReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class ReferencedObjectPostgreSQLConverter<TReferencedObject, TUniqueObject> : PostgreSQLConverter<TReferencedObject>, IGISPostgreSQLConverter<TReferencedObject> where TReferencedObject : ReferencedObject<TUniqueObject> where TUniqueObject : IUniqueObject
     {
         public ReferencedObjectPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)

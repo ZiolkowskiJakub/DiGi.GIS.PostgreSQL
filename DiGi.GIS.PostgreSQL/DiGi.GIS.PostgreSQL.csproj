@@ -35,6 +35,9 @@
     <Reference Include="DiGi.Core">
       <HintPath>..\..\DiGi.Core\bin\DiGi.Core.dll</HintPath>
     </Reference>
+    <Reference Include="DiGi.Core.IO">
+      <HintPath>..\..\DiGi.Core\bin\DiGi.Core.IO.dll</HintPath>
+    </Reference>
     <Reference Include="DiGi.Core.Relation">
       <HintPath>..\..\DiGi.Core\bin\DiGi.Core.Relation.dll</HintPath>
     </Reference>
@@ -52,6 +55,9 @@
     </Reference>
     <Reference Include="DiGi.PostgreSQL.UniqueReference">
       <HintPath>..\..\DiGi.PostgreSQL\bin\DiGi.PostgreSQL.UniqueReference.dll</HintPath>
+    </Reference>
+    <Reference Include="DiGi.Typology">
+      <HintPath>..\..\DiGi.Typology\bin\DiGi.Typology.dll</HintPath>
     </Reference>
   </ItemGroup>
 

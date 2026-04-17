@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class Building2DReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TGISSerializableObject> : ReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TGISSerializableObject> where TBuilding2DReferencedObject : Building2DReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class Building2DReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TUniqueObject> : ReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TUniqueObject> where TBuilding2DReferencedObject : Building2DReferencedObject<TUniqueObject> where TUniqueObject : IUniqueObject
     {
         public Building2DReferencedObjectPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
@@ -20,7 +20,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public async Task<TBuilding2DReferencedObject?> GetItemByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
         {
-
             return await GetItemsByIdsAsync([id], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
@@ -33,7 +32,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetItemsByReferencesAsync([reference], countyId, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
-        
+
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<long>? ids, int? countyId, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || ids is null)
@@ -49,7 +48,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string commandText = $@"
-                SELECT id, county_id, reference, object, created_at
+                SELECT id, county_id, unique_id, reference, object, created_at
                 FROM {TableName}
                 WHERE id = ANY(@ids)
                   AND (@countyId IS NULL OR county_id = @countyId);";
@@ -107,7 +106,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string commandText = $@"
-                SELECT id, county_id, reference, object, created_at
+                SELECT id, county_id, unique_id, reference, object, created_at
                 FROM {TableName}
                 WHERE reference = ANY(@references)
                   AND (@countyId IS NULL OR county_id = @countyId);";
@@ -121,7 +120,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-        
+
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
         {
             if (references is null)
@@ -139,7 +138,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
         }
-        
+
         public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects)
         {
             if (building2DReferencedObjects is null)
@@ -179,26 +178,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, grouping.Key.Value);
 
                 string commandText = $@"
-                    INSERT INTO {TableName} (county_id, reference, object)
-                    VALUES (@county_id, @reference, @object)
-                    ON CONFLICT (county_id, reference)
+                    INSERT INTO {TableName} (county_id, unique_id, reference, object)
+                    VALUES (@county_id, @unique_id, @reference, @object)
+                    ON CONFLICT (county_id, unique_id)
                     DO UPDATE SET
                         object = EXCLUDED.object,
+                        reference = EXCLUDED.reference,
                     RETURNING id;";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                // Define parameters once
+                NpgsqlParameter npgsqlParameter_UniqueId = npgsqlCommand.Parameters.Add("unique_id", NpgsqlDbType.Text);
+                NpgsqlParameter npgsqlParameter_CountyId = npgsqlCommand.Parameters.Add("county_id", NpgsqlDbType.Integer);
+                NpgsqlParameter npgsqlParameter_Reference = npgsqlCommand.Parameters.Add("reference", NpgsqlDbType.Text);
+                NpgsqlParameter npgsqlParameter_Object = npgsqlCommand.Parameters.Add("object", NpgsqlDbType.Jsonb);
 
                 foreach (TBuilding2DReferencedObject? countyReferencedObject in grouping)
                 {
-                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                    npgsqlParameter_UniqueId.Value = countyReferencedObject.UniqueId;
+                    npgsqlParameter_CountyId.Value = countyReferencedObject.CountyId;
+                    npgsqlParameter_Reference.Value = countyReferencedObject.Reference ?? (object)DBNull.Value;
+                    npgsqlParameter_Object.Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value;
 
-                    npgsqlCommand.Parameters.AddWithValue("county_id", countyReferencedObject.CountyId!);
-                    npgsqlCommand.Parameters.AddWithValue("reference", countyReferencedObject.Reference ?? (object)DBNull.Value);
-
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb)
-                    {
-                        Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value
-                    });
-
-                    var returnedId = await npgsqlCommand.ExecuteScalarAsync();
+                    object? returnedId = await npgsqlCommand.ExecuteScalarAsync();
                     if (returnedId is long id)
                     {
                         result.Add(id);
@@ -210,7 +213,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        protected abstract TBuilding2DReferencedObject Create(long id, int? countyId, string? reference, JsonObject? @object, DateTime? createdAt);
+        protected abstract TBuilding2DReferencedObject Create(long id, int? countyId, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt);
 
         protected override TBuilding2DReferencedObject Create(NpgsqlDataReader npgsqlDataReader)
         {
@@ -218,8 +221,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlDataReader.GetInt64(0),
                 npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1),
                 npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
-                JsonNode.Parse(npgsqlDataReader.GetString(3)) as JsonObject,
-                npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDateTime(4)
+                npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetString(3),
+                JsonNode.Parse(npgsqlDataReader.GetString(4)) as JsonObject,
+                npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetDateTime(5)
                 );
         }
     }

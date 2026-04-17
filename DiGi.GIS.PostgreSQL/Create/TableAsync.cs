@@ -62,6 +62,7 @@ namespace DiGi.GIS.PostgreSQL
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id SERIAL PRIMARY KEY,
+                    unique_id TEXT NOT NULL UNIQUE,
                     reference TEXT NOT NULL,
                     object JSONB,
                     created_at timestamptz DEFAULT now()
@@ -202,17 +203,18 @@ namespace DiGi.GIS.PostgreSQL
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    unique_id TEXT NOT NULL,
                     county_id INT NOT NULL,
                     reference TEXT NOT NULL,
                     object JSONB,
                     created_at timestamptz DEFAULT now(),
-                    PRIMARY KEY (id, county_id)
+                    PRIMARY KEY (id, county_id),
+                    UNIQUE (county_id, unique_id)
                 ) PARTITION BY LIST (county_id);
 
-                -- Optimization: Composite index for County + Reference
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_ref
-                ON {tableName} (county_id, reference);
-                ";
+                -- Note: The index name should be unique per database schema
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_unique_id_county
+                ON {tableName} (county_id, unique_id);";
 
             try
             {
@@ -248,7 +250,7 @@ namespace DiGi.GIS.PostgreSQL
 
             return true;
         }
-        
+
         public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)

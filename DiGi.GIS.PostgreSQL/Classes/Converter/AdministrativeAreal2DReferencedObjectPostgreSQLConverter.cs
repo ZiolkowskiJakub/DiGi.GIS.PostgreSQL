@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class AdministrativeAreal2DReferencedObjectPostgreSQLConverter<TAdministrativeAreal2DReferencedObject, TGISSerializableObject> : ReferencedObjectPostgreSQLConverter<TAdministrativeAreal2DReferencedObject, TGISSerializableObject> where TAdministrativeAreal2DReferencedObject : AdministrativeAreal2DReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class AdministrativeAreal2DReferencedObjectPostgreSQLConverter<TAdministrativeAreal2DReferencedObject, TUniqueObject> : ReferencedObjectPostgreSQLConverter<TAdministrativeAreal2DReferencedObject, TUniqueObject> where TAdministrativeAreal2DReferencedObject : AdministrativeAreal2DReferencedObject<TUniqueObject> where TUniqueObject : IUniqueObject
     {
         public AdministrativeAreal2DReferencedObjectPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
@@ -32,7 +32,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetItemsByReferencesAsync([reference], cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
-        
+
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? ids, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || ids is null)
@@ -48,7 +48,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string commandText = $@"
-                SELECT id, reference, object, created_at
+                SELECT id, unique_id, reference, object, created_at
                 FROM {TableName}
                 WHERE id = ANY(@ids);";
 
@@ -104,7 +104,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string commandText = $@"
-                SELECT id, reference, object, created_at
+                SELECT id, unique_id, reference, object, created_at
                 FROM {TableName}
                 WHERE reference = ANY(@references);";
 
@@ -116,7 +116,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-        
+
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, CancellationToken cancellationToken = default)
         {
             if (references is null)
@@ -134,7 +134,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetItemsByReferencesAsync(npgsqlConnection, references, cancellationToken);
         }
-        
+
         public async Task<HashSet<int>?> UpdateAsync(IEnumerable<TAdministrativeAreal2DReferencedObject>? administrativeAreal2DReferencedObjects)
         {
             if (administrativeAreal2DReferencedObjects is null)
@@ -174,12 +174,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 // SQL with full update on conflict (excluding ID)
                 NpgsqlBatchCommand npgsqlBatchCommand = new($@"
-                    INSERT INTO {TableName} (reference, object)
-                    VALUES (@reference, @object)
-                    ON CONFLICT (reference)
+                    INSERT INTO {TableName} (unique_id, reference, object)
+                    VALUES (@unique_id, @reference, @object)
+                    ON CONFLICT (unique_id)
                     DO UPDATE SET
-                        object = EXCLUDED.object
+                        object = EXCLUDED.object,
+                        reference = EXCLUDED.reference
                     RETURNING id;");
+
+                npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("unique_id", NpgsqlDbType.Text)
+                {
+                    Value = administrativeAreal2DReferencedObject.UniqueId
+                });
 
                 // Adding parameters with explicit NpgsqlDbType
                 npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = administrativeAreal2DReferencedObject.Reference });
@@ -210,15 +216,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
-        protected abstract TAdministrativeAreal2DReferencedObject Create(int id, string? reference, JsonObject? @object, DateTime? createdAt);
+        protected abstract TAdministrativeAreal2DReferencedObject Create(int id, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt);
 
         protected override TAdministrativeAreal2DReferencedObject Create(NpgsqlDataReader npgsqlDataReader)
         {
             return Create(
                 npgsqlDataReader.GetInt32(0),
                 npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetString(1),
-                JsonNode.Parse(npgsqlDataReader.GetString(2)) as JsonObject,
-                npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetDateTime(3)
+                npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                JsonNode.Parse(npgsqlDataReader.GetString(3)) as JsonObject,
+                npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDateTime(4)
                 );
         }
     }

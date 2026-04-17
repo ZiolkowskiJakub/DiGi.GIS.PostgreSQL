@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using System.Text.Json.Nodes;
 
 namespace DiGi.GIS.PostgreSQL.Interfaces
@@ -8,8 +8,8 @@ namespace DiGi.GIS.PostgreSQL.Interfaces
         JsonObject? Object { get; set; }
     }
 
-    public interface ITableSerializableObject<TGISSerializableObject> : ITableSerializableObject where TGISSerializableObject : IGISSerializableObject
+    public interface ITableSerializableObject<TSerializableObject> : ITableSerializableObject where TSerializableObject : ISerializableObject
     {
-        TGISSerializableObject? ToDiGi();
+        TSerializableObject? ToDiGi();
     }
 }

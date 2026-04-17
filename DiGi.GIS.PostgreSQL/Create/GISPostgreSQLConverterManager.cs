@@ -27,7 +27,7 @@ namespace DiGi.GIS.PostgreSQL
                 {
                     result.Add(new AdministrativeAreal2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new Building2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
-                    result.Add(new YearBuiltPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
+                    result.Add(new YearBuiltDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                 }
             }
 

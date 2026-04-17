@@ -1,17 +1,17 @@
-﻿using DiGi.GIS.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public abstract class Building2DReferencedObject<TGISSerializableObject> : ReferencedObject<TGISSerializableObject> where TGISSerializableObject : IGISSerializableObject
+    public abstract class Building2DReferencedObject<TUniqueObject> : ReferencedObject<TUniqueObject> where TUniqueObject : IUniqueObject
     {
         public Building2DReferencedObject(JsonObject? jsonObject)
             : base(jsonObject)
         {
         }
 
-        public Building2DReferencedObject(Building2DReferencedObject<TGISSerializableObject>? building2DReferencedObject)
+        public Building2DReferencedObject(Building2DReferencedObject<TUniqueObject>? building2DReferencedObject)
             : base(building2DReferencedObject)
         {
             if (building2DReferencedObject is not null)
