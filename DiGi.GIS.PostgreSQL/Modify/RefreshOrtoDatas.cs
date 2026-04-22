@@ -8,7 +8,7 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Modify
     {
-        public async static Task<bool> RefreshOrtoDatas(this GISPostgreSQLConverterManager? gISPostgreSQLConverterManager, PostgreSQLOrtoDatasRefreshOptions PostgreSQLOrtoDatasRefreshOptions, IProgress<long>? progress = null, CancellationToken cancellationToken = default)
+        public static async Task<bool> RefreshOrtoDatas(this GISPostgreSQLConverterManager? gISPostgreSQLConverterManager, PostgreSQLOrtoDatasRefreshOptions PostgreSQLOrtoDatasRefreshOptions, IProgress<long>? progress = null, CancellationToken cancellationToken = default)
         {
             if (gISPostgreSQLConverterManager?.GetPostgreSQLConverter<AdministrativeAreal2DPostgreSQLConverter>() is not AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
             {

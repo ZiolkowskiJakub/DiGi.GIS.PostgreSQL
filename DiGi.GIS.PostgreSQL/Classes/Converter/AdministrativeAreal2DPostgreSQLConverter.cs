@@ -347,6 +347,47 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
         }
 
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(code) || npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            if (ids is null)
+            {
+                return null;
+            }
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            {
+                return [];
+            }
+
+            List<AdministrativeAreal2DReference> result = [];
+
+            IEnumerable<IGrouping<AdministrativeArealType, AdministrativeAreal2DReference>> groupings = administrativeAreal2DReferences.GroupBy(x => x.AdministrativeArealType);
+            foreach (IGrouping<AdministrativeArealType, AdministrativeAreal2DReference> grouping in groupings)
+            {
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, grouping.ToList().ConvertAll(x => x.Id), false, cancellationToken);
+                if (administrativeAreal2DReferences_Temp is null)
+                {
+                    continue;
+                }
+
+                result.AddRange(administrativeAreal2DReferences_Temp);
+            }
+
+            return result;
+        }
+
         public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -406,7 +447,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE name ILIKE @text
                 ORDER BY name ASC;";
 
-            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             // Adding wildcards to the parameter value to match text at any position
             string formattedSearch = $"%{text}%";
@@ -647,16 +688,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
         }
 
-        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
-        {
-            if (npgsqlConnection is null)
-            {
-                return -1;
-            }
-
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
-        }
-
         public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -665,6 +696,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, cancellationToken);
+        }
+
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
         }
 
         public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
@@ -937,38 +978,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByCodeAsync(npgsqlConnection, code, administrativeArealType, cancellationToken);
+        }
+
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+        {
             if (ids is null)
             {
                 return null;
             }
 
-            if (ids.Count == 0)
+            if (!ids.Any())
             {
                 return [];
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
-            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
             {
-                return [];
+                return null;
             }
 
-            List<AdministrativeAreal2DReference> result = [];
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            IEnumerable<IGrouping<AdministrativeArealType, AdministrativeAreal2DReference>> groupings = administrativeAreal2DReferences.GroupBy(x => x.AdministrativeArealType);
-            foreach (IGrouping<AdministrativeArealType, AdministrativeAreal2DReference> grouping in groupings)
-            {
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, grouping.ToList().ConvertAll(x => x.Id), false, cancellationToken);
-                if (administrativeAreal2DReferences_Temp is null)
-                {
-                    continue;
-                }
-
-                result.AddRange(administrativeAreal2DReferences_Temp);
-            }
-
-            return result;
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
         }
 
         /// <summary>
@@ -1321,19 +1354,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return codes;
         }
 
-        public async Task<long> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
-        {
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return -1;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
-        }
-
         public async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -1345,6 +1365,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
         }
 
         public async Task<int?> GetIdByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null)

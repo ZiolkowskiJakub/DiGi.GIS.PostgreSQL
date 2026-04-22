@@ -1,5 +1,6 @@
 ﻿using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
+using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -266,7 +267,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
         }
-
+        
         public async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, CancellationToken cancellationToken = default)
         {
             if (building2DReferences == null)
@@ -321,12 +322,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand command = new NpgsqlCommand(commandText, npgsqlConnection);
+                await using NpgsqlCommand command = new(commandText, npgsqlConnection);
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
-                    Building2DReference building2DReference = new ()
+                    Building2DReference building2DReference = new()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id"))
                     };
