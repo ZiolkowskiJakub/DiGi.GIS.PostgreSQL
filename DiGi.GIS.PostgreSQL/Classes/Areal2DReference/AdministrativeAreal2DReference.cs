@@ -52,6 +52,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         [JsonInclude, JsonPropertyName("VoivodeshipId")]
         public int? VoivodeshipId { get; set; } = null;
 
+        /// <summary>
+        /// List of ids in the record including own Id (in order: CountryId, VoivodeshipId, CountyId, MunicipalityId, Id). Null values will be skipped.
+        /// </summary>
+        /// <returns></returns>
         public List<int> GetIds()
         {
             List<int> result = [];

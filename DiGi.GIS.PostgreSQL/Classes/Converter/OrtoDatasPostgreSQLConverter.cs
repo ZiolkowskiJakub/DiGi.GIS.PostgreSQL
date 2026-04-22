@@ -1,4 +1,5 @@
 ﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -19,6 +20,55 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = TableName.OrtoDatas;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = TableName.OrtoDatas;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+        }
+
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            long result = 0;
+            foreach (int countyId in countyIds)
+            {
+                string tableName = string.Format("{0}_{1}", TableName.OrtoDatas, countyId);
+                result += await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+            }
+
+            return result;
+        }
+
         public static async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || building2DReferences is null)
@@ -37,10 +87,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // 2. We use a LEFT JOIN between the input list (UNNEST) and the actual table.
             // If u.reference IS NULL, it means the item does NOT exist in the database.
-            const string commandText = @"
+            const string commandText = $@"
                 SELECT input.c, input.r
                 FROM UNNEST(@counties, @refs) AS input(c, r)
-                LEFT JOIN orto_datas u ON u.county_id = input.c AND u.reference = input.r
+                LEFT JOIN {TableName.OrtoDatas} u ON u.county_id = input.c AND u.reference = input.r
                 WHERE (@inverted = false AND u.reference IS NOT NULL)  -- Item exists
                    OR (@inverted = true AND u.reference IS NULL);     -- Item does not exist";
 
@@ -82,9 +132,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return result;
             }
 
-            const string commandText = @"
+            const string commandText = $@"
                 SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                FROM orto_datas
+                FROM {TableName.OrtoDatas}
                 WHERE reference = ANY(@references)
                   AND (@countyId IS NULL OR county_id = @countyId);";
 
@@ -108,8 +158,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas", cancellationToken);
-            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
+            bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas, cancellationToken);
+            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, cancellationToken);
 
             return result_1 || result_2;
         }
@@ -134,10 +184,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string> result = [];
 
-            const string commandText = @"
+            const string commandText = $@"
                 SELECT input_ref
                 FROM UNNEST(@refs) AS input_ref
-                LEFT JOIN orto_datas u ON u.reference = input_ref
+                LEFT JOIN {TableName.OrtoDatas} u ON u.reference = input_ref
                     AND (@county_id IS NULL OR u.county_id = @county_id)
                 WHERE
                     (@inverted = false AND u.reference IS NOT NULL)
@@ -170,6 +220,51 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+
+        public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string tableName = TableName.OrtoDatas;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyId, analyze, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
         }
 
         public async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, CancellationToken cancellationToken = default)
@@ -205,16 +300,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, "orto_datas_building2D_reference_update");
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update);
             if (!exists)
             {
                 return null;
             }
 
+            // FIX: Changed '=' to 'IN' to handle multiple rows from subquery
             string commandText = $@"
-                DELETE FROM orto_datas_building2D_reference_update
-                WHERE id = (
-                    SELECT id FROM orto_datas_building2D_reference_update
+                DELETE FROM {TableName.OrtoDatas_Building2DReference_Update}
+                WHERE id IN (
+                    SELECT id FROM {TableName.OrtoDatas_Building2DReference_Update}
                     ORDER BY created_at ASC
                     FOR UPDATE SKIP LOCKED
                     LIMIT {count}
@@ -225,33 +321,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             try
             {
-                await using NpgsqlCommand command = new(commandText, npgsqlConnection);
-
+                await using NpgsqlCommand command = new NpgsqlCommand(commandText, npgsqlConnection);
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
-                    Building2DReference building2DReference = new()
+                    Building2DReference building2DReference = new ()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id"))
                     };
 
                     int countyIdOrdinal = reader.GetOrdinal("county_id");
-                    building2DReference.CountyId = reader.IsDBNull(countyIdOrdinal) ? null : reader.GetInt32(countyIdOrdinal);
+                    building2DReference.CountyId = reader.IsDBNull(countyIdOrdinal) ? null : (int?)reader.GetInt32(countyIdOrdinal);
 
                     int referenceOrdinal = reader.GetOrdinal("reference");
                     building2DReference.Reference = reader.IsDBNull(referenceOrdinal) ? null : reader.GetString(referenceOrdinal);
 
                     int subdivisionIdOrdinal = reader.GetOrdinal("subdivision_id");
-                    building2DReference.SubdivisionId = reader.IsDBNull(subdivisionIdOrdinal) ? null : reader.GetInt32(subdivisionIdOrdinal);
+                    building2DReference.SubdivisionId = reader.IsDBNull(subdivisionIdOrdinal) ? null : (int?)reader.GetInt32(subdivisionIdOrdinal);
 
                     result.Add(building2DReference);
                 }
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException)
             {
-                // In a real Web API scenario, you would use ILogger here
-                Console.WriteLine($"Database error during {nameof(GetNextBuilding2DReferencesAsync)}: {ex.Message}");
+                // Log error (using ILogger in Web API context)
                 throw;
             }
 
@@ -444,7 +538,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     // SQL with full update on conflict (excluding ID)
                     NpgsqlBatchCommand npgsqlBatchCommand = new($@"
-                    INSERT INTO orto_datas (county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object)
+                    INSERT INTO {TableName.OrtoDatas} (county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object)
                     VALUES (@county_id, @reference, @min_x, @min_y, @max_x, @max_y, @subdivision_id, @object)
                     ON CONFLICT (reference, county_id)
                     DO UPDATE SET
@@ -506,7 +600,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Check if table exists before proceeding
-            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, "orto_datas_building2D_reference_update", cancellationToken);
+            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, cancellationToken);
             if (!created)
             {
                 return null;
@@ -515,7 +609,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // ON CONFLICT (county_id, reference) DO NOTHING ensures we don't add duplicates.
             // RETURNING * will only return rows that were actually inserted.
             string sql = $@"
-                INSERT INTO orto_datas_building2D_reference_update (county_id, reference, subdivision_id)
+                INSERT INTO {TableName.OrtoDatas_Building2DReference_Update} (county_id, reference, subdivision_id)
                 SELECT * FROM UNNEST(@counties, @refs, @subs)
                 ON CONFLICT (county_id, reference) DO NOTHING
                 RETURNING id, county_id, reference, subdivision_id;";
@@ -552,7 +646,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             catch (NpgsqlException ex)
             {
-                Console.WriteLine($"Database error during UpdateAsync: {ex.Message}");
+                Console.WriteLine($"Database error during {nameof(UpdateBuilding2DReferencesAsync)}: {ex.Message}");
                 throw;
             }
 
@@ -591,7 +685,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 // Szukamy county_id dla podanych referencji
                 const string findSql = @"
                     SELECT reference, county_id
-                    FROM orto_datas
+                    FROM {TableName.OrtoDatas}
                     WHERE reference = ANY(@refs)";
 
                 await using NpgsqlCommand npgsqlCommand = new(findSql, npgsqlConnection);
@@ -620,8 +714,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             // Teraz wykonujemy właściwy UPDATE na kompletnych danych
-            const string updateSql = @"
-                UPDATE orto_datas u
+            const string updateSql = $@"
+                UPDATE {TableName.OrtoDatas} u
                 SET subdivision_id = data.new_sub_id
                 FROM (
                     SELECT * FROM UNNEST(@counties, @refs, @subs) AS t(c_id, r_text, new_sub_id)

@@ -18,6 +18,52 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, cancellationToken);
+        }
+
+        public async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName, analyze, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName, analyze, cancellationToken);
+        }
+
         public async Task<TAdministrativeAreal2DReferencedObject?> GetItemByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await GetItemsByIdsAsync([id], cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
@@ -30,7 +76,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetItemsByReferencesAsync([reference], 1, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? ids, CancellationToken cancellationToken = default)
@@ -40,13 +86,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            List<TAdministrativeAreal2DReferencedObject>? result = [];
-
             if (!ids.Any())
             {
-                return result;
+                return [];
             }
 
+            // Base query using ANY operator for the array of IDs
             string commandText = $@"
                 SELECT id, unique_id, reference, object, created_at
                 FROM {TableName}
@@ -54,11 +99,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
+            // Explicitly adding parameters to the command
             npgsqlCommand.Parameters.AddWithValue("ids", ids.ToArray());
 
-            result = await ReadAsync(npgsqlCommand, cancellationToken);
-
-            return result;
+            return await ReadAsync(npgsqlCommand, cancellationToken);
         }
 
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByIdsAsync(IEnumerable<int>? ids, CancellationToken cancellationToken = default)
@@ -79,45 +123,59 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetItemsByIdsAsync(npgsqlConnection, ids, cancellationToken);
         }
 
-        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferenceAsync(string reference, CancellationToken cancellationToken = default)
+        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferenceAsync(string reference, long? limit = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], cancellationToken);
+            return await GetItemsByReferencesAsync([reference], limit, cancellationToken);
         }
 
-        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, CancellationToken cancellationToken = default)
+        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
                 return null;
             }
 
-            List<TAdministrativeAreal2DReferencedObject>? result = [];
+;
 
             if (!references.Any())
             {
-                return result;
+                return [];
             }
 
+            // Base query
             string commandText = $@"
                 SELECT id, unique_id, reference, object, created_at
                 FROM {TableName}
-                WHERE reference = ANY(@references);";
+                WHERE reference = ANY(@references)";
 
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            // Append LIMIT clause if limit has a value
+            if (limit.HasValue)
+            {
+                commandText += " LIMIT @limit";
+            }
 
+            // Standard PostgreSQL statement termination
+            commandText += ";";
+
+            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+
+            // Adding parameters
             npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
 
-            result = await ReadAsync(npgsqlCommand, cancellationToken);
+            if (limit.HasValue)
+            {
+                npgsqlCommand.Parameters.AddWithValue("limit", limit.Value);
+            }
 
-            return result;
+            return await ReadAsync(npgsqlCommand, cancellationToken);
         }
 
-        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, CancellationToken cancellationToken = default)
+        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -132,7 +190,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetItemsByReferencesAsync(npgsqlConnection, references, cancellationToken);
+            return await GetItemsByReferencesAsync(npgsqlConnection, references, limit, cancellationToken);
         }
 
         public async Task<HashSet<int>?> UpdateAsync(IEnumerable<TAdministrativeAreal2DReferencedObject>? administrativeAreal2DReferencedObjects)

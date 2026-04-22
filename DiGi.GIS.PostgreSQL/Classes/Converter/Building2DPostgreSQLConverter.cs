@@ -31,9 +31,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // Using the same logic as your GetAdministrativeAreal2DsByPoint2DAsync
             // Search area: [CenterX - effectiveRadius, CenterX + effectiveRadius]
-            string commandText = @"
+            const string commandText = $@"
                 SELECT id, county_id, reference, subdivision_id
-                FROM building_2d
+                FROM {Constants.TableName.Building2D}
                 WHERE county_id = @county_id
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL);";
 
@@ -44,6 +44,61 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
 
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = Constants.TableName.Building2D;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = Constants.TableName.Building2D;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+        }
+
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            if (countyIds is null)
+            {
+                return await GetEstimatedCountAsync(npgsqlConnection, (int?)null, analyze, cancellationToken);
+            }
+
+            long result = 0;
+
+            foreach (int countyId in countyIds)
+            {
+                string tableName = string.Format("{0}_{1}", Constants.TableName.Building2D, countyId);
+                result += await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+            }
+
+            return result;
+        }
+
         public static async Task<List<Point2D>?> GetPoint2DsByReferences(NpgsqlConnection npgsqlConnection, IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -51,9 +106,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            string commandText = @"
+            string commandText = $@"
                     SELECT min_x, min_y, max_x, max_y
-                    FROM building_2d
+                    FROM {Constants.TableName.Building2D}
                     WHERE reference = ANY(@references) AND (county_id = @countyId OR county_id IS NULL);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
@@ -106,7 +161,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, "building_2D");
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, Constants.TableName.Building2D);
         }
 
         public async Task<Building2D?> GetBuilding2DByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
@@ -119,9 +174,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            string commandText = @"
+            const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                    FROM building_2d
+                    FROM {Constants.TableName.Building2D}
                     WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
@@ -156,9 +211,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            string commandText = @"
+            const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                    FROM building_2d
+                    FROM {Constants.TableName.Building2D}
                     WHERE (county_id = @countyId OR county_id IS NULL)
                         AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)
                         AND (@x + @tolerance) >= min_x AND (@x - @tolerance) <= max_x
@@ -195,9 +250,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            string commandText = @"
+            const string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
-                    FROM building_2d
+                    FROM {Constants.TableName.Building2D}
                     WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
@@ -224,9 +279,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            string commandText = @"
+            const string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
-                    FROM building_2d
+                    FROM {Constants.TableName.Building2D}
                     WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
@@ -259,9 +314,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // 2. Critical: Pass the token to the connection opening process
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            string commandText = @"
+            string commandText = $@"
                 SELECT id, county_id, reference, subdivision_id
-                FROM building_2d
+                FROM {Constants.TableName.Building2D}
                 WHERE county_id = @countyId";
 
             bool hasExcluded = excludedReferences != null && excludedReferences.Any();
@@ -320,11 +375,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // 2. INNER JOIN matches input with building_2d table.
             // 3. The WHERE clause handles optional CountyId (if null in input, matches only by reference).
             // 4. DISTINCT ON ensures we get only one result per input record even if multiple matches exist.
-            const string commandText = @"
+            const string commandText = $@"
                 SELECT DISTINCT ON (input.ref, input.cnty)
                        b.id, b.county_id, b.reference, b.subdivision_id
                 FROM UNNEST(@refs, @counties) AS input(ref, cnty)
-                INNER JOIN building_2d b ON b.reference = input.ref
+                INNER JOIN {Constants.TableName.Building2D} b ON b.reference = input.ref
                 WHERE (input.cnty IS NULL OR b.county_id = input.cnty)
                 ORDER BY input.ref, input.cnty, b.id ASC;";
 
@@ -447,9 +502,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // Use a single query for everything (Subdivisions OR NULLs)
             // This query uses ANY() to avoid the N+1 problem
-            string commandText = @"
+            const string commandText = $@"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                FROM building_2d
+                FROM {Constants.TableName.Building2D}
                 WHERE county_id = ANY(@county_ids)
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
                     AND @minX <= max_x AND @maxX >= min_x
@@ -521,10 +576,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int?[] countyIds = [.. building2DReferences.Select(l => l.CountyId)];
 
             // Optimized query using UNNEST to perform a join against the input collection
-            const string commandText = @"
+            const string commandText = $@"
                 SELECT b.id, b.county_id, b.reference, b.code, b.min_x, b.min_y, b.max_x, b.max_y, b.subdivision_id, b.object, b.created_at
                 FROM UNNEST(@refs, @counties) AS input(ref, cnty)
-                INNER JOIN building_2d b ON b.reference = input.ref
+                INNER JOIN {Constants.TableName.Building2D} b ON b.reference = input.ref
                 WHERE (input.cnty IS NULL OR b.county_id = input.cnty);";
 
             List<Building2D> result = [];
@@ -580,9 +635,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // Using the same logic as your GetAdministrativeAreal2DsByPoint2DAsync
             // Search area: [CenterX - effectiveRadius, CenterX + effectiveRadius]
-            string commandText = @"
+            const string commandText = $@"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                FROM building_2d
+                FROM {Constants.TableName.Building2D}
                 WHERE county_id = ANY(@county_ids)
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
                     AND (@x + @effectiveRadius) >= min_x AND (@x - @effectiveRadius) <= max_x
@@ -610,6 +665,51 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return [.. dictionary.Values];
         }
 
+        public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string tableName = Constants.TableName.Building2D;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyId, analyze, cancellationToken);
+        }
+
+        public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
+        }
+
         public async Task<List<Point2D>?> GetPoint2DsByReferences(IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
         {
             if (references is null)
@@ -623,7 +723,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetPoint2DsByReferences(npgsqlConnection, references, countyId, cancellationToken);
         }
@@ -657,7 +757,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 string commandText_Select = $@"
                     SELECT id, county_id, object
-                    FROM building_2D
+                    FROM {Constants.TableName.Building2D}
                     WHERE {filterClause}
                     ORDER BY id ASC
                     FOR UPDATE SKIP LOCKED
@@ -699,7 +799,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
 
                         GIS.Classes.Building2D? building = Core.Convert.ToDiGi<GIS.Classes.Building2D>(Json)?.FirstOrDefault();
-                        if (building is null) continue;
+                        if (building is null)
+                        {
+                            continue;
+                        }
 
                         int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, postgreSQLBuilding2DRefreshOptions.Tolerance);
                         if (subdivisionId.HasValue)
@@ -738,7 +841,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 foreach ((long Id, int CountyId, int SubdivisionId) in updates)
                 {
-                    NpgsqlBatchCommand npgsqlBatchCommand = new("UPDATE building_2D SET subdivision_id = @subdivision_id WHERE id = @id AND county_id = @county_id");
+                    NpgsqlBatchCommand npgsqlBatchCommand = new($"UPDATE {Constants.TableName.Building2D} SET subdivision_id = @subdivision_id WHERE id = @id AND county_id = @county_id");
                     npgsqlBatchCommand.Parameters.AddWithValue("subdivision_id", SubdivisionId);
                     npgsqlBatchCommand.Parameters.AddWithValue("id", Id);
                     npgsqlBatchCommand.Parameters.AddWithValue("county_id", CountyId);
@@ -928,7 +1031,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     // SQL with full update on conflict (excluding ID)
                     NpgsqlBatchCommand npgsqlBatchCommand = new($@"
-                    INSERT INTO building_2D (county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object)
+                    INSERT INTO {Constants.TableName.Building2D} (county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object)
                     VALUES (@county_id, @reference, @code, @min_x, @min_y, @max_x, @max_y, @subdivision_id, @object)
                     ON CONFLICT (reference, county_id)
                     DO UPDATE SET

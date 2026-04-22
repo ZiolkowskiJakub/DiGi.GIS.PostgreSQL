@@ -15,8 +15,8 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             // Using timestamptz to ensure consistent time tracking across different time zones
-            const string commandText = @"
-                CREATE TABLE IF NOT EXISTS administrative_areal_2D (
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.AdministrativeAreal2D} (
                     id SERIAL PRIMARY KEY,
                     reference TEXT NOT NULL UNIQUE,
                     code TEXT,
@@ -93,8 +93,8 @@ namespace DiGi.GIS.PostgreSQL
 
             // Combined command: Create partitioned table and the supporting index
             // The index on the parent table will be inherited by all child partitions.
-            const string commandText = @"
-                CREATE TABLE IF NOT EXISTS building_2D (
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building2D} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
                     county_id INT NOT NULL,
                     reference TEXT NOT NULL,
@@ -111,8 +111,8 @@ namespace DiGi.GIS.PostgreSQL
                 ) PARTITION BY LIST (county_id);
 
                 -- This index handles both: subdivision_id = ANY(@ids) AND subdivision_id IS NULL
-                CREATE INDEX IF NOT EXISTS index_building_2d_subdivision_id
-                ON building_2D (subdivision_id);
+                CREATE INDEX IF NOT EXISTS index_{Constants.TableName.Building2D}_subdivision_id
+                ON {Constants.TableName.Building2D} (subdivision_id);
                 ";
 
             try
@@ -139,7 +139,7 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             string commandText = $@"
-                CREATE TABLE IF NOT EXISTS building_2D_{countyId} PARTITION OF building_2D
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building2D}_{countyId} PARTITION OF {Constants.TableName.Building2D}
                     FOR VALUES IN ({countyId});
                 ";
 
@@ -157,7 +157,6 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            // Added semicolons after each SQL statement to fix the 42601 syntax error
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -260,8 +259,8 @@ namespace DiGi.GIS.PostgreSQL
 
             // Combined command: Create partitioned table and the supporting index
             // The index on the parent table will be inherited by all child partitions.
-            const string commandText = @"
-                CREATE TABLE IF NOT EXISTS orto_datas (
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.OrtoDatas} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
                     county_id INT NOT NULL,
                     reference TEXT NOT NULL,
@@ -276,13 +275,13 @@ namespace DiGi.GIS.PostgreSQL
                 ) PARTITION BY LIST (county_id);
 
                 -- Index for subdivision (already in your code)
-                CREATE INDEX IF NOT EXISTS idx_orto_datas_subdivision
-                ON orto_datas (subdivision_id);
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.OrtoDatas}_subdivision
+                ON {Constants.TableName.OrtoDatas} (subdivision_id);
 
                 -- Optimization: Composite index for County + Reference
                 -- This is highly effective because of your partitioning strategy.
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_orto_datas_ref
-                ON orto_datas (county_id, reference);
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.OrtoDatas}_ref
+                ON {Constants.TableName.OrtoDatas} (county_id, reference);
                 ";
 
             try
@@ -296,7 +295,7 @@ namespace DiGi.GIS.PostgreSQL
             catch (NpgsqlException ex)
             {
                 // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error (OrtoDatas): {ex.Message}");
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_OrtoDatas)}): {ex.Message}");
                 return false;
             }
         }
@@ -309,7 +308,7 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             string commandText = $@"
-                CREATE TABLE IF NOT EXISTS orto_datas_{countyId} PARTITION OF orto_datas
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.OrtoDatas}_{countyId} PARTITION OF {Constants.TableName.OrtoDatas}
                     FOR VALUES IN ({countyId});
                 ";
 

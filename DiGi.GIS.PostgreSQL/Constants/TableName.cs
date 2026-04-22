@@ -1,0 +1,10 @@
+﻿namespace DiGi.GIS.PostgreSQL.Constants
+{
+    public static class TableName
+    {
+        public const string AdministrativeAreal2D = "administrative_areal_2d";
+        public const string Building2D = "building_2d";
+        public const string OrtoDatas = "orto_datas";
+        public const string OrtoDatas_Building2DReference_Update = "orto_datas_building_2d_reference_update";
+    }
+}
