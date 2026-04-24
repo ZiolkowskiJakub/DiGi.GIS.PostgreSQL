@@ -11,7 +11,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public override string TableName => "typology_model";
+        public override string TableName => Constants.TableName.TypologyModel;
 
         protected override TypologyModel Create(int id, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt)
         {

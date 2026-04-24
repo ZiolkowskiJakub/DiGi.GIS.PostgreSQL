@@ -269,7 +269,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     ON CONFLICT (county_id, unique_id)
                     DO UPDATE SET
                         object = EXCLUDED.object,
-                        reference = EXCLUDED.reference,
+                        reference = EXCLUDED.reference
                     RETURNING id;";
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);

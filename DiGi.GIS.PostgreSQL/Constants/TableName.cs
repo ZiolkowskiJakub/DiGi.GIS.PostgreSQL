@@ -6,5 +6,7 @@
         public const string Building2D = "building_2d";
         public const string OrtoDatas = "orto_datas";
         public const string OrtoDatas_Building2DReference_Update = "orto_datas_building_2d_reference_update";
+        public const string YearBuiltData = "year_built_data";
+        public const string TypologyModel = "typology_model";
     }
 }

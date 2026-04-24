@@ -12,7 +12,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public override string TableName => "year_built_data";
+        public override string TableName => Constants.TableName.YearBuiltData;
 
         protected override YearBuiltData Create(long id, int? countyId, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt)
         {
