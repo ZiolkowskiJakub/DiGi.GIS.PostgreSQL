@@ -188,6 +188,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return results?.FirstOrDefault();
         }
 
+        public async Task<Building2D?> GetBuilding2DByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            const string commandText = $@"
+                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                    FROM {Constants.TableName.Building2D}
+                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+
+            return results?.FirstOrDefault();
+        }
+
         public async Task<Building2D?> GetBuilding2DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (point2D is null)
