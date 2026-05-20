@@ -47,14 +47,14 @@
     <Reference Include="DiGi.GIS">
       <HintPath>..\..\DiGi.GIS\bin\DiGi.GIS.dll</HintPath>
     </Reference>
+    <Reference Include="DiGi.GIS.IO">
+      <HintPath>..\..\DiGi.GIS.IO\bin\DiGi.GIS.IO.dll</HintPath>
+    </Reference>
     <Reference Include="DiGi.PostgreSQL">
       <HintPath>..\..\DiGi.PostgreSQL\bin\DiGi.PostgreSQL.dll</HintPath>
     </Reference>
-    <Reference Include="DiGi.PostgreSQL.PartitionReference">
-      <HintPath>..\..\DiGi.PostgreSQL\bin\DiGi.PostgreSQL.PartitionReference.dll</HintPath>
-    </Reference>
-    <Reference Include="DiGi.PostgreSQL.UniqueReference">
-      <HintPath>..\..\DiGi.PostgreSQL\bin\DiGi.PostgreSQL.UniqueReference.dll</HintPath>
+    <Reference Include="DiGi.PostgreSQL.Table">
+      <HintPath>..\..\DiGi.PostgreSQL\bin\DiGi.PostgreSQL.Table.dll</HintPath>
     </Reference>
     <Reference Include="DiGi.Typology">
       <HintPath>..\..\DiGi.Typology\bin\DiGi.Typology.dll</HintPath>
