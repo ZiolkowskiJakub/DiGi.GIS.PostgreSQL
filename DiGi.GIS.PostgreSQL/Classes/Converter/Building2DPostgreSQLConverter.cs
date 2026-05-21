@@ -324,7 +324,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The ID of the county (Partition Key).</param>
         /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
         /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(int countyId, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
         {
             // 1. Check early if cancellation was already requested to avoid unnecessary allocations
             cancellationToken.ThrowIfCancellationRequested();
@@ -343,6 +343,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 FROM {Constants.TableName.Building2D}
                 WHERE county_id = @countyId";
 
+            bool hasSubdivisionId = subdivisionId.HasValue;
+            if (hasSubdivisionId)
+            {
+                commandText += " AND subdivision_id = @subdivisionId";
+            }
+
             bool hasExcluded = excludedReferences != null && excludedReferences.Any();
 
             if (hasExcluded)
@@ -352,6 +358,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            if (hasSubdivisionId)
+            {
+                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId.Value);
+            }
 
             if (hasExcluded)
             {

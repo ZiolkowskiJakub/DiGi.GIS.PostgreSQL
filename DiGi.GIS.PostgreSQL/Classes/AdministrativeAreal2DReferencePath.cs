@@ -49,22 +49,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        public bool Add(AdministrativeAreal2DReference? administrativeAreal2DReference)
-        {
-            if (administrativeAreal2DReference is null)
-            {
-                return false;
-            }
-
-            if (Core.Query.Clone(administrativeAreal2DReference) is not AdministrativeAreal2DReference administrativeAreal2DReference_Clone)
-            {
-                return false;
-            }
-
-            dictionary[administrativeAreal2DReference_Clone.AdministrativeArealType] = administrativeAreal2DReference_Clone;
-            return true;
-        }
-
         [JsonInclude, JsonPropertyName("AdministrativeAreal2DReferences")]
         public List<AdministrativeAreal2DReference> AdministrativeAreal2DReferences
         {
@@ -98,6 +82,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
         }
 
+        public AdministrativeAreal2DReference? this[AdministrativeArealType administrativeArealType]
+        {
+            get
+            {
+                if (!dictionary.TryGetValue(administrativeArealType, out AdministrativeAreal2DReference? result))
+                {
+                    return null;
+                }
+
+                return result;
+            }
+        }
+
+        public bool Add(AdministrativeAreal2DReference? administrativeAreal2DReference)
+        {
+            if (administrativeAreal2DReference is null)
+            {
+                return false;
+            }
+
+            if (Core.Query.Clone(administrativeAreal2DReference) is not AdministrativeAreal2DReference administrativeAreal2DReference_Clone)
+            {
+                return false;
+            }
+
+            dictionary[administrativeAreal2DReference_Clone.AdministrativeArealType] = administrativeAreal2DReference_Clone;
+            return true;
+        }
+        
         public bool Remove(AdministrativeArealType administrativeArealType)
         {
             return dictionary.Remove(administrativeArealType);

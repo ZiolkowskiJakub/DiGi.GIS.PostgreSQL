@@ -42,7 +42,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Enums.AdministrativeArealType.Subdivison);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Enums.AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
             if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return false;
@@ -50,20 +50,37 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             foreach(AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
             {
+                if (administrativeAreal2DReference.CountyId is not int countyId)
+                {
+                    continue;
+                }
+
                 AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference);
 
-                List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(administrativeAreal2DReference.CountyId.Value);
-                if(building2DReferences is null || building2DReferences.Count == 0)
+                AdministrativeAreal2DReference? AdministrativeAreal2DReference_Subdivision = administrativeAreal2DReferencePath?[Enums.AdministrativeArealType.Subdivison];
+
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id));
+
+                List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(administrativeAreal2DReference.CountyId.Value, AdministrativeAreal2DReference_Subdivision?.Id, cancellationToken: cancellationToken);
+                if (building2DReferences is null || building2DReferences.Count == 0)
                 {
-                    //TODO: Finish implementation
-                    throw new System.NotImplementedException();
+                    continue;
                 }
+
+                List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences);
+                if(building2Ds is null || building2Ds.Count == 0)
+                {
+                    continue;
+                }
+
+                Core.IO.Table.Classes.Table table = new();
+
+                IO.Modify.Update(table, countyId, AdministrativeAreal2DReference_Subdivision?.Id, building2Ds?.ConvertAll(x => x.ToDiGi()!), administrativeAreal2Ds: administrativeAreal2Ds?.ConvertAll(x => x.ToDiGi()!));
+
+
             }
 
-            
-
-
-            throw new NotImplementedException();
+            return false;
         }
     }
 }

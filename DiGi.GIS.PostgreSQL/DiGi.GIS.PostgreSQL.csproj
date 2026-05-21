@@ -47,6 +47,9 @@
     <Reference Include="DiGi.GIS">
       <HintPath>..\..\DiGi.GIS\bin\DiGi.GIS.dll</HintPath>
     </Reference>
+    <Reference Include="DiGi.GIS.Emgu.CV">
+      <HintPath>..\..\DiGi.GIS.Emgu.CV\bin\DiGi.GIS.Emgu.CV.dll</HintPath>
+    </Reference>
     <Reference Include="DiGi.GIS.IO">
       <HintPath>..\..\DiGi.GIS.IO\bin\DiGi.GIS.IO.dll</HintPath>
     </Reference>
