@@ -361,7 +361,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (hasSubdivisionId)
             {
-                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId.Value);
+                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId!.Value);
             }
 
             if (hasExcluded)
