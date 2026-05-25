@@ -40,7 +40,7 @@ namespace DiGi.GIS.PostgreSQL
                 if (connectionData is not null)
                 {
                     result.Add(new OrtoDatasPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
-                    result.Add(new Building2DTablePostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
+                    result.Add(new BuildingDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
                 }
             }
 

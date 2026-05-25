@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class PostgreSQLUpdateBuilding2DDataTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
+    public class PostgreSQLUpdateBuildingDataTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
         private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
-        public PostgreSQLUpdateBuilding2DDataTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
+        public PostgreSQLUpdateBuildingDataTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
         {
             this.gISPostgreSQLConverterManager = gISPostgreSQLConverterManager ?? throw new ArgumentNullException(nameof(gISPostgreSQLConverterManager));
         }
@@ -24,8 +24,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
-            Building2DTablePostgreSQLConverter? building2DTablePostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DTablePostgreSQLConverter>();
-            if(building2DTablePostgreSQLConverter is null)
+            BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingDataPostgreSQLConverter>();
+            if (buildingDataPostgreSQLConverter is null)
             {
                 return false;
             }
@@ -43,14 +43,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Enums.AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
-            if(administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return false;
             }
 
             long totalUpdated = 0;
 
-            foreach(AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
+            foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
             {
                 if (administrativeAreal2DReference.CountyId is not int countyId)
                 {
@@ -77,12 +77,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences);
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-
                 }
 
-                if(building2Ds is null || building2Ds.Count == 0)
+                if (building2Ds is null || building2Ds.Count == 0)
                 {
                     continue;
                 }
@@ -93,28 +92,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     IO.Modify.Update(table, countyId, administrativeAreal2DReference_Subdivision?.Id, building2Ds?.ConvertAll(x => x.ToDiGi()!), administrativeAreal2Ds: administrativeAreal2Ds?.ConvertAll(x => x.ToDiGi()!));
                 }
-                catch(Exception exception)
+                catch (Exception)
                 {
-
                 }
 
-                if(table is not null)
+                if (table is not null)
                 {
                     int count = table.RowCount;
 
-                    if(count != 0)
+                    if (count != 0)
                     {
                         bool updated = false;
                         try
                         {
-                            updated = await building2DTablePostgreSQLConverter.PushAsync(table);
+                            updated = await buildingDataPostgreSQLConverter.PushAsync(table);
                         }
-                        catch (Exception exception)
+                        catch (Exception)
                         {
-
                         }
 
-                        if(updated)
+                        if (updated)
                         {
                             totalUpdated += count;
                             progress.Report(totalUpdated);

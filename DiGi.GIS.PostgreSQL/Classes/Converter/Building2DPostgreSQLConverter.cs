@@ -616,7 +616,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 FROM UNNEST(@refs, @counties) AS input(ref, cnty)
                 INNER JOIN {Constants.TableName.Building2D} b ON b.reference = input.ref
                 WHERE (input.cnty IS NULL OR b.county_id = input.cnty);";
-            
+
             List<Building2D> result = [];
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);

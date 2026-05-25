@@ -10,5 +10,6 @@
         public const string TypologyModel = "typology_model";
         public const string OccupancyData_Building2D = "occupancy_data_building_2d";
         public const string OccupancyData_AdministrativeAreal2D = "occupancy_data_administrative_areal_2d";
+        public const string BuildingData = "building_data";
     }
 }

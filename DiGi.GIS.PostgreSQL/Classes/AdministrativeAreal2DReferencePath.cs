@@ -110,7 +110,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             dictionary[administrativeAreal2DReference_Clone.AdministrativeArealType] = administrativeAreal2DReference_Clone;
             return true;
         }
-        
+
         public bool Remove(AdministrativeArealType administrativeArealType)
         {
             return dictionary.Remove(administrativeArealType);
