@@ -522,6 +522,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">BoundingBox2D</param>
         /// <param name="administrativeArealType">AdministrativeArealType</param>
         /// <param name="tolerance">Tolerance</param>
+        /// <param name="cancellationToken"></param>
         /// <returns>AdministrativeAreal2D list</returns>
         public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
@@ -559,6 +560,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">BoundingBox2D</param>
         /// <param name="administrativeArealTypes">AdministrativeArealTypes</param>
         /// <param name="tolerance">Tolerance</param>
+        /// <param name="cancellationToken"></param>
         /// <returns>AdministrativeAreal2D list</returns>
         public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
@@ -883,7 +885,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Searches for administrative areas by name (case-insensitive) and returns a list of references.
         /// </summary>
-        /// <param name="npgsqlConnection">Existing Npgsql connection.</param>
         /// <param name="text">The text to search for within the name column.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A list of AdministrativeAreal2DReference objects matching the search criteria.</returns>

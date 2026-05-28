@@ -31,34 +31,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public async Task<Table?> PullAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
         {
-            if(npgsqlConnection is null || references is null || !references.Any() || columnUniqueIds is null || !columnUniqueIds.Any())
+            if (npgsqlConnection is null || references is null || !references.Any())
             {
                 return null;
             }
 
-            HashSet<string> columnUniqueIds_Temp = [];
-            foreach(string columnUniqueId in columnUniqueIds)
-            {
-                columnUniqueIds_Temp.Add(columnUniqueId);
-            }
+            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
             List<Column> columns = await GetColumnsByUniqueIds(npgsqlConnection, columnUniqueIds_Temp) ?? [];
-            
+
             Table table = new(columns);
 
             Column? column_Reference = table.UpdateColumn<Column>(IO.Constants.Column.Reference);
-            if(column_Reference is null)
+            if (column_Reference is null)
             {
                 return null;
             }
-            
+
             Column? column_CountyId = countyId is null ? null : table.UpdateColumn<Column>(IO.Constants.Column.CountyId);
 
-            foreach(string reference in references)
+            foreach (string reference in references)
             {
                 Dictionary<int, object?> values = [];
                 values[column_Reference.Index] = reference;
-                if(column_CountyId is not null)
+                if (column_CountyId is not null)
                 {
                     values[column_CountyId.Index] = countyId;
                 }
@@ -70,7 +66,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return table;
         }
-    
+
         public async Task<Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);

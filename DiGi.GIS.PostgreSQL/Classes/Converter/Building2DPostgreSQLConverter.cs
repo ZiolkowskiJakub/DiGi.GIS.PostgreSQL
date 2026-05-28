@@ -322,7 +322,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Optimized for partitioned tables using the partition key (county_id).
         /// </summary>
         /// <param name="countyId">The ID of the county (Partition Key).</param>
+        /// <param name="subdivisionId">The ID of the subdivision.</param>
         /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
         public async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
         {
