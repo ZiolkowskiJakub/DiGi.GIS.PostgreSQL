@@ -531,6 +531,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
+            double searchMinX = boundingBox2D.Min.X - tolerance;
+            double searchMinY = boundingBox2D.Min.Y - tolerance;
+            double searchMaxX = boundingBox2D.Max.X + tolerance;
+            double searchMaxY = boundingBox2D.Max.Y + tolerance;
+
             // Applying tolerance:
             // The point is considered within range if its tolerance buffer intersects with the bounding box
             // (x + tolerance) >= min_x AND (x - tolerance) <= max_x (apply the same logic for the Y axis)
@@ -538,16 +543,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE type_id = @typeId
-                    AND (@minX - @tolerance) <= max_x AND (@maxX + @tolerance) >= min_x
-                    AND (@minY - @tolerance) <= max_y AND (@maxY + @tolerance) >= min_y;");
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))");
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
@@ -788,6 +791,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.AdministrativeAreal2D, cancellationToken);
+        }
+
+        public async Task<bool> CreateTableAsync(int commandTimeout = 30)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool result = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection, commandTimeout);
+            if(result)
+            {
+                await DiGi.PostgreSQL.Modify.Analyze(npgsqlConnection, TableName.AdministrativeAreal2D, commandTimeout);
+            }
+
+            return result;
         }
 
         public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code)

@@ -164,6 +164,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, Constants.TableName.Building2D);
         }
 
+        public async Task<bool> CreateTableAsync(int commandTimeout = 30)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool result = await Create.TableAsync_Building2D(npgsqlConnection, commandTimeout);
+            if (result)
+            {
+                await DiGi.PostgreSQL.Modify.Analyze(npgsqlConnection, Constants.TableName.Building2D, commandTimeout);
+            }
+
+            return result;
+        }
+
         public async Task<Building2D?> GetBuilding2DByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -181,30 +200,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-
-            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-
-            return results?.FirstOrDefault();
-        }
-
-        public async Task<Building2D?> GetBuilding2DByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
-        {
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            const string commandText = $@"
-                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                    FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("reference", reference);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
 
             List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
@@ -262,6 +257,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return null;
+        }
+
+        public async Task<Building2D?> GetBuilding2DByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            const string commandText = $@"
+                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                    FROM {Constants.TableName.Building2D}
+                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+
+            return results?.FirstOrDefault();
         }
 
         public async Task<Building2DReference?> GetBuilding2DReferenceByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
@@ -518,7 +537,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-
             if (npgsqlConnection is null)
             {
                 return null;
@@ -526,69 +544,57 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            // 1. Get areas once
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, [AdministrativeArealType.Subdivison], tolerance);
+            // 1. Get administrative areas to identify which partitions (counties) to hit
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivison, tolerance);
 
-            Dictionary<string, Building2D> dictionary = [];
+            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            {
+                return [];
+            }
 
-            // Prepare pre-calculated boundaries for SQL performance
-            double minX = boundingBox2D.Min.X - tolerance;
-            double maxX = boundingBox2D.Max.X + tolerance;
-            double minY = boundingBox2D.Min.Y - tolerance;
-            double maxY = boundingBox2D.Max.Y + tolerance;
+            Dictionary<string, Building2D> dictionary = new Dictionary<string, Building2D>();
 
-            // Use a single query for everything (Subdivisions OR NULLs)
-            // This query uses ANY() to avoid the N+1 problem
+            // 2. Prepare pre-calculated boundaries for the 'box' constructor
+            double searchMinX = boundingBox2D.Min.X - tolerance;
+            double searchMaxX = boundingBox2D.Max.X + tolerance;
+            double searchMinY = boundingBox2D.Min.Y - tolerance;
+            double searchMaxY = boundingBox2D.Max.Y + tolerance;
+
+            // 3. Optimized Query:
+            // - county_id = ANY(@county_ids) triggers Partition Pruning
+            // - box && box triggers GiST index scan on those partitions
             const string commandText = $@"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                 FROM {Constants.TableName.Building2D}
                 WHERE county_id = ANY(@county_ids)
                     AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
-                    AND @minX <= max_x AND @maxX >= min_x
-                    AND @minY <= max_y AND @maxY >= min_y;";
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@sMinX, @sMinY), point(@sMaxX, @sMaxY));";
 
-            if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
+            int[] countyIds = [.. administrativeAreal2Ds.Select(a => a.CountyId).OfType<int>().Distinct()];
+            int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+
+            List<Building2D>? building2Ds = await ReadAsync_Building2D(npgsqlCommand);
+
+            if (building2Ds is not null)
             {
-                // Extract IDs into arrays for Npgsql
-                int?[] countyIds = [.. administrativeAreal2Ds.Select(a => a.CountyId).Distinct()];
-                int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
-
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-                NpgsqlParameter npgsqlParameter;
-
-                // Use explicit NpgsqlParameters for arrays to ensure correct type mapping
-                npgsqlParameter = new("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+                foreach (Building2D building in building2Ds)
                 {
-                    Value = (object?)countyIds ?? DBNull.Value
-                };
-                npgsqlCommand.Parameters.Add(npgsqlParameter);
-
-                npgsqlParameter = new("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer)
-                {
-                    Value = (object?)subdivisionIds ?? DBNull.Value
-                };
-                npgsqlCommand.Parameters.Add(npgsqlParameter);
-
-                npgsqlCommand.Parameters.AddWithValue("minX", minX);
-                npgsqlCommand.Parameters.AddWithValue("maxX", maxX);
-                npgsqlCommand.Parameters.AddWithValue("minY", minY);
-                npgsqlCommand.Parameters.AddWithValue("maxY", maxY);
-
-                List<Building2D>? building2Ds = await ReadAsync_Building2D(npgsqlCommand);
-
-                if (building2Ds is not null)
-                {
-                    foreach (Building2D building in building2Ds)
-                    {
-                        // Efficiently build a unique key
-                        string key = $"{building.CountyId}_{building.Reference}";
-                        dictionary.TryAdd(key, building);
-                    }
+                    // Building a unique key to prevent duplicates (in case a building overlaps partition logic)
+                    string key = $"{building.CountyId}_{building.Reference}";
+                    dictionary.TryAdd(key, building);
                 }
             }
 
-            return [.. dictionary.Values];
+            return dictionary.Values.ToList();
         }
 
         /// <summary>

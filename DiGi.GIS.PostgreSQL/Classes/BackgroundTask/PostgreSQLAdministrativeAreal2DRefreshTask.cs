@@ -6,12 +6,18 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
+    /// <summary>
+    /// Represents a background task that refreshes the PostgreSQL data for AdministrativeAreal2D.
+    /// </summary>
     public class PostgreSQLAdministrativeAreal2DRefreshTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
+        /// <summary>
+        /// Gets the AdministrativeAreal2D PostgreSQL converter used to refresh the data.
+        /// </summary>
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
 
         /// <summary>
-        /// Configuration for the PostgreSQL operation.
+        /// Gets the configuration for the PostgreSQL operation.
         /// These options will be used when RunAsync is triggered.
         /// </summary>
         public PostgreSQLAdministrativeAreal2DRefreshOptions PostgreSQLAdministrativeAreal2DRefreshOptions { get; set; } = new PostgreSQLAdministrativeAreal2DRefreshOptions();
@@ -25,8 +31,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Concrete implementation of the background work.
+        /// Executes the background task to refresh the PostgreSQL data for AdministrativeAreal2D.
         /// </summary>
+        /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation. Returns true if the refresh was successful; otherwise, false.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             // We pass the token to your C# DLL to ensure the

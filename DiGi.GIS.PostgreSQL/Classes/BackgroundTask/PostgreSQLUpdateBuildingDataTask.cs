@@ -7,8 +7,14 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
+    /// <summary>
+    /// Represents a background task that updates building data from AdministrativeAreal2D and Building2D sources.
+    /// </summary>
     public class PostgreSQLUpdateBuildingDataTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
+        /// <summary>
+        /// Gets the GIS PostgreSQL converter manager used to retrieve converters and execute operations.
+        /// </summary>
         private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         /// <summary>
@@ -20,8 +26,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Concrete implementation of the background work.
+        /// Executes the background task to update building data from AdministrativeAreal2D and Building2D sources.
         /// </summary>
+        /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation. Returns true if the update was successful; otherwise, false.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingDataPostgreSQLConverter>();

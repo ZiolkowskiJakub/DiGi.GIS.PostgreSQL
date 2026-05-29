@@ -7,7 +7,7 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Create
     {
-        public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
         {
             if (npgsqlConnection is null)
             {
@@ -32,20 +32,33 @@ namespace DiGi.GIS.PostgreSQL
                     municipality_id INT,
                     object JSONB,
                     created_at timestamptz DEFAULT now()
-                );";
+                );
+
+                -- 1. Spatial index using GiST and box type for fast Bounding Box searches
+                -- This index directly supports the '&&' operator used in GetAdministrativeAreal2DsByBoundingBox2DAsync
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_bbox
+                ON {Constants.TableName.AdministrativeAreal2D} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
+
+                -- 2. Index for type filtering (often used together with spatial queries)
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_type_id
+                ON {Constants.TableName.AdministrativeAreal2D} (type_id);
+
+                -- 3. Composite indices for hierarchical administrative lookups
+                -- These speed up filtering by voivodeship, county, etc.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_hierarchy
+                ON {Constants.TableName.AdministrativeAreal2D} (voivodeship_id, county_id, municipality_id);";
 
             try
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync();
                 return true;
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException)
             {
-                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_AdministrativeArea2D)}): {ex.Message}");
                 return false;
             }
         }
@@ -84,7 +97,7 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
-        public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
         {
             if (npgsqlConnection is null)
             {
@@ -110,8 +123,15 @@ namespace DiGi.GIS.PostgreSQL
                     UNIQUE (reference, county_id)
                 ) PARTITION BY LIST (county_id);
 
-                -- This index handles both: subdivision_id = ANY(@ids) AND subdivision_id IS NULL
-                CREATE INDEX IF NOT EXISTS index_{Constants.TableName.Building2D}_subdivision_id
+                -- 1. CRITICAL: Spatial index using GiST and box type.
+                -- This is essential for Bounding Box searches at the scale of millions of buildings.
+                -- It allows PostgreSQL to perform an R-Tree search instead of a Sequential Scan.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building2D}_bbox
+                ON {Constants.TableName.Building2D} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
+
+                -- 2. Hierarchy index: Subdivision filtering.
+                -- Useful for grouping buildings within estates or specific technical zones.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building2D}_subdivision_id
                 ON {Constants.TableName.Building2D} (subdivision_id);
                 ";
 
@@ -119,14 +139,13 @@ namespace DiGi.GIS.PostgreSQL
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync();
                 return true;
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException)
             {
-                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Building2D)}): {ex.Message}");
                 return false;
             }
         }
