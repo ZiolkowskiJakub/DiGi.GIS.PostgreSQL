@@ -804,7 +804,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync();
 
             bool result = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection, commandTimeout);
-            if(result)
+            if (result)
             {
                 await DiGi.PostgreSQL.Modify.Analyze(npgsqlConnection, TableName.AdministrativeAreal2D, commandTimeout);
             }
