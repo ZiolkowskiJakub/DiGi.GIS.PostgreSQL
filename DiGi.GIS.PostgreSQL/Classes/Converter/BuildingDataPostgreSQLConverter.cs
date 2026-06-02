@@ -1,5 +1,4 @@
-﻿using DiGi.Core.IO.Table.Classes;
-using DiGi.GIS.IO;
+﻿using DiGi.GIS.IO;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using DiGi.PostgreSQL.Table.Classes;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
-    public class BuildingDataPostgreSQLConverter : TablePostgreSQLConverter<Column>, IGISPostgreSQLConverter
+    public class BuildingDataPostgreSQLConverter : TablePostgreSQLConverter<Core.IO.Table.Classes.Column>, IGISPostgreSQLConverter
     {
         public BuildingDataPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
@@ -19,17 +18,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         public override string TableName => Constants.TableName.BuildingData;
 
-        protected override TableConversionOptions<Column>? TableConversionOptions => new()
+        protected override TableConversionOptions<Core.IO.Table.Classes.Column>? TableConversionOptions => new()
         {
             PrimaryKeyColumns = [IO.Constants.Column.CountyId, IO.Constants.Column.Reference],
-            PartitioningOptions = new PartitioningOptions<Column>()
+            PartitioningOptions = new PartitioningOptions<Core.IO.Table.Classes.Column>()
             {
                 Column = IO.Constants.Column.CountyId,
                 PartitioningRule = new ValuePartitioningRule()
             }
         };
 
-        public async Task<Table?> PullAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
         {
             if (npgsqlConnection is null || references is null || !references.Any())
             {
@@ -38,17 +37,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            List<Column> columns = await GetColumnsByUniqueIds(npgsqlConnection, columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIds(npgsqlConnection, columnUniqueIds_Temp) ?? [];
 
-            Table table = new(columns);
+            Core.IO.Table.Classes.Table table = new(columns);
 
-            Column? column_Reference = table.UpdateColumn<Column>(IO.Constants.Column.Reference);
+            Core.IO.Table.Classes.Column? column_Reference = table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
             if (column_Reference is null)
             {
                 return null;
             }
 
-            Column? column_CountyId = countyId is null ? null : table.UpdateColumn<Column>(IO.Constants.Column.CountyId);
+            Core.IO.Table.Classes.Column? column_CountyId = countyId is null ? null : table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
 
             foreach (string reference in references)
             {
@@ -67,7 +66,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return table;
         }
 
-        public async Task<Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
