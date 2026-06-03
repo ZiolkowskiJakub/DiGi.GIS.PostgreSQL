@@ -40,13 +40,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Gets or sets the county ID associated with this area reference.
+        /// Gets or sets the county ID associated with this item.
         /// </summary>
         [JsonInclude, JsonPropertyName("CountyId")]
         public int? CountyId { get; set; }
 
         /// <summary>
-        /// Gets or sets the reference string associated with this area.
+        /// Gets or sets the reference string associated with this item.
         /// </summary>
         [JsonInclude, JsonPropertyName("Reference")]
         public string? Reference { get; set; }
