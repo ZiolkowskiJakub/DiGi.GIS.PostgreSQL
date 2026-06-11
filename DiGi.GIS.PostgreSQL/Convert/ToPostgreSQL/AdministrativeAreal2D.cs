@@ -4,6 +4,11 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Convert
     {
+        /// <summary>
+        /// Converts a GIS administrative areal 2D object to its PostgreSQL representation.
+        /// </summary>
+        /// <param name="administrativeAreal2D">The source administrative areal 2D object to convert.</param>
+        /// <returns>The converted <see cref="AdministrativeAreal2D"/> object, or null if the input is null.</returns>
         public static AdministrativeAreal2D? ToPostgreSQL(this GIS.Classes.AdministrativeAreal2D? administrativeAreal2D)
         {
             if (administrativeAreal2D is null)

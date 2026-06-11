@@ -7,6 +7,12 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Create
     {
+        /// <summary>
+        /// Asynchronously creates the AdministrativeArea2D table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
         {
             if (npgsqlConnection is null)
@@ -63,6 +69,12 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates the AdministrativeArea2DReferencedObject table for the specified table name.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="tableName">The name of the table associated with the administrative area 2D referenced object.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
         {
             if (npgsqlConnection is null)
@@ -97,6 +109,12 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates the Building2D table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
         {
             if (npgsqlConnection is null)
@@ -150,6 +168,12 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates a partition for the Building2D table associated with the specified county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="countyId">The integer identifier of the county for which the partition is being created.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the Building2D partition was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2D_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
         {
             if (npgsqlConnection is null)
@@ -169,6 +193,13 @@ namespace DiGi.GIS.PostgreSQL
             return true;
         }
 
+        /// <summary>
+        /// Asynchronously creates the Building 2D reference table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="tableName">The name of the table to be created for Building 2D references.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other methods as a token for cancelling the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
@@ -209,6 +240,12 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates the Building 2D Referenced Object table for the specified table name.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
+        /// <returns>A <see cref="System.Threading.Tasks.Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
         {
             if (npgsqlConnection is null)
@@ -250,6 +287,13 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates a partition for the Building2DReferencedObject table based on the specified table name and county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="tableName">The name of the parent table that is being partitioned.</param>
+        /// <param name="countyId">The integer identifier of the county for which the partition is created.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2DReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId)
         {
             if (npgsqlConnection is null)
@@ -269,6 +313,11 @@ namespace DiGi.GIS.PostgreSQL
             return true;
         }
 
+        /// <summary>
+        /// Asynchronously creates the OrtoDatas table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the OrtoDatas table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
         {
             if (npgsqlConnection is null)
@@ -319,6 +368,12 @@ namespace DiGi.GIS.PostgreSQL
             }
         }
 
+        /// <summary>
+        /// Asynchronously creates a partition for the OrtoDatas table based on the specified county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_OrtoDatas_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
         {
             if (npgsqlConnection is null)

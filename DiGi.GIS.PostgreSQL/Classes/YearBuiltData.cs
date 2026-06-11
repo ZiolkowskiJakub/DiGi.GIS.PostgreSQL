@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.Interfaces;
+using DiGi.GIS.Interfaces;
 using System.Text.Json.Nodes;
 
 namespace DiGi.GIS.PostgreSQL.Classes

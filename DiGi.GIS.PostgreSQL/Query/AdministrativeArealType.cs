@@ -1,9 +1,14 @@
-﻿using DiGi.GIS.PostgreSQL.Enums;
+using DiGi.GIS.PostgreSQL.Enums;
 
 namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Query
     {
+        /// <summary>
+        /// Determines the administrative areal type based on the provided administrative areal object.
+        /// </summary>
+        /// <param name="administrativeAreal2D">The administrative areal object to evaluate.</param>
+        /// <returns>The corresponding <see cref="Enums.AdministrativeArealType"/>.</returns>
         public static AdministrativeArealType AdministrativeArealType(this GIS.Classes.AdministrativeAreal2D? administrativeAreal2D)
         {
             if (administrativeAreal2D is null)
@@ -24,6 +29,11 @@ namespace DiGi.GIS.PostgreSQL
             return Enums.AdministrativeArealType.Undefined;
         }
 
+        /// <summary>
+        /// Maps a GIS administrative division type to the PostgreSQL administrative areal type.
+        /// </summary>
+        /// <param name="administrativeDivisionType">The GIS administrative division type.</param>
+        /// <returns>The corresponding <see cref="Enums.AdministrativeArealType"/>.</returns>
         public static AdministrativeArealType AdministrativeArealType(this GIS.Enums.AdministrativeDivisionType administrativeDivisionType)
         {
             return administrativeDivisionType switch

@@ -18,6 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
+        /// <param name="administrativeAreal2DPostgreSQLConverter">The AdministrativeAreal2D PostgreSQL converter used to create the table.</param>
         public PostgreSQLAdministrativeAreal2DCreateTableTask(AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter ?? throw new ArgumentNullException(nameof(administrativeAreal2DPostgreSQLConverter));

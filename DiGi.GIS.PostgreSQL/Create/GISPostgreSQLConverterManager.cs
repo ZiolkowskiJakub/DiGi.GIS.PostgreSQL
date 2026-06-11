@@ -7,6 +7,11 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Create
     {
+        /// <summary>
+        /// Initializes and returns a new instance of the <see cref="GISPostgreSQLConverterManager"/>, 
+        /// configured using local configuration files from the executing assembly's directory.
+        /// </summary>
+        /// <returns>A configured <see cref="GISPostgreSQLConverterManager"/> if successful; otherwise, null.</returns>
         public static GISPostgreSQLConverterManager? GISPostgreSQLConverterManager()
         {
             string? directory_ExecutingAssembly = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

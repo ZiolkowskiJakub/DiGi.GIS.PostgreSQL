@@ -18,6 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
+        /// <param name="gISPostgreSQLConverterManager">The GIS PostgreSQL converter manager used to create the database.</param>
         public PostgreSQLOrtoDatasCreateDatabaseTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
         {
             this.gISPostgreSQLConverterManager = gISPostgreSQLConverterManager ?? throw new ArgumentNullException(nameof(gISPostgreSQLConverterManager));

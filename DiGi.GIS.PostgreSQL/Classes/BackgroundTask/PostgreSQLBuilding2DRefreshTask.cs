@@ -25,6 +25,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
+        /// <param name="building2DPostgreSQLConverter">The Building2D PostgreSQL converter used to refresh the data.</param>
         public PostgreSQLBuilding2DRefreshTask(Building2DPostgreSQLConverter building2DPostgreSQLConverter)
         {
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter ?? throw new ArgumentNullException(nameof(building2DPostgreSQLConverter));

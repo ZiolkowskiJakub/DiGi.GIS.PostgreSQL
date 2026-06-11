@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
 using System.Threading.Tasks;
@@ -18,6 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
+        /// <param name="building2DPostgreSQLConverter">The Building2D PostgreSQL converter used to create the table.</param>
         public PostgreSQLBuilding2DCreateTableTask(Building2DPostgreSQLConverter building2DPostgreSQLConverter)
         {
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter ?? throw new ArgumentNullException(nameof(building2DPostgreSQLConverter));

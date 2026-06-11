@@ -8,6 +8,14 @@ namespace DiGi.GIS.PostgreSQL
 {
     public static partial class Modify
     {
+        /// <summary>
+        /// Asynchronously refreshes orthodata in the PostgreSQL database based on the specified options.
+        /// </summary>
+        /// <param name="gISPostgreSQLConverterManager">The manager used to retrieve the necessary PostgreSQL converters.</param>
+        /// <param name="PostgreSQLOrtoDatasRefreshOptions">The options specifying how the orthodata should be refreshed.</param>
+        /// <param name="progress">An optional progress reporter to track the number of processed building references.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the refresh succeeded; otherwise, false.</returns>
         public static async Task<bool> RefreshOrtoDatas(this GISPostgreSQLConverterManager? gISPostgreSQLConverterManager, PostgreSQLOrtoDatasRefreshOptions PostgreSQLOrtoDatasRefreshOptions, IProgress<long>? progress = null, CancellationToken cancellationToken = default)
         {
             if (gISPostgreSQLConverterManager?.GetPostgreSQLConverter<AdministrativeAreal2DPostgreSQLConverter>() is not AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)

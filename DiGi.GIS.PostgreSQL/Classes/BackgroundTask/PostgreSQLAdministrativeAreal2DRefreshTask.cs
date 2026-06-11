@@ -25,6 +25,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
+        /// <param name="administrativeAreal2DPostgreSQLConverter">The AdministrativeAreal2D PostgreSQL converter used to refresh the data.</param>
         public PostgreSQLAdministrativeAreal2DRefreshTask(AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter ?? throw new ArgumentNullException(nameof(administrativeAreal2DPostgreSQLConverter));

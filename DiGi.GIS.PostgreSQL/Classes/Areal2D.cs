@@ -1,4 +1,4 @@
-﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Planar.Classes;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
