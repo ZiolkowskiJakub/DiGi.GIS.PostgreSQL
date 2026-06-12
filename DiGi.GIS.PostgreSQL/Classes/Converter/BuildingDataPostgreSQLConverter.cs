@@ -328,14 +328,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously computes aggregate statistics on a specific building data column inside a county partition.
+        /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
-        /// <param name="aggregateFunction">The aggregate calculation function.</param>
+        /// <param name="singlevalueAggregateFunction">The single-value aggregate calculation function.</param>
         /// <param name="countyId">The partition county identifier.</param>
-        /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, AggregateFunction aggregateFunction, int countyId, string? separator = null)
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(
+            string columnUniqueId,
+            DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction singlevalueAggregateFunction,
+            int countyId)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -347,7 +349,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(
                 npgsqlConnection_Db,
                 columnUniqueId,
-                aggregateFunction,
+                singlevalueAggregateFunction,
+                countyId);
+        }
+
+        /// <summary>
+        /// Asynchronously computes multi-value aggregate statistics on a specific building data column inside a county partition.
+        /// </summary>
+        /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
+        /// <param name="multivalueAggregateFunction">The multi-value aggregate calculation function.</param>
+        /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
+        /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(
+            string columnUniqueId,
+            DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction multivalueAggregateFunction,
+            int countyId,
+            string? separator = null)
+        {
+            await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection_Db is null)
+            {
+                return null;
+            }
+            await npgsqlConnection_Db.OpenAsync();
+
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(
+                npgsqlConnection_Db,
+                columnUniqueId,
+                multivalueAggregateFunction,
                 countyId,
                 separator);
         }
