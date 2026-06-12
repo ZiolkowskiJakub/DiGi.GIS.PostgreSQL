@@ -1,7 +1,9 @@
-﻿using DiGi.GIS.IO;
+using DiGi.GIS.IO;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
+using DiGi.PostgreSQL.Table;
 using DiGi.PostgreSQL.Table.Classes;
+using DiGi.PostgreSQL.Table.Enums;
 using Npgsql;
 using System;
 using System.Collections.Generic;
@@ -288,6 +290,89 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync();
 
             return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize);
+        }
+
+        /// <summary>
+        /// Asynchronously pulls a keyset-paginated chunk of building data from a partition county.
+        /// </summary>
+        /// <param name="countyId">The partition key identifying the county.</param>
+        /// <param name="columnUniqueIds">The optional list of column unique identifiers to project.</param>
+        /// <param name="lastReference">The last reference string from the previous page used as the cursor seek-key.</param>
+        /// <param name="pageSize">The page size count limit.</param>
+        /// <returns>A task representing the async operation, returning the populated <see cref="Core.IO.Table.Classes.Table"/> if successful; otherwise, null.</returns>
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250)
+        {
+            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? new List<Core.IO.Table.Classes.Column>();
+            
+            Core.IO.Table.Classes.Table table_Result = new Core.IO.Table.Classes.Table(columns);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
+
+            await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection_Db is null)
+            {
+                return null;
+            }
+            await npgsqlConnection_Db.OpenAsync();
+
+            bool isSuccess = await PullAsync(
+                npgsqlConnection_Db,
+                table_Result,
+                IO.Constants.Column.Reference.UniqueId()!,
+                lastReference,
+                pageSize,
+                countyId);
+
+            return isSuccess ? table_Result : null;
+        }
+
+        /// <summary>
+        /// Asynchronously computes aggregate statistics on a specific building data column inside a county partition.
+        /// </summary>
+        /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
+        /// <param name="aggregateFunction">The aggregate calculation function.</param>
+        /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
+        /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, AggregateFunction aggregateFunction, int countyId, string? separator = null)
+        {
+            await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection_Db is null)
+            {
+                return null;
+            }
+            await npgsqlConnection_Db.OpenAsync();
+
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(
+                npgsqlConnection_Db,
+                columnUniqueId,
+                aggregateFunction,
+                countyId,
+                separator);
+        }
+
+        /// <summary>
+        /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition.
+        /// </summary>
+        /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
+        /// <param name="bucketCount">The total number of buckets to segment the value range into.</param>
+        /// <param name="countyId">The partition county identifier.</param>
+        /// <returns>A task representing the async operation, returning the histogram aggregate result as a <see cref="System.Text.Json.Nodes.JsonArray"/>.</returns>
+        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int countyId)
+        {
+            await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection_Db is null)
+            {
+                return null;
+            }
+            await npgsqlConnection_Db.OpenAsync();
+
+            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(
+                npgsqlConnection_Db,
+                columnUniqueId,
+                bucketCount,
+                countyId);
         }
     }
 }
