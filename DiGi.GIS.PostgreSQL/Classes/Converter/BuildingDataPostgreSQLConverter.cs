@@ -303,9 +303,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public async Task<Core.IO.Table.Classes.Table?> PullAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250)
         {
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? new List<Core.IO.Table.Classes.Column>();
-            
-            Core.IO.Table.Classes.Table table_Result = new Core.IO.Table.Classes.Table(columns);
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? [];
+
+            Core.IO.Table.Classes.Table table_Result = new(columns);
             table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
             table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
 

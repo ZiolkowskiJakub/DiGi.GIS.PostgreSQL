@@ -79,7 +79,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id));
 
-                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(administrativeAreal2DReference.CountyId.Value, administrativeAreal2DReference_Subdivision?.Id, cancellationToken: cancellationToken);
+                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(administrativeAreal2DReference.CountyId.Value, administrativeAreal2DReference_Subdivision?.Id, null, cancellationToken);
                     if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;

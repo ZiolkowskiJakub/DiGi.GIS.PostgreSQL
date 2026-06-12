@@ -27,12 +27,66 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously counts the number of 2D buildings for a specified county, with optional filtering by subdivision identifiers.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
+        /// <param name="countyId">The integer identifier of the county (Partition Key).</param>
+        /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer, or -1 if the connection is null.</returns>
+        public static async Task<long> CountAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection == null)
+            {
+                return -1;
+            }
+
+            // Check early if cancellation was already requested
+            cancellationToken.ThrowIfCancellationRequested();
+
+            bool hasSubdivisionIds = subdivisionIds != null && subdivisionIds.Any();
+
+            // Build the base query using the mandatory county_id parameter
+            string commandText = $@"
+                SELECT COUNT(*)
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId";
+
+            // Dynamically append the subdivision_id filter if the collection has elements
+            if (hasSubdivisionIds)
+            {
+                commandText += " AND subdivision_id = ANY(@subdivisionIds)";
+            }
+
+            commandText += ";";
+
+            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            if (hasSubdivisionIds)
+            {
+                // Explicitly converting to an array for the ANY() operator in PostgreSQL
+                int[] subdivisionIdsArray = subdivisionIds!.ToArray();
+                npgsqlCommand.Parameters.AddWithValue("subdivisionIds", subdivisionIdsArray);
+            }
+
+            object? executeResult = await npgsqlCommand.ExecuteScalarAsync(cancellationToken);
+
+            if (executeResult != null && executeResult != DBNull.Value)
+            {
+                return System.Convert.ToInt64(executeResult);
+            }
+
+            return 0;
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a list of 2D building references for a specified county, with optional filtering by subdivision identifiers.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DReference" /> objects, or null if no references are found or an error occurs.</returns>
         public static async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
         {
@@ -55,7 +109,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
-
         /// <summary>
         /// Asynchronously retrieves the total count of records, optionally filtered by a specific county identifier.
         /// </summary>
@@ -82,10 +135,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves an estimated row count from the database, optionally filtered by a specific county identifier and with an optional statistics update.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="countyId">The optional integer identifier of the county for which the count is estimated; if null, the estimate may be calculated across all counties.</param>
         /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation on the table before retrieving the count to ensure statistics are current.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count as a long integer.</returns>
         public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -106,10 +159,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously gets the estimated row count across specified counties in a PostgreSQL database.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> to use for the query.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> to use for the query.</param>
         /// <param name="countyIds">A collection of integers representing the county identifiers.</param>
         /// <param name="analyze">A boolean indicating whether to run an analysis before fetching the estimated count.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 if an error occurs.</returns>
         public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -212,6 +265,96 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously counts the number of 2D buildings for a specified county, with optional filtering by subdivision identifiers.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county (Partition Key).</param>
+        /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer, or -1 if the connection is null.</returns>
+        public async Task<long> CountAsync(int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await CountAsync(npgsqlConnection, countyId, subdivisionIds, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously counts the number of 2D buildings for a specified administrative areal 2D identifiers.
+        /// </summary>
+        /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to filter by.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>Number of buidlings in the specified administrative areas.</returns>
+        public async Task<long> CountAsync(IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken);
+            if (administrativeAreal2DReferences is null)
+            {
+                return -1;
+            }
+
+            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivison, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
+
+            administrativeAreal2DReferences ??= [];
+
+            if (administrativeAreal2DReferences_Out is not null && administrativeAreal2DReferences_Out.Count != 0)
+            {
+                foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
+                {
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
+                    if (administrativeAreal2DReferences_Temp is not null)
+                    {
+                        administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
+                    }
+                }
+            }
+
+            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            {
+                return 0;
+            }
+
+            long result = 0;
+            while (administrativeAreal2DReferences is not null && administrativeAreal2DReferences.Count > 0)
+            {
+                int? countyId = administrativeAreal2DReferences[0]?.CountyId;
+
+                administrativeAreal2DReferences.Filter(x => x?.CountyId == countyId, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_CountyId, out administrativeAreal2DReferences);
+
+                if (administrativeAreal2DReferences_CountyId is null || administrativeAreal2DReferences_CountyId.Count == 0)
+                {
+                    break;
+                }
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    continue;
+                }
+
+                long count = await CountAsync(npgsqlConnection, countyId.Value, administrativeAreal2DReferences_CountyId.ConvertAll(x => x.Id).Distinct(), cancellationToken);
+                if (count > 0)
+                {
+                    result += count;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Asynchronously creates the table in the database.
         /// </summary>
         /// <param name="commandTimeout">The time interval, in seconds, to wait for the command to complete before timing out. The default value is 30 seconds.</param>
@@ -234,7 +377,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-
+        
         /// <summary>
         /// Asynchronously retrieves a <see cref="Building2D"/> instance by its unique identifier and an optional county identifier.
         /// </summary>
@@ -360,7 +503,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="id">The long integer representing the unique identifier of the building.</param>
         /// <param name="countyId">An optional integer representing the county identifier used to filter the search.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Building2DReference"/> if a match is found; otherwise, null.</returns>
         public async Task<Building2DReference?> GetBuilding2DReferenceByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -420,66 +563,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
 
             return results?.FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Retrieves all Building2DReferences for a specific county, with an optional exclusion list.
-        /// Optimized for partitioned tables using the partition key (county_id).
-        /// </summary>
-        /// <param name="countyId">The ID of the county (Partition Key).</param>
-        /// <param name="subdivisionId">The ID of the subdivision.</param>
-        /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
-        {
-            // 1. Check early if cancellation was already requested to avoid unnecessary allocations
-            cancellationToken.ThrowIfCancellationRequested();
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection == null)
-            {
-                return null;
-            }
-
-            // 2. Critical: Pass the token to the connection opening process
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            string commandText = $@"
-                SELECT id, county_id, reference, subdivision_id
-                FROM {Constants.TableName.Building2D}
-                WHERE county_id = @countyId";
-
-            bool hasSubdivisionId = subdivisionId.HasValue;
-            if (hasSubdivisionId)
-            {
-                commandText += " AND subdivision_id = @subdivisionId";
-            }
-
-            bool hasExcluded = excludedReferences != null && excludedReferences.Any();
-
-            if (hasExcluded)
-            {
-                commandText += " AND NOT (reference = ANY(@excluded))";
-            }
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
-
-            if (hasSubdivisionId)
-            {
-                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId!.Value);
-            }
-
-            if (hasExcluded)
-            {
-                // Using explicit typing and collection expression for performance
-                string[] excludedArray = [.. excludedReferences!];
-                npgsqlCommand.Parameters.AddWithValue("excluded", excludedArray);
-            }
-
-            // 3. Reading loop with token is correct
-            return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
@@ -622,6 +705,132 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Retrieves all Building2DReferences for a specific county, with an optional exclusion list.
+        /// Optimized for partitioned tables using the partition key (county_id).
+        /// </summary>
+        /// <param name="countyId">The ID of the county (Partition Key).</param>
+        /// <param name="subdivisionId">The ID of the subdivision.</param>
+        /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
+        {
+            // 1. Check early if cancellation was already requested to avoid unnecessary allocations
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            // 2. Critical: Pass the token to the connection opening process
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = $@"
+                SELECT id, county_id, reference, subdivision_id
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId";
+
+            bool hasSubdivisionId = subdivisionId.HasValue;
+            if (hasSubdivisionId)
+            {
+                commandText += " AND subdivision_id = @subdivisionId";
+            }
+
+            bool hasExcluded = excludedReferences != null && excludedReferences.Any();
+
+            if (hasExcluded)
+            {
+                commandText += " AND NOT (reference = ANY(@excluded))";
+            }
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            if (hasSubdivisionId)
+            {
+                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId!.Value);
+            }
+
+            if (hasExcluded)
+            {
+                // Using explicit typing and collection expression for performance
+                string[] excludedArray = [.. excludedReferences!];
+                npgsqlCommand.Parameters.AddWithValue("excluded", excludedArray);
+            }
+
+            // 3. Reading loop with token is correct
+            return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
+        }
+        
+        /// <summary>
+        /// Asynchronously retrieves a keyset-paginated list of Building2DReference objects for a specified county.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county (Partition Key).</param>
+        /// <param name="subdivisionId">The optional integer identifier of the subdivision.</param>
+        /// <param name="lastReference">The last reference string from the previous page, used as the pagination cursor.</param>
+        /// <param name="pageSize">The maximum number of references to return in a single page. Defaults to 250.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DReference"/> objects, or null if connection fails.</returns>
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, string? lastReference = null, int pageSize = 250, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Initialize the base query with the mandatory county_id parameter
+            string commandText = $@"
+                SELECT id, county_id, reference, subdivision_id
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId";
+
+            // Dynamically append the subdivision_id filter if it was provided
+            bool hasSubdivisionId = subdivisionId.HasValue;
+            if (hasSubdivisionId)
+            {
+                commandText += " AND subdivision_id = @subdivisionId";
+            }
+
+            // Dynamically append the pagination cursor if it was provided
+            bool hasCursor = !string.IsNullOrWhiteSpace(lastReference);
+            if (hasCursor)
+            {
+                commandText += " AND reference > @lastReference";
+            }
+
+            // Append sorting and limiting to finalize the keyset pagination query
+            commandText += @"
+                ORDER BY reference
+                LIMIT @pageSize;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.AddWithValue("pageSize", pageSize);
+
+            // Add the optional parameter values to the command if they are part of the query
+            if (hasSubdivisionId)
+            {
+                npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId!.Value);
+            }
+
+            if (hasCursor)
+            {
+                npgsqlCommand.Parameters.AddWithValue("lastReference", lastReference!);
+            }
+
+            List<Building2DReference>? building2DReferences = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
+
+            return building2DReferences;
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a list of <see cref="Building2D"/> objects located within the specified bounding box, applying a distance tolerance.
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search for buildings; may be null.</param>
@@ -650,7 +859,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            Dictionary<string, Building2D> dictionary = new Dictionary<string, Building2D>();
+            Dictionary<string, Building2D> dictionary = [];
 
             // 2. Prepare pre-calculated boundaries for the 'box' constructor
             double searchMinX = boundingBox2D.Min.X - tolerance;
@@ -692,7 +901,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            return dictionary.Values.ToList();
+            return [.. dictionary.Values];
         }
 
         /// <summary>
@@ -842,7 +1051,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the estimate.</param>
         /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count as a <see cref="System.Int64"/>, or -1 if an error occurs.</returns>
         public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
