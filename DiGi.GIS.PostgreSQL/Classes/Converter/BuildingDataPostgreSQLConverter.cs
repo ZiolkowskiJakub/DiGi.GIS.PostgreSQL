@@ -50,13 +50,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         };
 
         /// <summary>
-        /// Asynchronously retrieves a collection of unique values based on the specified unique identifier and county identifier.
+        /// Asynchronously retrieves a collection of unique values based on the specified unique identifier and county identifier, applying optional dynamic filters.
         /// </summary>
         /// <typeparam name="T">The type of the values to be retrieved.</typeparam>
         /// <param name="uniqueId">The nullable string representing the unique identifier used for filtering.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a nullable collection of nullable elements of type <typeparam ref="T"/>, or null if no values are found.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? uniqueId, int countyId)
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? uniqueId, int countyId, FilterGroup? filterGroup = null)
         {
             if(string.IsNullOrWhiteSpace(uniqueId))
             {
@@ -71,22 +72,39 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, countyId);
+            return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, countyId, filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously retrieves a collection of unique values for a specified identifier and county from the database.
+        /// Asynchronously retrieves a collection of unique values for a specified identifier and county from the database, applying optional dynamic filters.
         /// </summary>
         /// <typeparam name="T">The type of the unique values to be retrieved.</typeparam>
         /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the command.</param>
         /// <param name="uniqueId">The string identifier used to filter for unique values.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of nullable values of type T, or null if no results are found or the connection is invalid.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? uniqueId, int countyId)
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? uniqueId, int countyId, FilterGroup? filterGroup = null)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(uniqueId))
             {
                 return null;
+            }
+
+            if (filterGroup is not null)
+            {
+                FilterGroup filterGroup_Combined = new FilterGroup();
+                filterGroup_Combined.LogicalOperator = FilterLogicalOperator.And;
+
+                FilterCondition filterCondition_County = new FilterCondition();
+                filterCondition_County.ColumnUniqueId = IO.Constants.Column.CountyId.UniqueId();
+                filterCondition_County.FilterOperator = FilterOperator.Equals;
+                filterCondition_County.Value = countyId;
+
+                filterGroup_Combined.FilterConditions = new List<FilterCondition> { filterCondition_County };
+                filterGroup_Combined.FilterGroups = new List<FilterGroup> { filterGroup };
+
+                return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, filterGroup_Combined);
             }
 
             string commandQuery = $@"
@@ -328,16 +346,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition.
+        /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="singlevalueAggregateFunction">The single-value aggregate calculation function.</param>
         /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
         public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(
             string columnUniqueId,
             DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction singlevalueAggregateFunction,
-            int countyId)
+            int countyId,
+            FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -350,22 +370,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlConnection_Db,
                 columnUniqueId,
                 singlevalueAggregateFunction,
-                countyId);
+                countyId,
+                filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously computes multi-value aggregate statistics on a specific building data column inside a county partition.
+        /// Asynchronously computes multi-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="multivalueAggregateFunction">The multi-value aggregate calculation function.</param>
         /// <param name="countyId">The partition county identifier.</param>
         /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
+        /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
         public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(
             string columnUniqueId,
             DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction multivalueAggregateFunction,
             int countyId,
-            string? separator = null)
+            string? separator = null,
+            FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -379,17 +402,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 columnUniqueId,
                 multivalueAggregateFunction,
                 countyId,
-                separator);
+                separator,
+                filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition.
+        /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="bucketCount">The total number of buckets to segment the value range into.</param>
         /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to generating the histogram.</param>
         /// <returns>A task representing the async operation, returning the histogram aggregate result as a <see cref="System.Text.Json.Nodes.JsonArray"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int countyId)
+        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(
+            string columnUniqueId,
+            int bucketCount,
+            int countyId,
+            FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -402,7 +431,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlConnection_Db,
                 columnUniqueId,
                 bucketCount,
-                countyId);
+                countyId,
+                filterGroup);
         }
     }
 }
