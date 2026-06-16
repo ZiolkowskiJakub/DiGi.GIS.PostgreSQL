@@ -566,6 +566,37 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building2D"/> objects for a specified county identifier.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county used to filter the search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects if matches are found; otherwise, null.</returns>
+        public async Task<List<Building2D>?> GetBuilding2DsByCountyIdAsync(int countyId, CancellationToken cancellationToken = default)
+        {
+            // 1. Check early if cancellation was already requested to avoid unnecessary allocations
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            // 2. Critical: Pass the token to the connection opening process
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = $@"
+                SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            return await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+        }
+
+        /// <summary>
         /// Retrieves full Building2DReference data from building_2d table based on input references.
         /// Performs batch processing using UNNEST to avoid N+1 query performance issues.
         /// </summary>
