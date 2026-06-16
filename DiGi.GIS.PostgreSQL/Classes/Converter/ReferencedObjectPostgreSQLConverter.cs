@@ -54,5 +54,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
+
+        /// <summary>
+        /// Asynchronously clears all records from the referenced object table using the provided PostgreSQL connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database. This value can be null.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
+        public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        {
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously clears all records from the referenced object table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
+        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await ClearAsync(npgsqlConnection, cancellationToken);
+        }
     }
 }

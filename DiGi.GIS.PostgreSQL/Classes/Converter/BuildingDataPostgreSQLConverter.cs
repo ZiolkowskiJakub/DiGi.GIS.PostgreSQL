@@ -27,10 +27,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        /// <summary>
-        /// Gets the name of the database table associated with building data.
-        /// </summary>
-        /// <returns>A string representing the name of the database table.</returns>
+        /// <summary> Gets the name of the database table associated with building data. </summary>
         public override string TableName => Constants.TableName.BuildingData;
 
         /// <summary>
@@ -436,3 +433,4 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
     }
 }
+

@@ -1,7 +1,9 @@
 ﻿using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
+using DiGi.GIS.PostgreSQL.Enums;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,7 +12,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that updates building data from AdministrativeAreal2D and Building2D sources.
     /// </summary>
-    public class PostgreSQLUpdateBuildingDataTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
+    public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
         /// <summary>
         /// Gets the GIS PostgreSQL converter manager used to retrieve converters and execute operations.
@@ -18,10 +20,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
         private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         /// <summary>
+        /// Gets or sets the options used to configure the PostgreSQL building data update process.
+        /// </summary>
+        public PostgreSQLBuildingDataUpdateOptions uIBuildingDataUpdateOptions { get; set; } = new PostgreSQLBuildingDataUpdateOptions();
+
+        /// <summary>
         /// Constructor with Dependency Injection.
         /// </summary>
         /// <param name="gISPostgreSQLConverterManager">The GIS PostgreSQL converter manager used to retrieve converters and execute operations.</param>
-        public PostgreSQLUpdateBuildingDataTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
+        public PostgreSQLBuildingDataUpdateTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
         {
             this.gISPostgreSQLConverterManager = gISPostgreSQLConverterManager ?? throw new ArgumentNullException(nameof(gISPostgreSQLConverterManager));
         }
@@ -58,6 +65,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
+            uIBuildingDataUpdateOptions ??= new PostgreSQLBuildingDataUpdateOptions();
+
+            if (uIBuildingDataUpdateOptions.BuildingDataUpdateTypes is not IEnumerable<BuildingDataUpdateType> buildingDataUpdateTypes || !buildingDataUpdateTypes.Any())
+            {
+                return false;
+            }
+
             long totalUpdated = 0;
 
             foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
@@ -71,6 +85,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 AdministrativeAreal2DReference? administrativeAreal2DReference_Subdivision = null;
                 List<AdministrativeAreal2D>? administrativeAreal2Ds = null;
 
+                List<Building2DReference>? building2DReferences = null;
+
                 try
                 {
                     AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference, cancellationToken);
@@ -79,7 +95,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id));
 
-                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(administrativeAreal2DReference.CountyId.Value, administrativeAreal2DReference_Subdivision?.Id, null, cancellationToken);
+                    building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(administrativeAreal2DReference.CountyId.Value, administrativeAreal2DReference_Subdivision?.Id, null, cancellationToken);
                     if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;
@@ -100,7 +116,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 try
                 {
-                    IO.Modify.Update(table, countyId, administrativeAreal2DReference_Subdivision?.Id, building2Ds?.ConvertAll(x => x.ToDiGi()!), administrativeAreal2Ds: administrativeAreal2Ds?.ConvertAll(x => x.ToDiGi()!));
+                    if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.General))
+                    {
+                        IO.Modify.Update(table, countyId, administrativeAreal2DReference_Subdivision?.Id, building2Ds?.ConvertAll(x => x.ToDiGi()!), administrativeAreal2Ds: administrativeAreal2Ds?.ConvertAll(x => x.ToDiGi()!));
+                    }
+
+                    if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy))
+                    {
+                        IO.Modify.Update_Building2D_Occupancy(table, countyId, building2Ds?.ConvertAll(x => x.ToDiGi()!));
+
+                        Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>();
+                        if(building2DOccupancyDataPostgreSQLConverter is not null)
+                        {
+                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(building2DReferences?.ConvertAll(x => x.Reference!), countyId, cancellationToken: cancellationToken);
+                            if(building2DOccupancyDatas is not null)
+                            {
+                                Modify.Update_Occupancy(table, building2DOccupancyDatas);
+                            }
+                        }
+                    }
+
+                    if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Database))
+                    {
+                        Modify.Update_Id(table, building2DReferences);
+                    }
                 }
                 catch (Exception)
                 {

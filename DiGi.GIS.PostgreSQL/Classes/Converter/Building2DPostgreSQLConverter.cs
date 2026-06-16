@@ -15,6 +15,9 @@ using System.Threading.Tasks;
 
 namespace DiGi.GIS.PostgreSQL.Classes
 {
+    /// <summary>
+    /// Provides functionality for converting and managing <see cref="Building2D"/> entities within a PostgreSQL database, implementing the <see cref="IGISPostgreSQLConverter{T}"/> interface.
+    /// </summary>
     public class Building2DPostgreSQLConverter : PostgreSQLConverter<Building2D>, IGISPostgreSQLConverter<Building2D>
     {
         /// <summary>
@@ -938,6 +941,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Retrieves full building data based on a collection of references using optimized UNNEST batching.
         /// </summary>
+        /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, or null if the input collection was null.</returns>
         public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference> building2DReferences)
         {
             if (building2DReferences == null || !building2DReferences.Any())
