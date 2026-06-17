@@ -59,7 +59,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Enums.AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return false;
@@ -91,7 +91,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference, cancellationToken);
 
-                    administrativeAreal2DReference_Subdivision = administrativeAreal2DReferencePath?[Enums.AdministrativeArealType.Subdivison];
+                    administrativeAreal2DReference_Subdivision = administrativeAreal2DReferencePath?[AdministrativeArealType.Subdivison];
 
                     administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id));
 
