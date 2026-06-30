@@ -27,8 +27,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
         }
 
-        /// <summary> 
-        /// Gets the name of the database table associated with building data. 
+        /// <summary>
+        /// Gets the name of the database table associated with building data.
         /// </summary>
         public override string TableName => Constants.TableName.BuildingData;
 
@@ -58,7 +58,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task that represents the asynchronous operation. The task result contains a nullable collection of nullable elements of type <typeparam ref="T"/>, or null if no values are found.</returns>
         public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? uniqueId, int countyId, FilterGroup? filterGroup = null)
         {
-            if(string.IsNullOrWhiteSpace(uniqueId))
+            if (string.IsNullOrWhiteSpace(uniqueId))
             {
                 return null;
             }
@@ -92,25 +92,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (filterGroup is not null)
             {
-                FilterGroup filterGroup_Combined = new FilterGroup();
-                filterGroup_Combined.LogicalOperator = FilterLogicalOperator.And;
+                FilterGroup filterGroup_Combined = new()
+                {
+                    LogicalOperator = FilterLogicalOperator.And
+                };
 
-                FilterCondition filterCondition_County = new FilterCondition();
-                filterCondition_County.ColumnUniqueId = IO.Constants.Column.CountyId.UniqueId();
-                filterCondition_County.FilterOperator = FilterOperator.Equals;
-                filterCondition_County.Value = countyId;
+                FilterCondition filterCondition_County = new()
+                {
+                    ColumnUniqueId = IO.Constants.Column.CountyId.UniqueId(),
+                    FilterOperator = FilterOperator.Equals,
+                    Value = countyId
+                };
 
-                filterGroup_Combined.FilterConditions = new List<FilterCondition> { filterCondition_County };
-                filterGroup_Combined.FilterGroups = new List<FilterGroup> { filterGroup };
+                filterGroup_Combined.FilterConditions = [filterCondition_County];
+                filterGroup_Combined.FilterGroups = [filterGroup];
 
                 return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, filterGroup_Combined);
             }
 
             string commandQuery = $@"
-                SELECT DISTINCT {uniqueId} 
-                FROM {TableName} 
-                WHERE (@countyId IS NULL OR county_id = @countyId) 
-                  AND {uniqueId} IS NOT NULL 
+                SELECT DISTINCT {uniqueId}
+                FROM {TableName}
+                WHERE (@countyId IS NULL OR county_id = @countyId)
+                  AND {uniqueId} IS NOT NULL
                 ORDER BY {uniqueId}";
 
             HashSet<T?> result = [];
@@ -422,4 +426,3 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
     }
 }
-

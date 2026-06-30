@@ -1,6 +1,6 @@
-﻿using DiGi.Core.Classes;
-using DiGi.GIS.PostgreSQL.Interfaces;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
+using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -126,10 +126,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         IO.Modify.Update_Building2D_Occupancy(table, countyId, building2Ds?.ConvertAll(x => x.ToDiGi()!));
 
                         Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>();
-                        if(building2DOccupancyDataPostgreSQLConverter is not null)
+                        if (building2DOccupancyDataPostgreSQLConverter is not null)
                         {
                             List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(building2DReferences?.ConvertAll(x => x.Reference!), countyId, cancellationToken: cancellationToken);
-                            if(building2DOccupancyDatas is not null)
+                            if (building2DOccupancyDatas is not null)
                             {
                                 Modify.Update_Occupancy(table, building2DOccupancyDatas);
                             }

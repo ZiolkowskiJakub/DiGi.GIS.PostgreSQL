@@ -22,6 +22,5 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// Occupancy data update.
         /// </summary>
         [Description("Occupancy")] Occupancy,
-
     }
 }

@@ -329,8 +329,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously updates the specified collection of building 2D referenced objects.
         /// </summary>
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of <see cref="long"/> identifiers for the objects that were updated, or <c>null</c> if no updates occurred.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects)
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30)
         {
             if (building2DReferencedObjects is null)
             {
@@ -378,6 +379,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     RETURNING id;";
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 // Define parameters once
                 NpgsqlParameter npgsqlParameter_UniqueId = npgsqlCommand.Parameters.Add("unique_id", NpgsqlDbType.Text);

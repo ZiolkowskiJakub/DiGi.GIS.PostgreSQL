@@ -49,6 +49,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             bool includeAdministrativeAreal2Ds = PostgreSQLUpdateOccupancyOptions.IncludeAdministrativeAreal2Ds;
             bool clear = PostgreSQLUpdateOccupancyOptions.Clear;
 
+            // Bulk reads/writes over hundreds of thousands of records exceed the 30s default; allow up to 10 minutes per statement.
+            const int commandTimeout = 600;
+
             AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<AdministrativeAreal2DPostgreSQLConverter>();
             if (administrativeAreal2DPostgreSQLConverter is null)
             {
@@ -65,9 +68,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (includeAdministrativeAreal2Ds)
             {
-                if(clear)
+                if (clear)
                 {
-                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken);
+                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken, commandTimeout);
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }
@@ -81,7 +84,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType, cancellationToken: cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
                     if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
                     {
                         continue;
@@ -93,7 +96,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     {
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(administrativeAreal2DReference.Id);
+                        AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(administrativeAreal2DReference.Id, commandTimeout);
                         if (administrativeAreal2D_PostgreSQL is null)
                         {
                             continue;
@@ -109,7 +112,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         if (administrativeArealType_Child is not null)
                         {
-                            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Child = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType_Child.Value, administrativeAreal2DReference.Id, false, cancellationToken: cancellationToken);
+                            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Child = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType_Child.Value, administrativeAreal2DReference.Id, false, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
                             if (administrativeAreal2DReferences_Child is null || administrativeAreal2DReferences_Child.Count == 0)
                             {
                                 continue;
@@ -144,8 +147,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.UpdateAsync(administrativeAreal2DOccupancyDatas);
-                    
+                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.UpdateAsync(administrativeAreal2DOccupancyDatas, commandTimeout);
+
                     totalUpdated += administrativeAreal2DOccupancyDatas.Count;
                     progress.Report(totalUpdated);
                 }
@@ -167,12 +170,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (clear)
                 {
-                    await building2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken);
+                    await building2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken, commandTimeout);
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
                 if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
                 {
                     return true;
@@ -187,13 +190,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, administrativeAreal2DReference.Id, null, cancellationToken: cancellationToken);
+                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, administrativeAreal2DReference.Id, null, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
                     if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;
                     }
 
-                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences);
+                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout);
                     if (building2Ds is null || building2Ds.Count == 0)
                     {
                         continue;
@@ -204,9 +207,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     foreach (Building2D building2D_Raw in building2Ds)
                     {
-                        if (building2D_Raw?.ToDiGi() is not GIS.Classes.Building2D building2D || 
-                            !GIS.Query.IsOccupied(building2D) || 
-                            building2D.PolygonalFace2D?.GetArea() is not double floorArea || 
+                        if (building2D_Raw?.ToDiGi() is not GIS.Classes.Building2D building2D ||
+                            !GIS.Query.IsOccupied(building2D) ||
+                            building2D.PolygonalFace2D?.GetArea() is not double floorArea ||
                             floorArea <= 0)
                         {
                             continue;
@@ -222,7 +225,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    OccupancyData? occupancyData = (await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemByReferenceAsync(reference, cancellationToken))?.ToDiGi() as OccupancyData;
+                    OccupancyData? occupancyData = (await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemByReferenceAsync(reference, cancellationToken, commandTimeout))?.ToDiGi() as OccupancyData;
                     int remainingOccupancy = (int)(occupancyData?.Occupancy ?? 0);
                     double occupancyPerMeterSquared = (double)remainingOccupancy / area;
 
@@ -264,7 +267,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         {
                             int index = Core.Query.Random(random, range);
                             uint currentOccupancy = occupancyDatas[index].Occupancy ?? 0;
-                            
+
                             occupancyDatas[index] = new OccupancyData(occupancyDatas[index].Reference, occupancyDatas[index].OccupancyArea, currentOccupancy + 1);
                             remainingOccupancy--;
                         }
@@ -280,8 +283,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    await building2DOccupancyDataPostgreSQLConverter.UpdateAsync(building2DOccupancyDatas);
-                    
+                    await building2DOccupancyDataPostgreSQLConverter.UpdateAsync(building2DOccupancyDatas, commandTimeout);
+
                     totalUpdated += building2DOccupancyDatas.Count;
                     progress.Report(totalUpdated);
                 }

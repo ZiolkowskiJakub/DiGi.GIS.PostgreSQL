@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -391,6 +391,44 @@ namespace DiGi.GIS.PostgreSQL
             await npgsqlCommand.ExecuteNonQueryAsync();
 
             return true;
+        }
+
+        /// <summary>
+        /// Asynchronously creates the epw_file table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_EPWFile(this NpgsqlConnection? npgsqlConnection)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.EPWFile} (
+                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                    name TEXT NOT NULL UNIQUE,
+                    x DOUBLE PRECISION NOT NULL,
+                    y DOUBLE PRECISION NOT NULL,
+                    object JSONB NOT NULL,
+                    created_at timestamptz DEFAULT now()
+                );
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.EPWFile}_location
+                ON {Constants.TableName.EPWFile} USING gist ((point(x, y)));
+            ";
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_EPWFile)}): {ex.Message}");
+                return false;
+            }
         }
     }
 }

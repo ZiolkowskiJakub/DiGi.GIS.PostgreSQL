@@ -30,9 +30,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task representing the asynchronous operation. Returns true if the table was created successfully; otherwise, false.</returns>
         protected override async Task<bool> ExecuteAsync()
         {
-            // We pass the token to your C# DLL to ensure the
-            // PostgreSQL command can be aborted mid-execution.
-            return await administrativeAreal2DPostgreSQLConverter.CreateTableAsync(0);
+            return await administrativeAreal2DPostgreSQLConverter.CreateTableAsync(600);
         }
     }
 }

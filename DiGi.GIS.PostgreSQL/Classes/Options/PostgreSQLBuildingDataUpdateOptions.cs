@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using System.Collections.Generic;
 
@@ -19,7 +19,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         public PostgreSQLBuildingDataUpdateOptions()
         {
-
         }
     }
 }

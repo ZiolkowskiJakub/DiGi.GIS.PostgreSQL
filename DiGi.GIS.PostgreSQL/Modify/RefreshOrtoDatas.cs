@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.PostgreSQL.Classes;
+using DiGi.GIS.PostgreSQL.Classes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -55,7 +55,7 @@ namespace DiGi.GIS.PostgreSQL
 
                 foreach (int countyId in countyIds)
                 {
-                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, null, null,  cancellationToken);
+                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, null, null, cancellationToken);
                     if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;

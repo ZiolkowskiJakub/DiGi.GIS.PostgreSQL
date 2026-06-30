@@ -1,4 +1,4 @@
-﻿using DiGi.Core.IO.Table.Classes;
+using DiGi.Core.IO.Table.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.IO;
 using DiGi.GIS.PostgreSQL.Classes;
@@ -159,11 +159,10 @@ namespace DiGi.GIS.PostgreSQL
                 }
 
                 OccupancyData? occupancyData = building2DOccupancyData.ToDiGi() as OccupancyData;
-                if(occupancyData is null)
+                if (occupancyData is null)
                 {
                     continue;
                 }
-
 
                 Row? row = tuples.Find(x => x.Item2 == county_Id && x.Item3 == reference)?.Item1;
                 if (row is null)

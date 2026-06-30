@@ -113,15 +113,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="reference">The string reference used to locate the object.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <seeref name="TAdministrativeAreal2DReferencedObject"/> if an item with the specified reference is found; otherwise, null.</returns>
-        public async Task<TAdministrativeAreal2DReferencedObject?> GetItemByReferenceAsync(string reference, CancellationToken cancellationToken = default)
+        public async Task<TAdministrativeAreal2DReferencedObject?> GetItemByReferenceAsync(string reference, CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], 1, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetItemsByReferencesAsync([reference], 1, cancellationToken, commandTimeout).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         /// <summary>
@@ -205,8 +206,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of strings representing the references used to identify the items to retrieve.</param>
         /// <param name="limit">An optional maximum number of items to retrieve. If null, no limit is applied.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of matching <typeparamref name="TAdministrativeAreal2DReferencedObject"/> items, or null if the connection or references are null.</returns>
-        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default)
+        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -236,6 +238,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             commandText += ";";
 
             await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding parameters
             npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
@@ -254,8 +257,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">An optional collection of strings representing the references of the objects to retrieve.</param>
         /// <param name="limit">An optional long integer specifying the maximum number of items to be returned.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <seeref name="TAdministrativeAreal2DReferencedObject"/> objects, or null if no matching items are found or the references collection is null.</returns>
-        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default)
+        public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, long? limit = null, CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
             if (references is null)
             {
@@ -270,15 +274,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetItemsByReferencesAsync(npgsqlConnection, references, limit, cancellationToken);
+            return await GetItemsByReferencesAsync(npgsqlConnection, references, limit, cancellationToken, commandTimeout);
         }
 
         /// <summary>
         /// Asynchronously updates the specified collection of administrative areal 2D referenced objects.
         /// </summary>
         /// <param name="administrativeAreal2DReferencedObjects">The collection of <seeref name="TAdministrativeAreal2DReferencedObject"/> objects to be updated.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the batch. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}" /> of integers representing the IDs of the updated objects, or <c>null</c> if no objects were updated.</returns>
-        public async Task<HashSet<int>?> UpdateAsync(IEnumerable<TAdministrativeAreal2DReferencedObject>? administrativeAreal2DReferencedObjects)
+        public async Task<HashSet<int>?> UpdateAsync(IEnumerable<TAdministrativeAreal2DReferencedObject>? administrativeAreal2DReferencedObjects, int commandTimeout = 30)
         {
             if (administrativeAreal2DReferencedObjects is null)
             {
@@ -307,6 +312,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             foreach (TAdministrativeAreal2DReferencedObject administrativeAreal2DReferencedObject in administrativeAreal2DReferencedObjects)
             {

@@ -63,13 +63,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             commandText += ";";
 
-            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
 
             if (hasSubdivisionIds)
             {
                 // Explicitly converting to an array for the ANY() operator in PostgreSQL
-                int[] subdivisionIdsArray = subdivisionIds!.ToArray();
+                int[] subdivisionIdsArray = [.. subdivisionIds!];
                 npgsqlCommand.Parameters.AddWithValue("subdivisionIds", subdivisionIdsArray);
             }
 
@@ -112,6 +112,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
+
         /// <summary>
         /// Asynchronously retrieves the total count of records, optionally filtered by a specific county identifier.
         /// </summary>
@@ -380,7 +381,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-        
+
         /// <summary>
         /// Asynchronously retrieves a <see cref="Building2D"/> instance by its unique identifier and an optional county identifier.
         /// </summary>
@@ -746,8 +747,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="subdivisionId">The ID of the subdivision.</param>
         /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
             // 1. Check early if cancellation was already requested to avoid unnecessary allocations
             cancellationToken.ThrowIfCancellationRequested();
@@ -780,6 +782,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
 
             if (hasSubdivisionId)
@@ -797,7 +800,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // 3. Reading loop with token is correct
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
-        
+
         /// <summary>
         /// Asynchronously retrieves a keyset-paginated list of Building2DReference objects for a specified county.
         /// </summary>
@@ -942,8 +945,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Retrieves full building data based on a collection of references using optimized UNNEST batching.
         /// </summary>
         /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, or null if the input collection was null.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference> building2DReferences)
+        public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference> building2DReferences, int commandTimeout = 30)
         {
             if (building2DReferences == null || !building2DReferences.Any())
             {
@@ -971,6 +975,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<Building2D> result = [];
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.AddWithValue("refs", references);
             npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
 

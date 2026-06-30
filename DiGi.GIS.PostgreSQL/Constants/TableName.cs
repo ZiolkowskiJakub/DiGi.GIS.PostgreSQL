@@ -49,5 +49,10 @@ namespace DiGi.GIS.PostgreSQL.Constants
         /// The name of the building data table.
         /// </summary>
         public const string BuildingData = "building_data";
+
+        /// <summary>
+        /// The name of the EPW file table.
+        /// </summary>
+        public const string EPWFile = "epw_file";
     }
 }

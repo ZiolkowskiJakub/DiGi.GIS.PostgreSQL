@@ -60,18 +60,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database. This value can be null.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
-        public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken, commandTimeout);
         }
 
         /// <summary>
         /// Asynchronously clears all records from the referenced object table in the PostgreSQL database.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default, int commandTimeout = 30)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
 
@@ -82,7 +84,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await ClearAsync(npgsqlConnection, cancellationToken);
+            return await ClearAsync(npgsqlConnection, cancellationToken, commandTimeout);
         }
     }
 }

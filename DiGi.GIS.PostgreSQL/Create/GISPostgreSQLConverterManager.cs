@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.PostgreSQL.Classes;
+using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.PostgreSQL.Classes;
 using System.IO;
 using System.Reflection;
@@ -8,7 +8,7 @@ namespace DiGi.GIS.PostgreSQL
     public static partial class Create
     {
         /// <summary>
-        /// Initializes and returns a new instance of the <see cref="GISPostgreSQLConverterManager"/>, 
+        /// Initializes and returns a new instance of the <see cref="GISPostgreSQLConverterManager"/>,
         /// configured using local configuration files from the executing assembly's directory.
         /// </summary>
         /// <returns>A configured <see cref="GISPostgreSQLConverterManager"/> if successful; otherwise, null.</returns>
@@ -35,6 +35,7 @@ namespace DiGi.GIS.PostgreSQL
                     result.Add(new YearBuiltDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new Building2DOccupancyDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new AdministrativeAreal2DOccupancyDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
+                    result.Add(new EPWFilePostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                 }
             }
 
