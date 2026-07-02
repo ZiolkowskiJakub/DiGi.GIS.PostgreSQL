@@ -66,6 +66,9 @@
     <Reference Include="DiGi.Typology">
       <HintPath>..\..\DiGi.Typology\bin\DiGi.Typology.dll</HintPath>
     </Reference>
+    <Reference Include="DiGi.Weather">
+      <HintPath>..\..\DiGi.Weather\bin\DiGi.Weather.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
