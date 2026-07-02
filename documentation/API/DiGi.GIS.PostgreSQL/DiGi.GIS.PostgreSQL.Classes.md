@@ -5852,13 +5852,13 @@ public System.Threading.Tasks.Task<DiGi.EPW.Classes.EPWFile?> GetEPWFileAsync(do
 
 `x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The X coordinate \(longitude\)\.
+The X coordinate \(EPSG:2180 easting, in metres\)\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter.GetEPWFileAsync(double,double,System.Threading.CancellationToken).y'></a>
 
 `y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The Y coordinate \(latitude\)\.
+The Y coordinate \(EPSG:2180 northing, in metres\)\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter.GetEPWFileAsync(double,double,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5924,13 +5924,13 @@ The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgs
 
 `x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The X coordinate \(longitude\)\.
+The X coordinate \(EPSG:2180 easting, in metres\)\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter.GetEPWFileAsync(Npgsql.NpgsqlConnection,double,double,System.Threading.CancellationToken).y'></a>
 
 `y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The Y coordinate \(latitude\)\.
+The Y coordinate \(EPSG:2180 northing, in metres\)\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter.GetEPWFileAsync(Npgsql.NpgsqlConnection,double,double,System.Threading.CancellationToken).cancellationToken'></a>
 

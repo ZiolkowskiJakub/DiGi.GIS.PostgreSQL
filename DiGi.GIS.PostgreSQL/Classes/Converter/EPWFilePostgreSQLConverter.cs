@@ -1,6 +1,7 @@
 using DiGi.EPW;
 using DiGi.EPW.Classes;
 using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Spatial.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -53,8 +54,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the closest EPWFile to the given coordinate (x, y).
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
-        /// <param name="x">The X coordinate (longitude).</param>
-        /// <param name="y">The Y coordinate (latitude).</param>
+        /// <param name="x">The X coordinate (EPSG:2180 easting, in metres).</param>
+        /// <param name="y">The Y coordinate (EPSG:2180 northing, in metres).</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
         public static async Task<EPWFile?> GetEPWFileAsync(NpgsqlConnection? npgsqlConnection, double x, double y, CancellationToken cancellationToken = default)
@@ -134,8 +135,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
 
                 string name = ePWFile.Name();
-                double x = location.Longitude;
-                double y = location.Latitude;
+
+                // Store coordinates in EPSG:2180 (ETRS89 / Poland CS92) so they share the
+                // Building2D coordinate system used by the nearest-neighbour lookup query.
+                Point3D point3D = new(location.Longitude, location.Latitude, location.Elevation);
+                if (DiGi.GIS.Convert.ToEPSG2180(point3D) is not Point2D point2D)
+                {
+                    continue;
+                }
+
+                double x = point2D.X;
+                double y = point2D.Y;
 
                 NpgsqlBatchCommand npgsqlBatchCommand = new($@"
                     INSERT INTO {TableName} (name, x, y, object)
@@ -191,8 +201,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves the closest EPWFile to the given coordinate (x, y), automatically managing the connection.
         /// </summary>
-        /// <param name="x">The X coordinate (longitude).</param>
-        /// <param name="y">The Y coordinate (latitude).</param>
+        /// <param name="x">The X coordinate (EPSG:2180 easting, in metres).</param>
+        /// <param name="y">The Y coordinate (EPSG:2180 northing, in metres).</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
         public async Task<EPWFile?> GetEPWFileAsync(double x, double y, CancellationToken cancellationToken = default)
