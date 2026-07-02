@@ -98,8 +98,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Using the same logic as your GetAdministrativeAreal2DsByPoint2DAsync
-            // Search area: [CenterX - effectiveRadius, CenterX + effectiveRadius]
+            // Filter references by the county partition key, optionally narrowing to the given subdivisions.
             const string commandText = $@"
                 SELECT id, county_id, reference, subdivision_id
                 FROM {Constants.TableName.Building2D}
@@ -209,7 +208,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = $@"
                     SELECT min_x, min_y, max_x, max_y
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = ANY(@references) AND (county_id = @countyId OR county_id IS NULL);";
+                    WHERE reference = ANY(@references) AND county_id = @countyId;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
@@ -402,7 +401,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
-                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
+                    WHERE id = @id AND county_id = @countyId;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
@@ -442,13 +441,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
+            // Represent the point as a tolerance-sized search box so the GiST index on
+            // box(point(min_x, min_y), point(max_x, max_y)) can serve the '&&' overlap operator.
+            double searchMinX = point2D.X - tolerance;
+            double searchMinY = point2D.Y - tolerance;
+            double searchMaxX = point2D.X + tolerance;
+            double searchMaxY = point2D.Y + tolerance;
+
             const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
-                    WHERE (county_id = @countyId OR county_id IS NULL)
+                    WHERE county_id = @countyId
                         AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)
-                        AND (@x + @tolerance) >= min_x AND (@x - @tolerance) <= max_x
-                        AND (@y + @tolerance) >= min_y AND (@y - @tolerance) <= max_y
+                        AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
                     LIMIT 1;";
 
             foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
@@ -456,9 +461,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.Parameters.AddWithValue("countyId", administrativeAreal2D.CountyId as object ?? DBNull.Value);
                 npgsqlCommand.Parameters.AddWithValue("subdivisionId", administrativeAreal2D.Id as object ?? DBNull.Value);
-                npgsqlCommand.Parameters.AddWithValue("x", point2D.X);
-                npgsqlCommand.Parameters.AddWithValue("y", point2D.Y);
-                npgsqlCommand.Parameters.AddWithValue("tolerance", tolerance);
+                npgsqlCommand.Parameters.AddWithValue("searchMinX", searchMinX);
+                npgsqlCommand.Parameters.AddWithValue("searchMinY", searchMinY);
+                npgsqlCommand.Parameters.AddWithValue("searchMaxX", searchMaxX);
+                npgsqlCommand.Parameters.AddWithValue("searchMaxY", searchMaxY);
 
                 List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand);
 
@@ -491,7 +497,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
+                    WHERE reference = @reference AND county_id = @countyId;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("reference", reference);
@@ -522,7 +528,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
                     FROM {Constants.TableName.Building2D}
-                    WHERE id = @id AND (county_id = @countyId OR county_id IS NULL);";
+                    WHERE id = @id AND county_id = @countyId;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
@@ -558,7 +564,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference AND (county_id = @countyId OR county_id IS NULL);";
+                    WHERE reference = @reference AND county_id = @countyId;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("reference", reference);
@@ -872,8 +878,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search for buildings; may be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance used during the spatial query.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing a <see cref="List{Building2D}"/> of buildings found within the specified area.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -886,10 +893,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             // 1. Get administrative areas to identify which partitions (counties) to hit
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivison, tolerance);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivison, tolerance, cancellationToken);
 
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
@@ -926,13 +933,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinY", NpgsqlDbType.Double) { Value = searchMinY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
 
-            List<Building2D>? building2Ds = await ReadAsync_Building2D(npgsqlCommand);
+            List<Building2D>? building2Ds = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
 
             if (building2Ds is not null)
             {
                 foreach (Building2D building in building2Ds)
                 {
-                    // Building a unique key to prevent duplicates (in case a building overlaps partition logic)
+                    // Defensive de-duplication keyed on county + reference (unique per row, so duplicates are not expected)
                     string key = $"{building.CountyId}_{building.Reference}";
                     dictionary.TryAdd(key, building);
                 }
@@ -990,76 +997,40 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Building2D"/> objects located within or intersecting the specified circular area.
+        /// Asynchronously retrieves a list of <see cref="Building2D"/> objects whose bounding box lies within or intersects the specified circular area (the radius expanded by the tolerance).
         /// </summary>
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area; can be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance for the spatial query, defaulting to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2D}"/> of buildings found within the specified area, or null if no results are returned.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2D}"/> of buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established.</returns>
+        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (circle2D?.Center is null)
             {
                 return null;
             }
 
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
+            // Delegate the coarse spatial search to the bounding-box query: the circle's bounding box
+            // expanded by the tolerance is exactly the effective search region (radius + tolerance).
+            // This reuses the partition pruning and the GiST-indexed 'box && box' filter.
+            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, cancellationToken);
+            if (building2Ds is null || building2Ds.Count == 0)
             {
-                return [];
+                return building2Ds;
             }
 
-            await npgsqlConnection.OpenAsync();
-
-            // 1. Calculate the effective search radius (Radius + Tolerance)
-            double effectiveRadius = circle2D.Radius + tolerance;
-
-            // 2. Get administrative areas using the same logic (Point + Radius as Tolerance)
-            // This reuses your existing Point-based logic for area identification
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, circle2D.GetBoundingBox(), [AdministrativeArealType.Subdivison], tolerance);
-
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            // Narrow the bounding-box superset to the true circular area (radius + tolerance)
+            // using the exact rectangle-vs-circle test on each building's bounding box.
+            List<Building2D> result = [];
+            foreach (Building2D building2D in building2Ds)
             {
-                return [];
-            }
-
-            Dictionary<string, Building2D> dictionary = [];
-
-            // 3. Prepare parameters for the Point-in-BBox query
-            double centerX = circle2D.Center.X;
-            double centerY = circle2D.Center.Y;
-            int[] countyIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
-            int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
-
-            // Using the same logic as your GetAdministrativeAreal2DsByPoint2DAsync
-            // Search area: [CenterX - effectiveRadius, CenterX + effectiveRadius]
-            const string commandText = $@"
-                SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                FROM {Constants.TableName.Building2D}
-                WHERE county_id = ANY(@county_ids)
-                    AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
-                    AND (@x + @effectiveRadius) >= min_x AND (@x - @effectiveRadius) <= max_x
-                    AND (@y + @effectiveRadius) >= min_y AND (@y - @effectiveRadius) <= max_y;";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-            npgsqlCommand.Parameters.AddWithValue("county_ids", countyIds);
-            npgsqlCommand.Parameters.AddWithValue("subdivision_ids", subdivisionIds);
-            npgsqlCommand.Parameters.AddWithValue("x", centerX);
-            npgsqlCommand.Parameters.AddWithValue("y", centerY);
-            npgsqlCommand.Parameters.AddWithValue("effectiveRadius", effectiveRadius);
-
-            List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand);
-
-            if (results is not null)
-            {
-                foreach (Building2D building in results)
+                if (circle2D.InRange(building2D.BoundingBox2D, tolerance))
                 {
-                    string key = $"{building.CountyId}_{building.Reference}";
-                    dictionary.TryAdd(key, building);
+                    result.Add(building2D);
                 }
             }
 
-            return [.. dictionary.Values];
+            return result;
         }
 
         /// <summary>

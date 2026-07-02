@@ -630,9 +630,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             double searchMaxX = boundingBox2D.Max.X + tolerance;
             double searchMaxY = boundingBox2D.Max.Y + tolerance;
 
-            // Applying tolerance:
-            // The point is considered within range if its tolerance buffer intersects with the bounding box
-            // (x + tolerance) >= min_x AND (x - tolerance) <= max_x (apply the same logic for the Y axis)
+            // The bounding box is expanded by the tolerance on every side; the GiST index on
+            // box(point(min_x, min_y), point(max_x, max_y)) serves the '&&' overlap operator.
             string commandText = new($@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
@@ -790,21 +789,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            // Applying tolerance:
-            // The point is considered within range if its tolerance buffer intersects with the bounding box
-            // (x + tolerance) >= min_x AND (x - tolerance) <= max_x (apply the same logic for the Y axis)
+            // Applying tolerance by treating the point as a tolerance-sized search box.
+            // The GiST index on box(point(min_x, min_y), point(max_x, max_y)) serves the '&&' overlap operator.
+            double searchMinX = point2D.X - tolerance;
+            double searchMinY = point2D.Y - tolerance;
+            double searchMaxX = point2D.X + tolerance;
+            double searchMaxY = point2D.Y + tolerance;
+
             string commandText = new($@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE type_id = @typeId
-                    AND (@x + @tolerance) >= min_x AND (@x - @tolerance) <= max_x
-                    AND (@y + @tolerance) >= min_y AND (@y - @tolerance) <= max_y;");
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));");
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Double) { Value = point2D.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Double) { Value = point2D.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
@@ -1314,7 +1317,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Creating connection using your infrastructure
+            // Creating the connection using the shared PostgreSQL infrastructure
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
@@ -2036,7 +2039,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Creating connection using your existing infrastructure
+            // Creating the connection using the shared PostgreSQL infrastructure
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
@@ -2259,22 +2262,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
+            double searchMinX = boundingBox2D.Min.X - tolerance;
+            double searchMinY = boundingBox2D.Min.Y - tolerance;
+            double searchMaxX = boundingBox2D.Max.X + tolerance;
+            double searchMaxY = boundingBox2D.Max.Y + tolerance;
+
+            // The GiST index on box(point(min_x, min_y), point(max_x, max_y)) serves the '&&' overlap operator.
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE type_id = @typeId
                     AND id != ALL(@excludedIds)
                     AND ({parentIdColumnName} = ANY(@parentIds) OR {parentIdColumnName} IS NULL)
-                    AND (@minX - @tolerance) <= max_x AND (@maxX + @tolerance) >= min_x
-                    AND (@minY - @tolerance) <= max_y AND (@maxY + @tolerance) >= min_y;";
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             // Passing the IEnumerable<int> as an array parameter
@@ -2331,22 +2338,28 @@ namespace DiGi.GIS.PostgreSQL.Classes
             bool hasExclusions = excludedIds != null && excludedIds.Count > 0;
             string excludedFilter = hasExclusions ? "AND id != ALL(@excludedIds)" : "";
 
-            // 2. Build the command text using the safe fragment
+            // 2. Build the command text using the safe fragment.
+            // The GiST index on box(point(min_x, min_y), point(max_x, max_y)) serves the '&&' overlap operator.
+            double searchMinX = point2D.X - tolerance;
+            double searchMinY = point2D.Y - tolerance;
+            double searchMaxX = point2D.X + tolerance;
+            double searchMaxY = point2D.Y + tolerance;
+
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE type_id = @typeId
                     {excludedFilter}
                     AND ({parentIdColumnName} = ANY(@parentIds) OR {parentIdColumnName} IS NULL)
-                    AND (@x + @tolerance) >= min_x AND (@x - @tolerance) <= max_x
-                    AND (@y + @tolerance) >= min_y AND (@y - @tolerance) <= max_y;";
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             // 3. Add parameters - we only add excludedIds if it's actually used in the query
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Double) { Value = point2D.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Double) { Value = point2D.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)

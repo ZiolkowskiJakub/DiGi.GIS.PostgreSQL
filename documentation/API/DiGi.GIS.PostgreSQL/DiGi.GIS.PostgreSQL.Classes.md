@@ -3925,28 +3925,34 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if no references are found or an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetBuilding2DsByBoundingBox2DAsync\(BoundingBox2D, double\) Method
+## Building2DPostgreSQLConverter\.GetBuilding2DsByBoundingBox2DAsync\(BoundingBox2D, double, CancellationToken\) Method
 
 Asynchronously retrieves a list of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') objects located within the specified bounding box, applying a distance tolerance\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2D>?> GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2D>?> GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double).boundingBox2D'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
 
 `boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
 
 The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the spatial area to search for buildings; may be null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double).tolerance'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The double value representing the distance tolerance used during the spatial query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -3979,32 +3985,38 @@ The timeout in seconds for the execution of the command\. A value of 0 disables 
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') objects matching the provided references, or null if the input collection was null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetBuilding2DsByCircle2DAsync\(Circle2D, double\) Method
+## Building2DPostgreSQLConverter\.GetBuilding2DsByCircle2DAsync\(Circle2D, double, CancellationToken\) Method
 
-Asynchronously retrieves a list of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') objects located within or intersecting the specified circular area\.
+Asynchronously retrieves a list of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') objects whose bounding box lies within or intersects the specified circular area \(the radius expanded by the tolerance\)\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2D>?> GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D? circle2D, double tolerance=0.001);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2D>?> GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D? circle2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double).circle2D'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).circle2D'></a>
 
 `circle2D` [DiGi\.Geometry\.Planar\.Classes\.Circle2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.circle2d 'DiGi\.Geometry\.Planar\.Classes\.Circle2D')
 
 The [DiGi\.Geometry\.Planar\.Classes\.Circle2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.circle2d 'DiGi\.Geometry\.Planar\.Classes\.Circle2D') defining the search area; can be null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double).tolerance'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The double value representing the distance tolerance for the spatial query, defaulting to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of buildings found within the specified area, or null if no results are returned\.
+A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(int,System.Threading.CancellationToken)'></a>
 
