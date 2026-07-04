@@ -1,4 +1,6 @@
 using DiGi.Core.Classes;
+using DiGi.Geometry.Planar;
+using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
@@ -139,6 +141,41 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Database))
                     {
                         Modify.Update_Id(table, building2DReferences);
+                    }
+
+                    if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios))
+                    {
+                        if(building2Ds is not null)
+                        {
+                            List<double> radiuses = [200, 400, 600, 1000];
+                            
+                            Building2DPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DPostgreSQLConverter>();
+
+                            if(building2DOccupancyDataPostgreSQLConverter is not null)
+                            {
+                                foreach (Building2D building2D in building2Ds)
+                                {
+                                    if (building2D.ToDiGi() is not GIS.Classes.Building2D building2D_GIS)
+                                    {
+                                        continue;
+                                    }
+
+                                    Point2D? centroid = building2D_GIS.PolygonalFace2D?.Centroid();
+                                    if (centroid is null)
+                                    {
+                                        continue;
+                                    }
+
+                                    Circle2D circle2D = new(centroid, radiuses[0]);
+
+                                    List<Building2D>? building2Ds_Circle = await building2DOccupancyDataPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(circle2D, cancellationToken: cancellationToken);
+
+                                    //TODO: Finish implementation for Radial Ratios
+                                    throw new NotImplementedException();
+                                    //IO.Modify.Update_RadialRatios(table, , countyId, building2D);
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception)

@@ -78,3 +78,9 @@ Database data update type\.
 `Occupancy` 2
 
 Occupancy data update\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.RadialRatios'></a>
+
+`RadialRatios` 3
+
+Radial ratios \(Radial Building Coverage Ratio, Radial Floor Area Ratio\) update\.

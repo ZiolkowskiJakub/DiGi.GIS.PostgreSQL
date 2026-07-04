@@ -22,5 +22,10 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// Occupancy data update.
         /// </summary>
         [Description("Occupancy")] Occupancy,
+
+        /// <summary>
+        /// Radial ratios (Radial Building Coverage Ratio, Radial Floor Area Ratio) update.
+        /// </summary>
+        [Description("Radial Ratios")] RadialRatios,
     }
 }
