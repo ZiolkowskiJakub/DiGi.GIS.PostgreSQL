@@ -665,11 +665,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            HashSet<AdministrativeArealType>? administrativeArealTypes_Temp = administrativeArealTypes is not null ? [.. administrativeArealTypes] : null;
+            HashSet<AdministrativeArealType>? administrativeArealTypes_HashSet = administrativeArealTypes?.ToHashSet();
 
-            int maxIndex = (administrativeArealTypes_Temp is not null && administrativeArealTypes_Temp.Count > 0) ? (int)administrativeArealTypes_Temp.Max() : int.MaxValue;
+            int maxIndex = (administrativeArealTypes_HashSet is not null && administrativeArealTypes_HashSet.Count > 0) ? (int)administrativeArealTypes_HashSet.Max() : int.MaxValue;
 
-            List<AdministrativeAreal2D>? result = [];
+            double searchMinX = boundingBox2D.Min.X - tolerance;
+            double searchMinY = boundingBox2D.Min.Y - tolerance;
+            double searchMaxX = boundingBox2D.Max.X + tolerance;
+            double searchMaxY = boundingBox2D.Max.Y + tolerance;
+
+            List<AdministrativeAreal2D> candidates = [];
 
             HashSet<int> excludedIds = [];
             HashSet<int> parentIds = [];
@@ -680,10 +685,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     break;
                 }
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, parentIds, excludedIds, tolerance, cancellationToken);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(npgsqlConnection, searchMinX, searchMinY, searchMaxX, searchMaxY, administrativeArealType, parentIds, excludedIds, cancellationToken);
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
-                    return result;
+                    break;
                 }
 
                 parentIds.Clear();
@@ -697,21 +702,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     excludedIds.Add(administrativeAreal2D.Id);
                     parentIds.Add(administrativeAreal2D.Id);
 
-                    if (administrativeArealTypes_Temp is not null && !administrativeArealTypes_Temp.Contains(administrativeAreal2D.AdministrativeArealType))
+                    if (administrativeArealTypes_HashSet is not null && !administrativeArealTypes_HashSet.Contains(administrativeAreal2D.AdministrativeArealType))
                     {
                         continue;
                     }
 
-                    GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi();
-                    if (administrativeAreal2D_GIS is null)
-                    {
-                        continue;
-                    }
+                    candidates.Add(administrativeAreal2D);
+                }
+            }
 
-                    if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && boundingBox2D.InRange(polygonalFace2D.ExternalEdge, tolerance))
-                    {
-                        result.Add(administrativeAreal2D);
-                    }
+            if (candidates.Count == 0)
+            {
+                return [];
+            }
+
+            await PopulateObjectsAsync(npgsqlConnection, candidates, cancellationToken);
+
+            List<AdministrativeAreal2D>? result = [];
+            foreach (AdministrativeAreal2D candidate in candidates)
+            {
+                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = candidate.ToDiGi();
+                if (administrativeAreal2D_GIS is null)
+                {
+                    continue;
+                }
+
+                if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && boundingBox2D.InRange(polygonalFace2D.ExternalEdge, tolerance))
+                {
+                    result.Add(candidate);
                 }
             }
 
@@ -1608,34 +1626,33 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            List<AdministrativeArealType> administrativeArealTypes_All = [.. Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>()];
-            administrativeArealTypes_All.Remove(AdministrativeArealType.Undefined);
-            administrativeArealTypes_All.Sort();
+            HashSet<AdministrativeArealType>? administrativeArealTypes_HashSet = administrativeArealTypes?.ToHashSet();
 
-            int maxIndex = int.MaxValue;
-            if (administrativeArealTypes is not null && administrativeArealTypes.Any())
-            {
-                maxIndex = (int)administrativeArealTypes.Max();
-            }
+            int maxIndex = administrativeArealTypes_HashSet is not null && administrativeArealTypes_HashSet.Count > 0 ? (int)administrativeArealTypes_HashSet.Max() : int.MaxValue;
 
-            List<AdministrativeAreal2D>? result = [];
+            double searchMinX = point2D.X - tolerance;
+            double searchMinY = point2D.Y - tolerance;
+            double searchMaxX = point2D.X + tolerance;
+            double searchMaxY = point2D.Y + tolerance;
+
+            List<AdministrativeAreal2D> candidates = [];
 
             HashSet<int> excludedIds = [];
             HashSet<int> parentIds = [];
-            foreach (AdministrativeArealType administrativeArealType in administrativeArealTypes_All)
+            foreach (AdministrativeArealType administrativeArealType in AdministrativeAreal2DPostgreSQLConverter.administrativeArealTypes)
             {
                 if ((int)administrativeArealType > maxIndex)
                 {
                     break;
                 }
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByPoint2DAsync(npgsqlConnection, point2D, administrativeArealType, parentIds, excludedIds, tolerance);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(npgsqlConnection, searchMinX, searchMinY, searchMaxX, searchMaxY, administrativeArealType, parentIds, excludedIds);
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
-                    return result;
+                    break;
                 }
 
-                parentIds = [];
+                parentIds.Clear();
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
                 {
                     if (administrativeAreal2D is null)
@@ -1646,21 +1663,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     excludedIds.Add(administrativeAreal2D.Id);
                     parentIds.Add(administrativeAreal2D.Id);
 
-                    if (administrativeArealTypes is not null && !administrativeArealTypes.Contains(administrativeAreal2D.AdministrativeArealType))
+                    if (administrativeArealTypes_HashSet is not null && !administrativeArealTypes_HashSet.Contains(administrativeAreal2D.AdministrativeArealType))
                     {
                         continue;
                     }
 
-                    GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = administrativeAreal2D.ToDiGi();
-                    if (administrativeAreal2D_GIS is null)
-                    {
-                        continue;
-                    }
+                    candidates.Add(administrativeAreal2D);
+                }
+            }
 
-                    if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, tolerance))
-                    {
-                        result.Add(administrativeAreal2D);
-                    }
+            if (candidates.Count == 0)
+            {
+                return [];
+            }
+
+            await PopulateObjectsAsync(npgsqlConnection, candidates);
+
+            List<AdministrativeAreal2D> result = [];
+            foreach (AdministrativeAreal2D candidate in candidates)
+            {
+                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS = candidate.ToDiGi();
+                if (administrativeAreal2D_GIS is null)
+                {
+                    continue;
+                }
+
+                if (administrativeAreal2D_GIS.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, tolerance))
+                {
+                    result.Add(candidate);
                 }
             }
 
@@ -2212,6 +2242,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
             };
         }
 
+        private static AdministrativeAreal2D Create_AdministrativeAreal2D_NoObject(NpgsqlDataReader npgsqlDataReader)
+        {
+            return new AdministrativeAreal2D
+            {
+                Id = npgsqlDataReader.GetInt32(0),
+                Reference = npgsqlDataReader.GetString(1),
+                Code = npgsqlDataReader.GetString(2),
+                Name = npgsqlDataReader.GetString(3),
+                AdministrativeArealType = (AdministrativeArealType)npgsqlDataReader.GetInt32(4),
+                BoundingBox2D = new BoundingBox2D(
+                        new Point2D(npgsqlDataReader.IsDBNull(5) ? double.NaN : npgsqlDataReader.GetDouble(5), npgsqlDataReader.IsDBNull(6) ? double.NaN : npgsqlDataReader.GetDouble(6)),
+                        new Point2D(npgsqlDataReader.IsDBNull(7) ? double.NaN : npgsqlDataReader.GetDouble(7), npgsqlDataReader.IsDBNull(8) ? double.NaN : npgsqlDataReader.GetDouble(8))),
+                CountryId = npgsqlDataReader.IsDBNull(9) ? null : npgsqlDataReader.GetInt32(9),
+                VoivodeshipId = npgsqlDataReader.IsDBNull(10) ? null : npgsqlDataReader.GetInt32(10),
+                CountyId = npgsqlDataReader.IsDBNull(11) ? null : npgsqlDataReader.GetInt32(11),
+                MunicipalityId = npgsqlDataReader.IsDBNull(12) ? null : npgsqlDataReader.GetInt32(12),
+                CreatedAt = npgsqlDataReader.IsDBNull(13) ? null : npgsqlDataReader.GetDateTime(13),
+            };
+        }
+
         private static AdministrativeAreal2DReference Create_AdministrativeAreal2DReference(NpgsqlDataReader npgsqlDataReader)
         {
             return new AdministrativeAreal2DReference
@@ -2402,6 +2452,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
+        private static async Task<List<AdministrativeAreal2D>?> ReadAsync_AdministrativeAreal2D_NoObject(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlCommand is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlDataReader, cancellationToken);
+        }
+
+        private static async Task<List<AdministrativeAreal2D>> ReadAsync_AdministrativeAreal2D_NoObject(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
+        {
+            List<AdministrativeAreal2D> result = [];
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(Create_AdministrativeAreal2D_NoObject(npgsqlDataReader));
+            }
+
+            return result;
+        }
+
         private static async Task<List<AdministrativeAreal2DReference>?> ReadAsync_AdministrativeAreal2DReference(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
         {
             if (npgsqlCommand is null)
@@ -2424,6 +2498,192 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+
+        private static async Task PopulateObjectsAsync(NpgsqlConnection npgsqlConnection, IEnumerable<AdministrativeAreal2D> administrativeAreal2Ds, CancellationToken cancellationToken = default)
+        {
+            int[] ids = administrativeAreal2Ds.Select(x => x.Id).ToArray();
+            if (ids.Length == 0)
+            {
+                return;
+            }
+
+            Dictionary<int, JsonObject?> map = [];
+
+            string commandText = $@"
+                SELECT id, object
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE id = ANY(@ids);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = ids });
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                int id = npgsqlDataReader.GetInt32(0);
+                JsonObject? jsonObject = npgsqlDataReader.IsDBNull(1) ? null : JsonNode.Parse(npgsqlDataReader.GetString(1)) as JsonObject;
+                map[id] = jsonObject;
+            }
+
+            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
+            {
+                if (map.TryGetValue(administrativeAreal2D.Id, out JsonObject? jsonObject))
+                {
+                    administrativeAreal2D.Object = jsonObject;
+                }
+            }
+        }
+
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(NpgsqlConnection? npgsqlConnection, double searchMinX, double searchMinY, double searchMaxX, double searchMaxY, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            if (administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return [];
+            }
+
+            if (administrativeArealType == AdministrativeArealType.Country)
+            {
+                if (parentIds != null && parentIds.Count != 0)
+                {
+                    return [];
+                }
+
+                string commandText = $@"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, created_at
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+
+                return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand, cancellationToken);
+            }
+
+            if (parentIds is null || parentIds.Count == 0)
+            {
+                return [];
+            }
+
+            string? parentIdColumnName = Query.ParentIdColumnName(administrativeArealType);
+            if (string.IsNullOrWhiteSpace(parentIdColumnName))
+            {
+                return [];
+            }
+
+            bool hasExclusions = excludedIds != null && excludedIds.Count > 0;
+            string excludedFilter = hasExclusions ? "AND id != ALL(@excludedIds)" : "";
+
+            string commandText2 = $@"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, created_at
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                    {excludedFilter}
+                    AND ({parentIdColumnName} = ANY(@parentIds) OR {parentIdColumnName} IS NULL)
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
+
+            await using NpgsqlCommand npgsqlCommand2 = new(commandText2, npgsqlConnection);
+
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds.ToArray() });
+
+            if (hasExclusions)
+            {
+                npgsqlCommand2.Parameters.Add(new NpgsqlParameter("excludedIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = excludedIds!.ToArray() });
+            }
+
+            return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand2, cancellationToken);
+        }
+
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(NpgsqlConnection? npgsqlConnection, double searchMinX, double searchMinY, double searchMaxX, double searchMaxY, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            if (administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return [];
+            }
+
+            if (administrativeArealType == AdministrativeArealType.Country)
+            {
+                if (parentIds != null && parentIds.Count != 0)
+                {
+                    return [];
+                }
+
+                string commandText = $@"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, created_at
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+
+                return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand, cancellationToken);
+            }
+
+            if (parentIds is null || parentIds.Count == 0)
+            {
+                return [];
+            }
+
+            string? parentIdColumnName = Query.ParentIdColumnName(administrativeArealType);
+            if (string.IsNullOrWhiteSpace(parentIdColumnName))
+            {
+                return [];
+            }
+
+            bool hasExclusions = excludedIds != null && excludedIds.Count > 0;
+            string excludedFilter = hasExclusions ? "AND id != ALL(@excludedIds)" : "";
+
+            string commandText2 = $@"
+                SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, created_at
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                    {excludedFilter}
+                    AND ({parentIdColumnName} = ANY(@parentIds) OR {parentIdColumnName} IS NULL)
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
+
+            await using NpgsqlCommand npgsqlCommand2 = new(commandText2, npgsqlConnection);
+
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
+            npgsqlCommand2.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds.ToArray() });
+
+            if (hasExclusions)
+            {
+                npgsqlCommand2.Parameters.Add(new NpgsqlParameter("excludedIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = excludedIds!.ToArray() });
+            }
+
+            return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand2, cancellationToken);
         }
     }
 }
