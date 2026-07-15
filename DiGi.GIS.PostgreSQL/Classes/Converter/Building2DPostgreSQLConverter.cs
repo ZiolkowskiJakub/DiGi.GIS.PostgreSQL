@@ -398,14 +398,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            const string commandText = $@"
+            string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
-                    WHERE id = @id AND county_id = @countyId;";
+                    WHERE id = @id{(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
 
             List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
 
@@ -494,14 +497,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            const string commandText = $@"
+            string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference AND county_id = @countyId;";
+                    WHERE reference = @reference{(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("reference", reference);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
 
             List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
 
@@ -525,14 +531,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            const string commandText = $@"
+            string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
                     FROM {Constants.TableName.Building2D}
-                    WHERE id = @id AND county_id = @countyId;";
+                    WHERE id = @id{(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("id", id);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
 
             List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
 
@@ -561,14 +570,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            const string commandText = $@"
+            string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference AND county_id = @countyId;";
+                    WHERE reference = @reference{(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("reference", reference);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
 
             List<Building2DReference>? results = await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
 
