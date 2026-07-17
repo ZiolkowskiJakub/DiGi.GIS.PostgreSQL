@@ -1,3 +1,4 @@
+using DiGi.Analytical.Building.Enums;
 using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.PostgreSQL.Classes;
 using System.IO;
@@ -32,6 +33,7 @@ namespace DiGi.GIS.PostgreSQL
                 {
                     result.Add(new AdministrativeAreal2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new Building2DPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
+
                     result.Add(new YearBuiltDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new Building2DOccupancyDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
                     result.Add(new AdministrativeAreal2DOccupancyDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Main);
@@ -47,6 +49,7 @@ namespace DiGi.GIS.PostgreSQL
                 {
                     result.Add(new OrtoDatasPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
                     result.Add(new BuildingDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
+                    result.Add(new BuildingModelPostgreSQLConverter(connectionData, BuildingModelDetailLevel.Component), postgreSQLConfigurationFile_Storage);
                 }
             }
 

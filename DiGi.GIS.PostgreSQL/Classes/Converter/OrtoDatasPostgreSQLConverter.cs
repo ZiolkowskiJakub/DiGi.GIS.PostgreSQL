@@ -1,4 +1,4 @@
-﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
@@ -750,7 +750,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    Building2DReference location = new()
+                    Building2DReference building2DReference = new()
                     {
                         Id = reader.GetInt64(reader.GetOrdinal("id")),
                         CountyId = reader.IsDBNull(reader.GetOrdinal("county_id")) ? null : reader.GetInt32(reader.GetOrdinal("county_id")),
@@ -758,7 +758,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         SubdivisionId = reader.IsDBNull(reader.GetOrdinal("subdivision_id")) ? null : reader.GetInt32(reader.GetOrdinal("subdivision_id"))
                     };
 
-                    result.Add(location);
+                    result.Add(building2DReference);
                 }
             }
             catch (NpgsqlException ex)

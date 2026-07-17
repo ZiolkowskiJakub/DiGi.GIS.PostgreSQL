@@ -145,13 +145,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios))
                     {
-                        if(building2Ds is not null)
+                        if (building2Ds is not null)
                         {
                             List<double> radiuses = [200, 400, 600, 1000];
-                            
+
                             Building2DPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DPostgreSQLConverter>();
 
-                            if(building2DOccupancyDataPostgreSQLConverter is not null)
+                            if (building2DOccupancyDataPostgreSQLConverter is not null)
                             {
                                 foreach (Building2D building2D in building2Ds)
                                 {

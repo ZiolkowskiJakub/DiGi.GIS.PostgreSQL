@@ -3795,6 +3795,39 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if no references are found or an error occurs\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByCircle2DAsync\(Circle2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects for the buildings whose bounding box lies within or intersects the specified circular area \(the radius expanded by the tolerance\)\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D? circle2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).circle2D'></a>
+
+`circle2D` [DiGi\.Geometry\.Planar\.Classes\.Circle2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.circle2d 'DiGi\.Geometry\.Planar\.Classes\.Circle2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.Circle2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.circle2d 'DiGi\.Geometry\.Planar\.Classes\.Circle2D') defining the search area; can be null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The double value representing the distance tolerance for the spatial query, defaulting to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(DiGi.Geometry.Planar.Classes.Circle2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of references to the buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,string,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByCountyIdAsync\(int, Nullable\<int\>, string, int, CancellationToken\) Method
@@ -4404,6 +4437,23 @@ Initializes a new instance of the Building2DReference class\.
 public Building2DReference();
 ```
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReference.Building2DReference(DiGi.GIS.PostgreSQL.Classes.Building2D)'></a>
+
+## Building2DReference\(Building2D\) Constructor
+
+Initializes a new instance of the Building2DReference class from a Building2D instance\.
+
+```csharp
+public Building2DReference(DiGi.GIS.PostgreSQL.Classes.Building2D? building2D);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReference.Building2DReference(DiGi.GIS.PostgreSQL.Classes.Building2D).building2D'></a>
+
+`building2D` [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')
+
+The Building2D instance to reference\. This value can be null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReference.Building2DReference(DiGi.GIS.PostgreSQL.Classes.Building2DReference)'></a>
 
 ## Building2DReference\(Building2DReference\) Constructor
@@ -4487,6 +4537,7 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 Derived  
 ↳ [Building2DOccupancyData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyData')  
+↳ [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')  
 ↳ [OrtoDatas](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatas 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas')  
 ↳ [YearBuiltData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltData 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltData')
 ### Constructors
@@ -4591,6 +4642,7 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 Derived  
 ↳ [Building2DOccupancyDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyDataPostgreSQLConverter')  
+↳ [BuildingModelPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter')  
 ↳ [YearBuiltDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter')
 ### Constructors
 
@@ -5714,6 +5766,126 @@ An optional enumerable collection of additional unique identifiers for columns\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') instance if data is successfully retrieved; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel'></a>
+
+## BuildingModel Class
+
+Represents a database row envelope for a [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel') referenced by a 2D building\.
+
+```csharp
+public class BuildingModel : DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject<DiGi.Analytical.Building.Classes.BuildingModel>
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.GIS\.PostgreSQL\.Classes\.TableSerializableObject&lt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.TableSerializableObject\<TSerializableObject\>')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.TableSerializableObject\<TSerializableObject\>') → [DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObject&lt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObject\<TUniqueObject\>')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObject\<TUniqueObject\>') → [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject&lt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>') → BuildingModel
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel.BuildingModel()'></a>
+
+## BuildingModel\(\) Constructor
+
+Initializes a new instance of the BuildingModel class\.
+
+```csharp
+public BuildingModel();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel.BuildingModel(DiGi.GIS.PostgreSQL.Classes.BuildingModel)'></a>
+
+## BuildingModel\(BuildingModel\) Constructor
+
+Initializes a new instance of the BuildingModel class by copying data from another BuildingModel instance\.
+
+```csharp
+public BuildingModel(DiGi.GIS.PostgreSQL.Classes.BuildingModel? buildingModel);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel.BuildingModel(DiGi.GIS.PostgreSQL.Classes.BuildingModel).buildingModel'></a>
+
+`buildingModel` [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')
+
+The BuildingModel instance to copy data from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel.BuildingModel(System.Text.Json.Nodes.JsonObject)'></a>
+
+## BuildingModel\(JsonObject\) Constructor
+
+Initializes a new instance of the BuildingModel class from a JsonObject\.
+
+```csharp
+public BuildingModel(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel.BuildingModel(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JsonObject containing the serialized data\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter'></a>
+
+## BuildingModelPostgreSQLConverter Class
+
+Provides functionality to convert building model data for PostgreSQL database operations, scoped to a specific [DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.enums.buildingmodeldetaillevel 'DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel')\.
+
+```csharp
+public class BuildingModelPostgreSQLConverter : DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.BuildingModel, DiGi.Analytical.Building.Classes.BuildingModel>
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1')[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1') → [DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObjectPostgreSQLConverter&lt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ReferencedObjectPostgreSQLConverter_TReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObjectPostgreSQLConverter\<TReferencedObject,TUniqueObject\>')[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')[,](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ReferencedObjectPostgreSQLConverter_TReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObjectPostgreSQLConverter\<TReferencedObject,TUniqueObject\>')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ReferencedObjectPostgreSQLConverter_TReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.ReferencedObjectPostgreSQLConverter\<TReferencedObject,TUniqueObject\>') → [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter&lt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>')[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')[,](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>') → BuildingModelPostgreSQLConverter
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.BuildingModelPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData,DiGi.Analytical.Building.Enums.BuildingModelDetailLevel)'></a>
+
+## BuildingModelPostgreSQLConverter\(ConnectionData, BuildingModelDetailLevel\) Constructor
+
+Initializes a new instance of the [BuildingModelPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter') class\.
+
+```csharp
+public BuildingModelPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData? connectionData, DiGi.Analytical.Building.Enums.BuildingModelDetailLevel buildingModelDetailLevel);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.BuildingModelPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData,DiGi.Analytical.Building.Enums.BuildingModelDetailLevel).connectionData'></a>
+
+`connectionData` [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData')
+
+The connection data used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.BuildingModelPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData,DiGi.Analytical.Building.Enums.BuildingModelDetailLevel).buildingModelDetailLevel'></a>
+
+`buildingModelDetailLevel` [DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.enums.buildingmodeldetaillevel 'DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel')
+
+The detail level of the building models handled by this converter\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.BuildingModelDetailLevel'></a>
+
+## BuildingModelPostgreSQLConverter\.BuildingModelDetailLevel Property
+
+Gets the detail level of the building models handled by this converter, which determines the target table\.
+
+```csharp
+private DiGi.Analytical.Building.Enums.BuildingModelDetailLevel BuildingModelDetailLevel { private get; }
+```
+
+#### Property Value
+[DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.enums.buildingmodeldetaillevel 'DiGi\.Analytical\.Building\.Enums\.BuildingModelDetailLevel')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.TableName'></a>
+
+## BuildingModelPostgreSQLConverter\.TableName Property
+
+Gets the name of the table in the PostgreSQL database where building model data for the configured detail level is stored\.
+
+```csharp
+public override string TableName { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter'></a>
 

@@ -1046,6 +1046,48 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building2DReference"/> objects for the buildings whose bounding box lies within or intersects the specified circular area (the radius expanded by the tolerance).
+        /// </summary>
+        /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area; can be null.</param>
+        /// <param name="tolerance">The double value representing the distance tolerance for the spatial query, defaulting to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of references to the buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established.</returns>
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (circle2D?.Center is null)
+            {
+                return null;
+            }
+
+            // Delegate the coarse spatial search to the bounding-box query: the circle's bounding box
+            // expanded by the tolerance is exactly the effective search region (radius + tolerance).
+            // This reuses the partition pruning and the GiST-indexed 'box && box' filter.
+            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, cancellationToken);
+            if (building2Ds is null)
+            {
+                return null;
+            }
+
+            if (building2Ds.Count == 0)
+            {
+                return [];
+            }
+
+            // Narrow the bounding-box superset to the true circular area (radius + tolerance)
+            // using the exact rectangle-vs-circle test on each building's bounding box.
+            List<Building2DReference> result = [];
+            foreach (Building2D building2D in building2Ds)
+            {
+                if (circle2D.InRange(building2D.BoundingBox2D, tolerance))
+                {
+                    result.Add(new Building2DReference(building2D));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Asynchronously retrieves the count of records, optionally filtered by a specific county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the results; if null, the total count is retrieved.</param>

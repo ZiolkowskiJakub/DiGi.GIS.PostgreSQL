@@ -43,6 +43,27 @@ The collection of [ITableSerializableObject&lt;TSerializableObject&gt;](DiGi.GIS
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TSerializableObject](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Convert.ToDiGi_TSerializableObject_(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Interfaces.ITableSerializableObject_TSerializableObject__).TSerializableObject 'DiGi\.GIS\.PostgreSQL\.Convert\.ToDiGi\<TSerializableObject\>\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableSerializableObject\<TSerializableObject\>\>\)\.TSerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
 A list of [TSerializableObject](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Convert.ToDiGi_TSerializableObject_(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Interfaces.ITableSerializableObject_TSerializableObject__).TSerializableObject 'DiGi\.GIS\.PostgreSQL\.Convert\.ToDiGi\<TSerializableObject\>\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableSerializableObject\<TSerializableObject\>\>\)\.TSerializableObject') instances, or null if [tableSerializableObjects](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Convert.ToDiGi_TSerializableObject_(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Interfaces.ITableSerializableObject_TSerializableObject__).tableSerializableObjects 'DiGi\.GIS\.PostgreSQL\.Convert\.ToDiGi\<TSerializableObject\>\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableSerializableObject\<TSerializableObject\>\>\)\.tableSerializableObjects') is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Convert.ToPostgreSQL(thisDiGi.Analytical.Building.Classes.BuildingModel)'></a>
+
+## Convert\.ToPostgreSQL\(this BuildingModel\) Method
+
+Converts the specified analytical building model to a PostgreSQL\-compatible building model object, reading the reference and county identifier from the building model parameters\.
+
+```csharp
+public static DiGi.GIS.PostgreSQL.Classes.BuildingModel? ToPostgreSQL(this DiGi.Analytical.Building.Classes.BuildingModel? buildingModel);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Convert.ToPostgreSQL(thisDiGi.Analytical.Building.Classes.BuildingModel).buildingModel'></a>
+
+`buildingModel` [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')
+
+The analytical building model to convert\.
+
+#### Returns
+[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')  
+A [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel') object if the provided building model is not null and carries the [DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.analytical.enums.buildingmodelparameter.reference 'DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference') and [DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.CountyId](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.analytical.enums.buildingmodelparameter.countyid 'DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.CountyId') parameter values; otherwise, null\.
+
 <a name='DiGi.GIS.PostgreSQL.Convert.ToPostgreSQL(thisDiGi.GIS.Classes.AdministrativeAreal2D)'></a>
 
 ## Convert\.ToPostgreSQL\(this AdministrativeAreal2D\) Method

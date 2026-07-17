@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace DiGi.GIS.PostgreSQL.Classes
@@ -36,6 +36,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         public Building2DReference()
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the Building2DReference class from a Building2D instance.
+        /// </summary>
+        /// <param name="building2D">The Building2D instance to reference. This value can be null.</param>
+        public Building2DReference(Building2D? building2D)
+        {
+            if (building2D is not null)
+            {
+                Id = building2D.Id;
+                SubdivisionId = building2D.SubdivisionId;
+                CountyId = building2D.CountyId;
+                Reference = building2D.Reference;
+            }
         }
 
         /// <summary>
