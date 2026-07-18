@@ -16,6 +16,8 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
+            //TODO: Use ComplexReference instead CountyId
+
             if (!buildingModel.TryGetValue<string>(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
             {
                 return null;
