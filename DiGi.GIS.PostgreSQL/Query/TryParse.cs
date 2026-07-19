@@ -60,7 +60,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            UniqueIdReference? uniqueReference_BuildingModel = serializableReferences.Find(x => x is UniqueIdReference uniqueIdReference && uniqueIdReference.TypeReference == new TypeReference(typeof(DiGi.Analytical.Building.Classes.BuildingModel))) as UniqueIdReference;
+            var uniqueReference_BuildingModel = serializableReferences.Find(x => x is UniqueIdReference uniqueIdReference && uniqueIdReference.TypeReference == new TypeReference(typeof(DiGi.Analytical.Building.Classes.BuildingModel))) as UniqueIdReference;
             if (uniqueReference_BuildingModel is null || uniqueReference_BuildingModel.UniqueId is not string uniqueId_BuildingModel || string.IsNullOrWhiteSpace(uniqueId_BuildingModel))
             {
                 return false;

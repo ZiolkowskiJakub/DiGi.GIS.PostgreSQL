@@ -62,7 +62,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
-        public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default, int commandTimeout = 30)
+        public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken, commandTimeout);
         }
@@ -73,7 +73,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default, int commandTimeout = 30)
+        public async Task<bool> ClearAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
 
@@ -84,7 +84,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await ClearAsync(npgsqlConnection, cancellationToken, commandTimeout);
+            return await ClearAsync(npgsqlConnection, commandTimeout, cancellationToken);
         }
     }
 }

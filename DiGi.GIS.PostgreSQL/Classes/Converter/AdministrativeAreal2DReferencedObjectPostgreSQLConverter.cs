@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Interfaces;
+using DiGi.Core.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -237,7 +237,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Standard PostgreSQL statement termination
             commandText += ";";
 
-            await using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding parameters

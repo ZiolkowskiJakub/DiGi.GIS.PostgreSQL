@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System.Collections.Generic;
@@ -79,7 +79,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             get
             {
                 List<AdministrativeAreal2DReference> result = [];
-                foreach (AdministrativeArealType administrativeArealType in System.Enum.GetValues(typeof(AdministrativeArealType)))
+                foreach (AdministrativeArealType administrativeArealType in System.Enum.GetValues<AdministrativeArealType>())
                 {
                     if (dictionary.TryGetValue(administrativeArealType, out AdministrativeAreal2DReference? administrativeAreal2DReference) && administrativeAreal2DReference is not null)
                     {

@@ -1,4 +1,4 @@
-﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -2502,7 +2502,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         private static async Task PopulateObjectsAsync(NpgsqlConnection npgsqlConnection, IEnumerable<AdministrativeAreal2D> administrativeAreal2Ds, CancellationToken cancellationToken = default)
         {
-            int[] ids = administrativeAreal2Ds.Select(x => x.Id).ToArray();
+            int[] ids = [.. administrativeAreal2Ds.Select(x => x.Id)];
             if (ids.Length == 0)
             {
                 return;

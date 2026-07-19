@@ -24,7 +24,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Gets or sets the options used to configure the PostgreSQL building data update process.
         /// </summary>
-        public PostgreSQLBuildingDataUpdateOptions uIBuildingDataUpdateOptions { get; set; } = new PostgreSQLBuildingDataUpdateOptions();
+        public PostgreSQLBuildingDataUpdateOptions UIBuildingDataUpdateOptions { get; set; } = new PostgreSQLBuildingDataUpdateOptions();
 
         /// <summary>
         /// Constructor with Dependency Injection.
@@ -67,9 +67,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            uIBuildingDataUpdateOptions ??= new PostgreSQLBuildingDataUpdateOptions();
+            UIBuildingDataUpdateOptions ??= new PostgreSQLBuildingDataUpdateOptions();
 
-            if (uIBuildingDataUpdateOptions.BuildingDataUpdateTypes is not IEnumerable<BuildingDataUpdateType> buildingDataUpdateTypes || !buildingDataUpdateTypes.Any())
+            if (UIBuildingDataUpdateOptions.BuildingDataUpdateTypes is not IEnumerable<BuildingDataUpdateType> buildingDataUpdateTypes || !buildingDataUpdateTypes.Any())
             {
                 return false;
             }

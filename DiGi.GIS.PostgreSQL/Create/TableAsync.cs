@@ -1,3 +1,4 @@
+using DiGi.GIS.PostgreSQL.Classes;
 using Npgsql;
 using System;
 using System.Threading;
@@ -366,6 +367,85 @@ namespace DiGi.GIS.PostgreSQL
                 Console.WriteLine($"Postgres Error ({nameof(TableAsync_OrtoDatas)}): {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Asynchronously creates the partitioned <see cref="Building"/> table along with its supporting composite index, if it does not already exist.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_Building(this NpgsqlConnection? npgsqlConnection)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building} (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    lod SMALLINT,
+                    year SMALLINT,
+                    min_x DOUBLE PRECISION,
+                    min_y DOUBLE PRECISION,
+                    min_z DOUBLE PRECISION,
+                    max_x DOUBLE PRECISION,
+                    max_y DOUBLE PRECISION,
+                    max_z DOUBLE PRECISION,
+                    object JSONB,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                ) PARTITION BY LIST (county_id);
+
+                -- Optimization: Composite index for County + Reference
+                -- This is highly effective because of your partitioning strategy.
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref
+                ON {Constants.TableName.Building} (county_id, reference);
+                ";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Building)}): {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously creates a partition for the <see cref="Building"/> table based on the specified county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_Building_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building}_{countyId} PARTITION OF {Constants.TableName.Building}
+                    FOR VALUES IN ({countyId});
+                ";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            await npgsqlCommand.ExecuteNonQueryAsync();
+
+            return true;
         }
 
         /// <summary>

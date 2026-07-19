@@ -1,0 +1,622 @@
+using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Spatial.Classes;
+using DiGi.GIS.PostgreSQL.Constants;
+using DiGi.GIS.PostgreSQL.Interfaces;
+using DiGi.PostgreSQL.Classes;
+using Npgsql;
+using NpgsqlTypes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DiGi.GIS.PostgreSQL.Classes
+{
+    /// <summary>
+    /// Provides a specialized implementation for converting <see cref="Building"/> objects to and from a PostgreSQL database format, incorporating GIS-specific conversion capabilities.
+    /// </summary>
+    public class BuildingPostgreSQLConverter : PostgreSQLConverter<Building>, IGISPostgreSQLConverter<Building>
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BuildingPostgreSQLConverter"/> class.
+        /// </summary>
+        /// <param name="connectionData">The <see cref="ConnectionData"/> containing the connection settings required to establish a connection to the PostgreSQL database. This value can be null.</param>
+        public BuildingPostgreSQLConverter(ConnectionData? connectionData)
+            : base(connectionData)
+        {
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the count of records from the database, optionally filtered by a specific county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="countyId">The optional integer identifier of the county used to filter the count.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a <see cref="long"/>.</returns>
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = TableName.Building;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="countyId">The optional integer identifier for the county; if null, the estimate is calculated across all counties.</param>
+        /// <param name="analyze">A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a long integer.</returns>
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string tableName = TableName.Building;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> to use for the query.</param>
+        /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
+        /// <param name="analyze">A boolean indicating whether to run an analysis operation before fetching the estimated count.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total estimated row count as a long, or -1 if an error occurs.</returns>
+        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            long result = 0;
+            foreach (int countyId in countyIds)
+            {
+                string tableName = string.Format("{0}_{1}", TableName.Building, countyId);
+                result += await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously clears all data from the building table.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
+        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            bool result = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.Building, cancellationToken);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the count of records, optionally filtered by a specific county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved for all counties.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total row count as a long.</returns>
+        public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string tableName = TableName.Building;
+            if (countyId != null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter the estimate.</param>
+        /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count as a long, or -1 if an error occurs.</returns>
+        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyId, analyze, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the estimated row count for the specified collection of county identifiers.
+        /// </summary>
+        /// <param name="countyIds">A collection of integers representing the unique identifiers of the counties to be counted.</param>
+        /// <param name="analyze">A boolean value indicating whether to perform a database analysis operation before retrieving the estimate.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 if an error occurs.</returns>
+        public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously updates a collection of <see cref="Building"/> records in the PostgreSQL database.
+        /// </summary>
+        /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
+        /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of updated building IDs, or null if the operation fails.</returns>
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        {
+            if (buildings is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool succeeded = await Create.TableAsync_Building(npgsqlConnection);
+            if (!succeeded)
+            {
+                return null;
+            }
+
+            HashSet<long> result = [];
+
+            if (!buildings.Any())
+            {
+                return result;
+            }
+
+            Dictionary<int, List<Building>> dictionary_Buildings = [];
+
+            foreach (Building building_Temp in buildings)
+            {
+                if (building_Temp is null)
+                {
+                    continue;
+                }
+
+                int? countyId = building_Temp.CountyId;
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    BoundingBox3D? boundingBox3D = building_Temp.BoundingBox3D;
+                    if (boundingBox3D is null)
+                    {
+                        continue;
+                    }
+
+                    BoundingBox2D? boundingBox2D = new (
+                        new Point2D(boundingBox3D.MinX, boundingBox3D.MinY),
+                        new Point2D(boundingBox3D.MaxX, boundingBox3D.MaxY));
+
+                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                    if (administrativeAreal2Ds != null)
+                    {
+                        int count = administrativeAreal2Ds.Count;
+                        if (count == 1)
+                        {
+                            countyId = administrativeAreal2Ds[0].Id;
+                        }
+                        else if (count > 1)
+                        {
+                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi()?.PolygonalFace2D?.ExternalEdge));
+                            tuples_AdministrativeAreal2D.RemoveAll(x => x?.Item2 is null);
+
+                            if (tuples_AdministrativeAreal2D.Count == 1)
+                            {
+                                countyId = tuples_AdministrativeAreal2D[0].Item1.Id;
+                            }
+                            else if (count > 1)
+                            {
+                                List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2_Temp = tuples_AdministrativeAreal2D.FindAll(x => x.Item2!.InRange(boundingBox2D, tolerance));
+                                if (tuples_AdministrativeAreal2_Temp.Count == 0)
+                                {
+                                    List<Tuple<AdministrativeAreal2D, double>> tuples_Distance = [];
+                                    foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2D)
+                                    {
+                                        Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
+
+                                        double distance = Geometry.Planar.Query.Distance(boundingBox2D, polygonal2D_AdministrativeAreal2D, out _, out _, tolerance);
+
+                                        tuples_Distance.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, distance));
+                                    }
+
+                                    if (tuples_Distance.Count != 0)
+                                    {
+                                        tuples_Distance.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+                                        countyId = tuples_Distance[0].Item1.Id;
+                                    }
+                                }
+                                else if (tuples_AdministrativeAreal2_Temp.Count == 1)
+                                {
+                                    countyId = tuples_AdministrativeAreal2_Temp[0].Item1.Id;
+                                }
+                                else
+                                {
+                                    if ((Polygon2D?)boundingBox2D is Polygon2D polygon2D)
+                                    {
+                                        List<Tuple<AdministrativeAreal2D, double>> tuples_Area = [];
+                                        foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2_Temp)
+                                        {
+                                            Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
+
+                                            List<Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<Geometry.Planar.Interfaces.IPolygonal2D, Geometry.Planar.Interfaces.IPolygonal2D>([polygonal2D_AdministrativeAreal2D, polygon2D], tolerance);
+
+                                            double area = 0;
+                                            if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
+                                            {
+                                                area = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
+                                            }
+
+                                            if (area <= tolerance)
+                                            {
+                                                continue;
+                                            }
+
+                                            tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
+                                        }
+
+                                        if (tuples_Area.Count != 0)
+                                        {
+                                            tuples_Area.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+
+                                            countyId = tuples_Area[0].Item1.Id;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (countyId is null || !countyId.HasValue)
+                {
+                    continue;
+                }
+
+                if (!dictionary_Buildings.TryGetValue(countyId.Value, out List<Building>? buildings_CountyId) || buildings_CountyId is null)
+                {
+                    buildings_CountyId = [];
+                    dictionary_Buildings[countyId.Value] = buildings_CountyId;
+                }
+
+                buildings_CountyId.Add(building_Temp);
+            }
+
+            await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+
+            foreach (KeyValuePair<int, List<Building>> keyValuePair in dictionary_Buildings)
+            {
+                int countyId = keyValuePair.Key;
+
+                succeeded = await Create.TableAsync_Building_Partition(npgsqlConnection, countyId);
+                if (!succeeded)
+                {
+                    continue;
+                }
+
+                foreach (Building building_Temp in keyValuePair.Value)
+                {
+                    NpgsqlBatchCommand npgsqlBatchCommand;
+                    if (building_Temp.Id > 0)
+                    {
+                        npgsqlBatchCommand = new($@"
+                        INSERT INTO {TableName.Building} (id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object)
+                        OVERRIDING SYSTEM VALUE
+                        VALUES (@id, @county_id, @reference, @lod, @year, @min_x, @min_y, @min_z, @max_x, @max_y, @max_z, @object)
+                        ON CONFLICT (id, county_id)
+                        DO UPDATE SET
+                            reference = EXCLUDED.reference,
+                            lod = EXCLUDED.lod,
+                            year = EXCLUDED.year,
+                            min_x = EXCLUDED.min_x,
+                            min_y = EXCLUDED.min_y,
+                            min_z = EXCLUDED.min_z,
+                            max_x = EXCLUDED.max_x,
+                            max_y = EXCLUDED.max_y,
+                            max_z = EXCLUDED.max_z,
+                            object = EXCLUDED.object
+                        RETURNING id;");
+
+                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("id", NpgsqlDbType.Bigint) { Value = building_Temp.Id });
+                    }
+                    else
+                    {
+                        npgsqlBatchCommand = new($@"
+                        INSERT INTO {TableName.Building} (county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object)
+                        VALUES (@county_id, @reference, @lod, @year, @min_x, @min_y, @min_z, @max_x, @max_y, @max_z, @object)
+                        RETURNING id;");
+                    }
+
+                    BoundingBox3D? boundingBox3D = building_Temp.BoundingBox3D;
+
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = building_Temp.Reference ?? (object)DBNull.Value });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("lod", NpgsqlDbType.Smallint) { Value = building_Temp.LOD is null ? DBNull.Value : (short)building_Temp.LOD.Value });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("year", NpgsqlDbType.Smallint) { Value = building_Temp.Year is null ? DBNull.Value : building_Temp.Year.Value });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("min_x", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MinX });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("min_y", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MinY });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("min_z", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MinZ });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("max_x", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MaxX });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("max_y", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MaxY });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("max_z", NpgsqlDbType.Double) { Value = boundingBox3D is null ? double.NaN : boundingBox3D.MaxZ });
+
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb)
+                    {
+                        Value = (object?)building_Temp.Object?.ToJsonString() ?? DBNull.Value
+                    });
+
+                    npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
+                }
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+
+            int buildingIndex = 0;
+            List<Building> orderedBuildings = [];
+            foreach (KeyValuePair<int, List<Building>> keyValuePair in dictionary_Buildings)
+            {
+                orderedBuildings.AddRange(keyValuePair.Value);
+            }
+
+            do
+            {
+                while (await npgsqlDataReader.ReadAsync())
+                {
+                    long id = npgsqlDataReader.GetInt64(0);
+                    result.Add(id);
+
+                    if (buildingIndex < orderedBuildings.Count)
+                    {
+                        orderedBuildings[buildingIndex].Id = id;
+                        buildingIndex++;
+                    }
+                }
+            }
+            while (await npgsqlDataReader.NextResultAsync());
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously checks for the existence of a collection of references, optionally filtered by a county identifier.
+        /// </summary>
+        /// <param name="references">An <see cref="IEnumerable{T}"/> of strings representing the references to be checked.</param>
+        /// <param name="countyId">The optional integer identifier for the county; if null, the search is not filtered by county.</param>
+        /// <param name="inverted">A boolean value indicating whether to return the set of references that do not exist (true) or those that do exist (false).</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            if (!references.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<string> result = [];
+
+            const string commandText = $@"
+                SELECT input_ref
+                FROM UNNEST(@refs) AS input_ref
+                LEFT JOIN {TableName.Building} u ON u.reference = input_ref
+                    AND (@county_id IS NULL OR u.county_id = @county_id)
+                WHERE
+                    (@inverted = false AND u.reference IS NOT NULL)
+                    OR
+                    (@inverted = true AND u.reference IS NULL);";
+
+            try
+            {
+                await npgsqlConnection.OpenAsync(cancellationToken);
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                string[] referenceArray = [.. references.Distinct()];
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
+
+                await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    result.Add(reader.GetString(0));
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error in {nameof(ContainsByReferencesAsync)}: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified reference and optional county identifier.
+        /// </summary>
+        /// <param name="reference">The string reference of the buildings to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
+        public async Task<List<Building>?> GetBuildingsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetBuildingsByReferencesAsync([reference], countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
+        /// </summary>
+        /// <param name="references">A collection of strings representing the references to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
+        public async Task<List<Building>?> GetBuildingsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuildingsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="references">A collection of strings representing the references to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or references are null.</returns>
+        public static async Task<List<Building>?> GetBuildingsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            List<Building>? result = [];
+
+            if (!references.Any())
+            {
+                return result;
+            }
+
+            const string commandText = $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync_Building(npgsqlCommand, cancellationToken);
+
+            return result;
+        }
+
+        private static Building Create_Building(NpgsqlDataReader npgsqlDataReader)
+        {
+            return new Building
+            {
+                Id = npgsqlDataReader.GetInt64(0),
+                CountyId = npgsqlDataReader.IsDBNull(1) ? null : (int?)npgsqlDataReader.GetInt32(1),
+                Reference = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                LOD = npgsqlDataReader.IsDBNull(3) ? null : (CityGML.Enums.LOD?)npgsqlDataReader.GetInt16(3),
+                Year = npgsqlDataReader.IsDBNull(4) ? null : (short?)npgsqlDataReader.GetInt16(4),
+                BoundingBox3D = npgsqlDataReader.IsDBNull(5) || double.IsNaN(npgsqlDataReader.GetDouble(5)) ? null : new BoundingBox3D(
+                    new Point3D(npgsqlDataReader.GetDouble(5), npgsqlDataReader.GetDouble(6), npgsqlDataReader.GetDouble(7)),
+                    new Point3D(npgsqlDataReader.GetDouble(8), npgsqlDataReader.GetDouble(9), npgsqlDataReader.GetDouble(10))),
+                Object = npgsqlDataReader.IsDBNull(11) ? null : JsonNode.Parse(npgsqlDataReader.GetString(11)) as JsonObject,
+                CreatedAt = npgsqlDataReader.IsDBNull(12) ? null : (DateTime?)npgsqlDataReader.GetDateTime(12)
+            };
+        }
+
+        private static async Task<List<Building>> ReadAsync_Building(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
+        {
+            List<Building> result = [];
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(Create_Building(npgsqlDataReader));
+            }
+
+            return result;
+        }
+
+        private static async Task<List<Building>?> ReadAsync_Building(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlCommand is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            return await ReadAsync_Building(npgsqlDataReader, cancellationToken);
+        }
+    }
+}

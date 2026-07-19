@@ -21,6 +21,11 @@ namespace DiGi.GIS.PostgreSQL.Constants
         public const string OrtoDatas = "orto_datas";
 
         /// <summary>
+        /// The name of the building table.
+        /// </summary>
+        public const string Building = "building";
+
+        /// <summary>
         /// The name of the ortho-datas building 2D reference update table.
         /// </summary>
         public const string OrtoDatas_Building2DReference_Update = "orto_datas_building_2d_reference_update";
@@ -55,6 +60,9 @@ namespace DiGi.GIS.PostgreSQL.Constants
         /// </summary>
         public const string EPWFile = "epw_file";
 
+        /// <summary>
+        /// The name of the building model table.
+        /// </summary>
         public const string BuildingModel = "building_model";
     }
 }

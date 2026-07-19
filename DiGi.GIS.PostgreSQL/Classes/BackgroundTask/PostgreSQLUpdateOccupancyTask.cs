@@ -70,7 +70,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 if (clear)
                 {
-                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken, commandTimeout);
+                    await administrativeAreal2DOccupancyDataPostgreSQLConverter.ClearAsync(commandTimeout, cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }
@@ -170,7 +170,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (clear)
                 {
-                    await building2DOccupancyDataPostgreSQLConverter.ClearAsync(cancellationToken, commandTimeout);
+                    await building2DOccupancyDataPostgreSQLConverter.ClearAsync(commandTimeout, cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }

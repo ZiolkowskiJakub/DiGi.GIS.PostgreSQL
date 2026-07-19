@@ -158,8 +158,7 @@ namespace DiGi.GIS.PostgreSQL
                     continue;
                 }
 
-                OccupancyData? occupancyData = building2DOccupancyData.ToDiGi() as OccupancyData;
-                if (occupancyData is null)
+                if (building2DOccupancyData.ToDiGi() is not OccupancyData occupancyData)
                 {
                     continue;
                 }

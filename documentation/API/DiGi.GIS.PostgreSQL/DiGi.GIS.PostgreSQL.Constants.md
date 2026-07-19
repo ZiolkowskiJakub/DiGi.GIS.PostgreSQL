@@ -68,6 +68,19 @@ public const string AdministrativeAreal2D = "administrative_areal_2d";
 #### Field Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
+<a name='DiGi.GIS.PostgreSQL.Constants.TableName.Building'></a>
+
+## TableName\.Building Field
+
+The name of the building table\.
+
+```csharp
+public const string Building = "building";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.PostgreSQL.Constants.TableName.Building2D'></a>
 
 ## TableName\.Building2D Field
@@ -89,6 +102,19 @@ The name of the building data table\.
 
 ```csharp
 public const string BuildingData = "building_data";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Constants.TableName.BuildingModel'></a>
+
+## TableName\.BuildingModel Field
+
+The name of the building model table\.
+
+```csharp
+public const string BuildingModel = "building_model";
 ```
 
 #### Field Value
