@@ -23,6 +23,8 @@ namespace DiGi.GIS.PostgreSQL
                 reference = building.UniqueId;
             }
 
+            building.GetValue<string>(Analytical.Enums.BuildingModelParameter.LOD);
+
             Building result = new()
             {
                 Reference = reference,

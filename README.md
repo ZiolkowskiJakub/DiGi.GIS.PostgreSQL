@@ -46,6 +46,18 @@ ALL complex functionalities, including operations on classes, interfaces, and en
 
 ---
 
+## 🔌 PostgreSQL Converter Registration
+
+Converters in this project must be explicitly registered in `Create\GISPostgreSQLConverterManager.cs`. This factory method reads `PostgreSQL_Main` and `PostgreSQL_Storage` configuration files and manually instantiates each converter.
+
+The GIS WebAPI project's `InitializeAsync` reads converters from the returned `GISPostgreSQLConverterManager` and registers them in the DI container. WebAPI controllers (e.g. `BuildingController`) depend on these converters via constructor injection.
+
+**When adding a new converter that will be consumed by a GIS WebAPI controller:**
+1. Add its instantiation to `Create\GISPostgreSQLConverterManager.cs` under the appropriate configuration file section.
+2. If a converter is missing from this registration, the corresponding controller will receive a `null` dependency, causing a `NullReferenceException` and a **500 Internal Server Error** at runtime.
+
+---
+
 ## 💻 Coding Guidelines for Developers & AI Agents
 
 To maintain codebase health, performance, and compatibility within Visual Studio 2026 / C# 10+ environments, all developers and AI agents must strictly comply with these guidelines.

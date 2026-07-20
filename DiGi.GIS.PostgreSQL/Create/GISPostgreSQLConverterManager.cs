@@ -9,8 +9,16 @@ namespace DiGi.GIS.PostgreSQL
     public static partial class Create
     {
         /// <summary>
-        /// Initializes and returns a new instance of the <see cref="GISPostgreSQLConverterManager"/>,
-        /// configured using local configuration files from the executing assembly's directory.
+        /// Creates a <see cref="GISPostgreSQLConverterManager"/> with all PostgreSQL converters registered.
+        /// Reads connection configuration from <c>PostgreSQL_Main</c> and <c>PostgreSQL_Storage</c> files
+        /// in the executing assembly's directory.
+        /// <para>
+        /// IMPORTANT: Every converter consumed by a GIS WebAPI controller (e.g. <c>BuildingController</c>,
+        /// <c>AdministrativeAreal2DController</c>) MUST be registered here. The WebAPI <c>InitializeAsync</c>
+        /// reads converters from the returned manager and adds them to the DI container. A missing
+        /// registration causes the controller's converter dependency to be <see langword="null"/>,
+        /// resulting in a 500 Internal Server Error at runtime.
+        /// </para>
         /// </summary>
         /// <returns>A configured <see cref="GISPostgreSQLConverterManager"/> if successful; otherwise, null.</returns>
         public static GISPostgreSQLConverterManager? GISPostgreSQLConverterManager()
@@ -50,6 +58,7 @@ namespace DiGi.GIS.PostgreSQL
                     result.Add(new OrtoDatasPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
                     result.Add(new BuildingDataPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
                     result.Add(new BuildingModelPostgreSQLConverter(connectionData, BuildingModelDetailLevel.Component), postgreSQLConfigurationFile_Storage);
+                    result.Add(new BuildingPostgreSQLConverter(connectionData), postgreSQLConfigurationFile_Storage);
                 }
             }
 

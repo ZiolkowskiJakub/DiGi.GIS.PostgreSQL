@@ -256,8 +256,15 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 ## Create\.GISPostgreSQLConverterManager\(\) Method
 
-Initializes and returns a new instance of the [GISPostgreSQLConverterManager\(\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.GISPostgreSQLConverterManager() 'DiGi\.GIS\.PostgreSQL\.Create\.GISPostgreSQLConverterManager\(\)'),
-configured using local configuration files from the executing assembly's directory\.
+Creates a [GISPostgreSQLConverterManager\(\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.GISPostgreSQLConverterManager() 'DiGi\.GIS\.PostgreSQL\.Create\.GISPostgreSQLConverterManager\(\)') with all PostgreSQL converters registered\.
+Reads connection configuration from `PostgreSQL_Main` and `PostgreSQL_Storage` files
+in the executing assembly's directory\.
+
+IMPORTANT: Every converter consumed by a GIS WebAPI controller (e.g. `BuildingController`,
+`AdministrativeAreal2DController`) MUST be registered here. The WebAPI `InitializeAsync`
+reads converters from the returned manager and adds them to the DI container. A missing
+registration causes the controller's converter dependency to be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null'),
+resulting in a 500 Internal Server Error at runtime.
 
 ```csharp
 public static DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager? GISPostgreSQLConverterManager();
