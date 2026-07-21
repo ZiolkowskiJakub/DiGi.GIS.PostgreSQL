@@ -84,3 +84,26 @@ Occupancy data update\.
 `RadialRatios` 3
 
 Radial ratios \(Radial Building Coverage Ratio, Radial Floor Area Ratio\) update\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingParameter'></a>
+
+## BuildingParameter Enum
+
+Parameters applicable to a Building\.
+
+```csharp
+public enum BuildingParameter
+```
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingParameter.LOD'></a>
+
+`LOD` 0
+
+Level of Detail\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingParameter.Year'></a>
+
+`Year` 1
+
+Model year\.

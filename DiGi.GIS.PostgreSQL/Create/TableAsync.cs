@@ -401,10 +401,10 @@ namespace DiGi.GIS.PostgreSQL
                     PRIMARY KEY (id, county_id)
                 ) PARTITION BY LIST (county_id);
 
-                -- Optimization: Composite index for County + Reference
-                -- This is highly effective because of your partitioning strategy.
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref
-                ON {Constants.TableName.Building} (county_id, reference);
+                -- Optimization: Composite index for County + Reference + LOD + Year
+                -- NULLS NOT DISTINCT ensures ON CONFLICT works even when lod or year are NULL (PostgreSQL 15+)
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref_lod_year
+                ON {Constants.TableName.Building} (county_id, reference, lod, year) NULLS NOT DISTINCT;
                 ";
 
             try

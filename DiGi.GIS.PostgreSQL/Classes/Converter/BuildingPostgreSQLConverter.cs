@@ -379,6 +379,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         npgsqlBatchCommand = new($@"
                         INSERT INTO {TableName.Building} (county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object)
                         VALUES (@county_id, @reference, @lod, @year, @min_x, @min_y, @min_z, @max_x, @max_y, @max_z, @object)
+                        ON CONFLICT (county_id, reference, lod, year)
+                        DO UPDATE SET
+                            min_x = EXCLUDED.min_x,
+                            min_y = EXCLUDED.min_y,
+                            min_z = EXCLUDED.min_z,
+                            max_x = EXCLUDED.max_x,
+                            max_y = EXCLUDED.max_y,
+                            max_z = EXCLUDED.max_z,
+                            object = EXCLUDED.object
                         RETURNING id;");
                     }
 
