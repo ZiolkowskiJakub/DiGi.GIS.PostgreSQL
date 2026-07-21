@@ -139,7 +139,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 // Store coordinates in EPSG:2180 (ETRS89 / Poland CS92) so they share the
                 // Building2D coordinate system used by the nearest-neighbour lookup query.
                 Point3D point3D = new(location.Longitude, location.Latitude, location.Elevation);
-                if (DiGi.GIS.Convert.ToEPSG2180(point3D) is not Point2D point2D)
+                if (GIS.Convert.ToEPSG2180(point3D) is not Point2D point2D)
                 {
                     continue;
                 }
