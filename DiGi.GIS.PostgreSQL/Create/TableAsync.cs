@@ -405,6 +405,12 @@ namespace DiGi.GIS.PostgreSQL
                 -- NULLS NOT DISTINCT ensures ON CONFLICT works even when lod or year are NULL (PostgreSQL 15+)
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref_lod_year
                 ON {Constants.TableName.Building} (county_id, reference, lod, year) NULLS NOT DISTINCT;
+
+                -- CRITICAL: Spatial index using GiST and box type.
+                -- Enables an R-Tree lookup for the bounding box fallback in GetBuildingByReferenceAsync
+                -- instead of a sequential scan across the county partition.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_bbox
+                ON {Constants.TableName.Building} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
                 ";
 
             try

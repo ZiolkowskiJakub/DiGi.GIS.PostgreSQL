@@ -851,6 +851,43 @@ The GIS administrative division type\.
 [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')  
 The corresponding [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.Building(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,DiGi.Geometry.Spatial.Classes.Point3D,double)'></a>
+
+## Query\.Building\(this IEnumerable\<Building\>, Point3D, double\) Method
+
+Selects the single most relevant [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') from a collection of candidates\.
+
+Candidates are ranked ascending by level of detail and then by year, with nulls treated as the lowest rank, and only the candidates sharing the highest rank are considered.
+
+When more than one candidate shares the highest rank and a point is provided, the candidate whose surface geometry is closest to that point wins; candidates without usable geometry are excluded from that comparison.
+
+```csharp
+public static DiGi.GIS.PostgreSQL.Classes.Building? Building(this System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building>? buildings, DiGi.Geometry.Spatial.Classes.Point3D? point3D, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Building(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,DiGi.Geometry.Spatial.Classes.Point3D,double).buildings'></a>
+
+`buildings` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') candidates to choose from\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Building(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,DiGi.Geometry.Spatial.Classes.Point3D,double).point3D'></a>
+
+`point3D` [DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D')
+
+The optional [DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D') used to break ties between candidates of equal rank\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Building(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,DiGi.Geometry.Spatial.Classes.Point3D,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The tolerance used for the closest point calculation\.
+
+#### Returns
+[Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building')  
+The most relevant [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building'), or null if the collection is null, empty or no candidate could be resolved\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.ChildAdministrativeArealType(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 
 ## Query\.ChildAdministrativeArealType\(this AdministrativeArealType\) Method

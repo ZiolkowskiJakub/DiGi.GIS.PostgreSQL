@@ -6078,6 +6078,102 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.HashSet&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1') of strings containing the filtered references, or null if the operation fails or no results are found\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken)'></a>
+
+## BuildingPostgreSQLConverter\.GetBuildingByReferenceAsync\(string, Nullable\<int\>, Point3D, double, double, CancellationToken\) Method
+
+Asynchronously retrieves the single most relevant [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') for the specified reference, falling back to a spatial search around the supplied point when the reference cannot be resolved\.
+
+Candidates are ranked ascending by level of detail and then by year, with nulls treated as the lowest rank; ties between candidates of equal rank are broken by the surface geometry closest to [point3D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).point3D 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.GetBuildingByReferenceAsync\(string, System\.Nullable\<int\>, DiGi\.Geometry\.Spatial\.Classes\.Point3D, double, double, System\.Threading\.CancellationToken\)\.point3D').
+
+The spatial fallback ignores the reference entirely and is limited in X and Y by [maxDistance](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).maxDistance 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.GetBuildingByReferenceAsync\(string, System\.Nullable\<int\>, DiGi\.Geometry\.Spatial\.Classes\.Point3D, double, double, System\.Threading\.CancellationToken\)\.maxDistance'); the resulting candidate distance itself is not capped.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building?> GetBuildingByReferenceAsync(string reference, System.Nullable<int> countyId, DiGi.Geometry.Spatial.Classes.Point3D? point3D, double maxDistance=1.0, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The string reference of the building to search for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county to filter the results\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).point3D'></a>
+
+`point3D` [DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D')
+
+The optional [DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D') used to break ties and to locate the building when the reference cannot be resolved\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).maxDistance'></a>
+
+`maxDistance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance used to inflate [point3D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).point3D 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.GetBuildingByReferenceAsync\(string, System\.Nullable\<int\>, DiGi\.Geometry\.Spatial\.Classes\.Point3D, double, double, System\.Threading\.CancellationToken\)\.point3D') in X and Y into the bounding box of the spatial fallback search\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The tolerance used for the closest point calculation\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingByReferenceAsync(string,System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,double,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the most relevant [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building'), or null if none could be resolved\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,System.Nullable_int_,System.Threading.CancellationToken)'></a>
+
+## BuildingPostgreSQLConverter\.GetBuildingsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, Nullable\<int\>, CancellationToken\) Method
+
+Asynchronously retrieves a list of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records whose bounding box overlaps the specified 2D bounding box, optionally filtered by a county identifier\.
+
+Only the X and Y extents participate in the filter; records stored without a bounding box are excluded.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building>?> GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,System.Nullable_int_,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,System.Nullable_int_,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county to filter the results\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') objects, or null if the connection or the bounding box are null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetBuildingsByReferenceAsync(string,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
 ## BuildingPostgreSQLConverter\.GetBuildingsByReferenceAsync\(string, Nullable\<int\>, CancellationToken\) Method

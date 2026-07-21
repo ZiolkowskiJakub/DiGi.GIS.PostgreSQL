@@ -7,6 +7,7 @@ using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -183,6 +184,91 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the single most relevant <see cref="Building"/> for the specified reference, falling back to a spatial search around the supplied point when the reference cannot be resolved.
+        /// <para>Candidates are ranked ascending by level of detail and then by year, with nulls treated as the lowest rank; ties between candidates of equal rank are broken by the surface geometry closest to <paramref name="point3D"/>.</para>
+        /// <para>The spatial fallback ignores the reference entirely and is limited in X and Y by <paramref name="maxDistance"/>; the resulting candidate distance itself is not capped.</para>
+        /// </summary>
+        /// <param name="reference">The string reference of the building to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="point3D">The optional <see cref="Point3D"/> used to break ties and to locate the building when the reference cannot be resolved.</param>
+        /// <param name="maxDistance">The distance used to inflate <paramref name="point3D"/> in X and Y into the bounding box of the spatial fallback search.</param>
+        /// <param name="tolerance">The tolerance used for the closest point calculation.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the most relevant <see cref="Building"/>, or null if none could be resolved.</returns>
+        public async Task<Building?> GetBuildingByReferenceAsync(string reference, int? countyId, Point3D? point3D, double maxDistance = 1, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            List<Building>? buildings = await GetBuildingsByReferencesAsync(npgsqlConnection, [reference], countyId, cancellationToken);
+
+            Building? result = Query.Building(buildings, point3D, tolerance);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            if (point3D is null)
+            {
+                return null;
+            }
+
+            BoundingBox2D boundingBox2D = new(
+                new Point2D(point3D.X - maxDistance, point3D.Y - maxDistance),
+                new Point2D(point3D.X + maxDistance, point3D.Y + maxDistance));
+
+            buildings = await GetBuildingsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, cancellationToken);
+
+            return Query.Building(buildings, point3D, tolerance);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records whose bounding box overlaps the specified 2D bounding box, optionally filtered by a county identifier.
+        /// <para>Only the X and Y extents participate in the filter; records stored without a bounding box are excluded.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or the bounding box are null.</returns>
+        public static async Task<List<Building>?> GetBuildingsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || boundingBox2D is null)
+            {
+                return null;
+            }
+
+            // PostgreSQL orders NaN above every other float value, so records stored without a bounding box
+            // (written as NaN by UpdateAsync) have to be excluded explicitly before the overlap test.
+            const string commandText = $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE (@countyId IS NULL OR county_id = @countyId)
+                  AND min_x <> 'NaN'::float8
+                  AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@minX, @minY), point(@maxX, @maxY));";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y });
+
+            return await ReadAsync_Building(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
