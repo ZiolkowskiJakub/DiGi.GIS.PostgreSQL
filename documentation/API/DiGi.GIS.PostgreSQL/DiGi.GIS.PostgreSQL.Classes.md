@@ -376,40 +376,40 @@ The timeout in seconds for the execution of the command\. A value of 0 disables 
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the [AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D') if found; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DByIdAsync\(NpgsqlConnection, int, CancellationToken, int\) Method
+## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DByIdAsync\(NpgsqlConnection, int, int, CancellationToken\) Method
 
 Asynchronously retrieves an administrative areal 2D by its unique identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int id, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken,int).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken,int).id'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).id'></a>
 
 `id` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The unique identifier of the administrative areal 2D to retrieve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to cancel the asynchronous operation\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to cancel the asynchronous operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -721,46 +721,46 @@ Cancellation token\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A list of AdministrativeAreal2DReference objects matching the search criteria\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(AdministrativeArealType, Nullable\<int\>, bool, CancellationToken, int\) Method
+## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(AdministrativeArealType, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves a list of administrative areal 2D references based on the specified administrative areal type, an optional parent identifier, and a uniqueness flag\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, System.Nullable<int> parentId=null, bool uniqueCode=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, System.Nullable<int> parentId=null, bool uniqueCode=false, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).administrativeArealType'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
 
 The [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType') that defines the category of administrative areals to be retrieved\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).parentId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).parentId'></a>
 
 `parentId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the parent administrative areal used to filter for child elements\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).uniqueCode'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).uniqueCode'></a>
 
 `uniqueCode` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether the retrieval should be filtered by unique codes\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -811,52 +811,52 @@ A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotne
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference') objects if successful; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(NpgsqlConnection, AdministrativeArealType, Nullable\<int\>, bool, CancellationToken, int\) Method
+## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(NpgsqlConnection, AdministrativeArealType, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves a list of administrative areal 2D references filtered by the specified administrative areal type and optionally by a parent identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, System.Nullable<int> parentId=null, bool uniqueCode=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, System.Nullable<int> parentId=null, bool uniqueCode=false, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).administrativeArealType'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
 
 The [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType') that filters the administrative areal references\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).parentId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).parentId'></a>
 
 `parentId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional unique identifier of the parent administrative area\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).uniqueCode'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).uniqueCode'></a>
 
 `uniqueCode` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A value indicating whether to filter by a unique code\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Npgsql.NpgsqlConnection,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -2634,34 +2634,34 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the \<seeref name="TAdministrativeAreal2DReferencedObject" /\> if found; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemByReferenceAsync\(string, CancellationToken, int\) Method
+## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemByReferenceAsync\(string, int, CancellationToken\) Method
 
 Asynchronously retrieves an item of type \<seeref name="TAdministrativeAreal2DReferencedObject" /\> using the specified reference\.
 
 ```csharp
-public System.Threading.Tasks.Task<TAdministrativeAreal2DReferencedObject?> GetItemByReferenceAsync(string reference, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public System.Threading.Tasks.Task<TAdministrativeAreal2DReferencedObject?> GetItemByReferenceAsync(string reference, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,System.Threading.CancellationToken,int).reference'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,int,System.Threading.CancellationToken).reference'></a>
 
 `reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The string reference used to locate the object\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The cancellation token to observe while waiting for the task to complete\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByReferenceAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -2760,85 +2760,85 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject') objects, or null if no items are found\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferencesAsync\(NpgsqlConnection, IEnumerable\<string\>, Nullable\<long\>, CancellationToken, int\) Method
+## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferencesAsync\(NpgsqlConnection, IEnumerable\<string\>, Nullable\<long\>, int, CancellationToken\) Method
 
 Asynchronously retrieves items of type [TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject') based on the provided references\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, System.Nullable<long> limit=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, System.Nullable<long> limit=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The PostgreSQL connection to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).references'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).references'></a>
 
 `references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of strings representing the references used to identify the items to retrieve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).limit'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).limit'></a>
 
 `limit` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional maximum number of items to retrieve\. If null, no limit is applied\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The cancellation token to observe while waiting for the task to complete\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of matching [TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject') items, or null if the connection or references are null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferencesAsync\(IEnumerable\<string\>, Nullable\<long\>, CancellationToken, int\) Method
+## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferencesAsync\(IEnumerable\<string\>, Nullable\<long\>, int, CancellationToken\) Method
 
 Asynchronously retrieves a list of items that match the specified references\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable<string>? references, System.Nullable<long> limit=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable<string>? references, System.Nullable<long> limit=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).references'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).references'></a>
 
 `references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 An optional collection of strings representing the references of the objects to retrieve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).limit'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).limit'></a>
 
 `limit` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional long integer specifying the maximum number of items to be returned\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The cancellation token to observe while waiting for the task to complete\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -3970,47 +3970,47 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if connection fails\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByCountyIdAsync\(int, Nullable\<int\>, IEnumerable\<string\>, CancellationToken, int\) Method
+## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByCountyIdAsync\(int, Nullable\<int\>, IEnumerable\<string\>, int, CancellationToken\) Method
 
 Retrieves all Building2DReferences for a specific county, with an optional exclusion list\.
 Optimized for partitioned tables using the partition key \(county\_id\)\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, System.Nullable<int> subdivisionId=null, System.Collections.Generic.IEnumerable<string>? excludedReferences=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken), int commandTimeout=30);
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, System.Nullable<int> subdivisionId=null, System.Collections.Generic.IEnumerable<string>? excludedReferences=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The ID of the county \(Partition Key\)\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int).subdivisionId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).subdivisionId'></a>
 
 `subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The ID of the subdivision\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int).excludedReferences'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).excludedReferences'></a>
 
 `excludedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 Optional collection of references to be excluded from the result\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The cancellation token\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken,int).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(int,System.Nullable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  

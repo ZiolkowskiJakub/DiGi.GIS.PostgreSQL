@@ -1,4 +1,4 @@
-using DiGi.CityGML.Classes;
+﻿using DiGi.CityGML.Classes;
 using DiGi.Core.Parameter.Classes;
 using System.ComponentModel;
 

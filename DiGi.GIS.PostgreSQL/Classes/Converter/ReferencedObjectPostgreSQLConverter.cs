@@ -1,4 +1,4 @@
-using DiGi.Core.Interfaces;
+﻿using DiGi.Core.Interfaces;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -64,7 +64,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the clear operation was successful.</returns>
         public async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken, commandTimeout);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, commandTimeout, cancellationToken);
         }
 
         /// <summary>

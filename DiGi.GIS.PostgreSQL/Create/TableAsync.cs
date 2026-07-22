@@ -411,6 +411,12 @@ namespace DiGi.GIS.PostgreSQL
                 -- instead of a sequential scan across the county partition.
                 CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_bbox
                 ON {Constants.TableName.Building} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
+
+                -- Supports GetBuildingByLatestCreatedAtAsync, which is ORDER BY created_at DESC LIMIT 1.
+                -- Without it that query is a sequential scan plus sort across every partition, and it is
+                -- what the import's resume prompt blocks on before any work can start.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_created_at
+                ON {Constants.TableName.Building} (created_at DESC);
                 ";
 
             try

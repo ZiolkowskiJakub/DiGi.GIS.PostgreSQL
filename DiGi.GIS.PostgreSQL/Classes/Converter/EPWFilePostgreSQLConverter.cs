@@ -1,4 +1,4 @@
-using DiGi.EPW;
+﻿using DiGi.EPW;
 using DiGi.EPW.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Spatial.Classes;
@@ -47,7 +47,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken: cancellationToken);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-using DiGi.Core.Classes;
+﻿using DiGi.Core.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -225,7 +225,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    OccupancyData? occupancyData = (await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemByReferenceAsync(reference, cancellationToken, commandTimeout))?.ToDiGi() as OccupancyData;
+                    OccupancyData? occupancyData = (await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemByReferenceAsync(reference, commandTimeout, cancellationToken))?.ToDiGi() as OccupancyData;
                     int remainingOccupancy = (int)(occupancyData?.Occupancy ?? 0);
                     double occupancyPerMeterSquared = (double)remainingOccupancy / area;
 

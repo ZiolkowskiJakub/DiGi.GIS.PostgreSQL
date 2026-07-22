@@ -1,4 +1,4 @@
-using DiGi.Geometry.Planar.Classes;
+﻿using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -223,7 +223,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool result = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.Building, cancellationToken);
+            bool result = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.Building, cancellationToken: cancellationToken);
 
             return result;
         }

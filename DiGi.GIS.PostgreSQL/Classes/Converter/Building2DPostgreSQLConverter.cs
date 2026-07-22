@@ -1,4 +1,4 @@
-using DiGi.Core;
+﻿using DiGi.Core;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
@@ -317,7 +317,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
                     if (administrativeAreal2DReferences_Temp is not null)
                     {
                         administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
@@ -714,7 +714,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
                     if (administrativeAreal2DReferences_Temp is not null)
                     {
                         administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
@@ -764,10 +764,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The ID of the county (Partition Key).</param>
         /// <param name="subdivisionId">The ID of the subdivision.</param>
         /// <param name="excludedReferences">Optional collection of references to be excluded from the result.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A list of Building2DReference objects, or null if connection fails.</returns>
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, CancellationToken cancellationToken = default, int commandTimeout = 30)
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(int countyId, int? subdivisionId = null, IEnumerable<string>? excludedReferences = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             // 1. Check early if cancellation was already requested to avoid unnecessary allocations
             cancellationToken.ThrowIfCancellationRequested();
