@@ -25,7 +25,7 @@ namespace DiGi.GIS.PostgreSQL
 
             Core.Parameter.Classes.GetValueSettings getValueSettings = new(true, false);
 
-            if(!building.TryGetValue(Enums.BuildingParameter.Year, out short? year, getValueSettings))
+            if (!building.TryGetValue(Enums.BuildingParameter.Year, out short? year, getValueSettings))
             {
                 year = null;
             }

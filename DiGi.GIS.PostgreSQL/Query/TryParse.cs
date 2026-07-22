@@ -29,15 +29,15 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            if(!Core.Query.TryParse(reference, out IReference? reference_Temp) || reference_Temp is null)
+            if (!Core.Query.TryParse(reference, out IReference? reference_Temp) || reference_Temp is null)
             {
                 buildingModelReference = reference;
                 return true;
             }
 
-            if(reference_Temp is IUniqueReference uniqueReference)
+            if (reference_Temp is IUniqueReference uniqueReference)
             {
-                if(uniqueReference.UniqueId is string uniqueId && !string.IsNullOrWhiteSpace(uniqueId))
+                if (uniqueReference.UniqueId is string uniqueId && !string.IsNullOrWhiteSpace(uniqueId))
                 {
                     buildingModelReference = uniqueId;
                     return true;
@@ -46,7 +46,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            if(reference_Temp is not ComplexReference complexReference)
+            if (reference_Temp is not ComplexReference complexReference)
             {
                 // Core.Query.TryParse accepts a bare, discriminator-less string by reading it as a legacy
                 // TypeReference (see Core.Query.TryParseLegacy), so a plain building reference parses to a
@@ -78,6 +78,5 @@ namespace DiGi.GIS.PostgreSQL
 
             return true;
         }
-
     }
 }

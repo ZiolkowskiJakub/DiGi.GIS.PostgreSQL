@@ -7,7 +7,6 @@ using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -27,6 +26,114 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public BuildingPostgreSQLConverter(ConnectionData? connectionData)
             : base(connectionData)
         {
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the <see cref="Building"/> record with the latest creation timestamp using the specified connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the latest <see cref="Building"/> object, or null if none is found or the connection is null.</returns>
+        public static async Task<Building?> GetBuildingByLatestCreatedAtAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            const string commandText = $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE (@countyId IS NULL OR county_id = @countyId)
+                ORDER BY created_at DESC
+                LIMIT 1;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+
+            List<Building>? buildings = await ReadAsync_Building(npgsqlCommand, cancellationToken);
+            if (buildings is null || buildings.Count == 0)
+            {
+                return null;
+            }
+
+            return buildings[0];
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records whose bounding box overlaps the specified 2D bounding box, optionally filtered by a county identifier.
+        /// <para>Only the X and Y extents participate in the filter; records stored without a bounding box are excluded.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or the bounding box are null.</returns>
+        public static async Task<List<Building>?> GetBuildingsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || boundingBox2D is null)
+            {
+                return null;
+            }
+
+            // PostgreSQL orders NaN above every other float value, so records stored without a bounding box
+            // (written as NaN by UpdateAsync) have to be excluded explicitly before the overlap test.
+            const string commandText = $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE (@countyId IS NULL OR county_id = @countyId)
+                  AND min_x <> 'NaN'::float8
+                  AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@minX, @minY), point(@maxX, @maxY));";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y });
+
+            return await ReadAsync_Building(npgsqlCommand, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="references">A collection of strings representing the references to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or references are null.</returns>
+        public static async Task<List<Building>?> GetBuildingsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            List<Building>? result = [];
+
+            if (!references.Any())
+            {
+                return result;
+            }
+
+            const string commandText = $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            result = await ReadAsync_Building(npgsqlCommand, cancellationToken);
+
+            return result;
         }
 
         /// <summary>
@@ -122,6 +229,182 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously checks for the existence of a collection of references, optionally filtered by a county identifier.
+        /// </summary>
+        /// <param name="references">An <see cref="IEnumerable{T}"/> of strings representing the references to be checked.</param>
+        /// <param name="countyId">The optional integer identifier for the county; if null, the search is not filtered by county.</param>
+        /// <param name="inverted">A boolean value indicating whether to return the set of references that do not exist (true) or those that do exist (false).</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            if (!references.Any())
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<string> result = [];
+
+            const string commandText = $@"
+                SELECT input_ref
+                FROM UNNEST(@refs) AS input_ref
+                LEFT JOIN {TableName.Building} u ON u.reference = input_ref
+                    AND (@county_id IS NULL OR u.county_id = @county_id)
+                WHERE
+                    (@inverted = false AND u.reference IS NOT NULL)
+                    OR
+                    (@inverted = true AND u.reference IS NULL);";
+
+            try
+            {
+                await npgsqlConnection.OpenAsync(cancellationToken);
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                string[] referenceArray = [.. references.Distinct()];
+
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
+
+                await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    result.Add(reader.GetString(0));
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Database error in {nameof(ContainsByReferencesAsync)}: {ex.Message}");
+                throw;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the <see cref="Building"/> record with the latest creation timestamp.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter the search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the latest <see cref="Building"/> object, or null if none is found or the connection fails.</returns>
+        public async Task<Building?> GetBuildingByLatestCreatedAtAsync(int? countyId = null, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuildingByLatestCreatedAtAsync(npgsqlConnection, countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the single most relevant <see cref="Building"/> for the specified reference, falling back to a spatial search around the supplied point when the reference cannot be resolved.
+        /// <para>Candidates are ranked ascending by level of detail and then by year, with nulls treated as the lowest rank; ties between candidates of equal rank are broken by the surface geometry closest to <paramref name="point3D"/>.</para>
+        /// <para>The spatial fallback ignores the reference entirely and is limited in X and Y by <paramref name="maxDistance"/>; the resulting candidate distance itself is not capped.</para>
+        /// </summary>
+        /// <param name="reference">The string reference of the building to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="point3D">The optional <see cref="Point3D"/> used to break ties and to locate the building when the reference cannot be resolved.</param>
+        /// <param name="maxDistance">The distance used to inflate <paramref name="point3D"/> in X and Y into the bounding box of the spatial fallback search.</param>
+        /// <param name="tolerance">The tolerance used for the closest point calculation.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the most relevant <see cref="Building"/>, or null if none could be resolved.</returns>
+        public async Task<Building?> GetBuildingByReferenceAsync(string reference, int? countyId, Point3D? point3D, double maxDistance = 1, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            List<Building>? buildings = await GetBuildingsByReferencesAsync(npgsqlConnection, [reference], countyId, cancellationToken);
+
+            Building? result = Query.Building(buildings, point3D, tolerance);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            if (point3D is null)
+            {
+                return null;
+            }
+
+            BoundingBox2D boundingBox2D = new(
+                new Point2D(point3D.X - maxDistance, point3D.Y - maxDistance),
+                new Point2D(point3D.X + maxDistance, point3D.Y + maxDistance));
+
+            buildings = await GetBuildingsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, cancellationToken);
+
+            return Query.Building(buildings, point3D, tolerance);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified reference and optional county identifier.
+        /// </summary>
+        /// <param name="reference">The string reference of the buildings to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
+        public async Task<List<Building>?> GetBuildingsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetBuildingsByReferencesAsync([reference], countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
+        /// </summary>
+        /// <param name="references">A collection of strings representing the references to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
+        public async Task<List<Building>?> GetBuildingsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuildingsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves the count of records, optionally filtered by a specific county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved for all counties.</param>
@@ -185,92 +468,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
         }
-
-        /// <summary>
-        /// Asynchronously retrieves the single most relevant <see cref="Building"/> for the specified reference, falling back to a spatial search around the supplied point when the reference cannot be resolved.
-        /// <para>Candidates are ranked ascending by level of detail and then by year, with nulls treated as the lowest rank; ties between candidates of equal rank are broken by the surface geometry closest to <paramref name="point3D"/>.</para>
-        /// <para>The spatial fallback ignores the reference entirely and is limited in X and Y by <paramref name="maxDistance"/>; the resulting candidate distance itself is not capped.</para>
-        /// </summary>
-        /// <param name="reference">The string reference of the building to search for.</param>
-        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="point3D">The optional <see cref="Point3D"/> used to break ties and to locate the building when the reference cannot be resolved.</param>
-        /// <param name="maxDistance">The distance used to inflate <paramref name="point3D"/> in X and Y into the bounding box of the spatial fallback search.</param>
-        /// <param name="tolerance">The tolerance used for the closest point calculation.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the most relevant <see cref="Building"/>, or null if none could be resolved.</returns>
-        public async Task<Building?> GetBuildingByReferenceAsync(string reference, int? countyId, Point3D? point3D, double maxDistance = 1, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(reference))
-            {
-                return null;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            List<Building>? buildings = await GetBuildingsByReferencesAsync(npgsqlConnection, [reference], countyId, cancellationToken);
-
-            Building? result = Query.Building(buildings, point3D, tolerance);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            if (point3D is null)
-            {
-                return null;
-            }
-
-            BoundingBox2D boundingBox2D = new(
-                new Point2D(point3D.X - maxDistance, point3D.Y - maxDistance),
-                new Point2D(point3D.X + maxDistance, point3D.Y + maxDistance));
-
-            buildings = await GetBuildingsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, cancellationToken);
-
-            return Query.Building(buildings, point3D, tolerance);
-        }
-
-        /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Building"/> records whose bounding box overlaps the specified 2D bounding box, optionally filtered by a county identifier.
-        /// <para>Only the X and Y extents participate in the filter; records stored without a bounding box are excluded.</para>
-        /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
-        /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
-        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or the bounding box are null.</returns>
-        public static async Task<List<Building>?> GetBuildingsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int? countyId, CancellationToken cancellationToken = default)
-        {
-            if (npgsqlConnection is null || boundingBox2D is null)
-            {
-                return null;
-            }
-
-            // PostgreSQL orders NaN above every other float value, so records stored without a bounding box
-            // (written as NaN by UpdateAsync) have to be excluded explicitly before the overlap test.
-            const string commandText = $@"
-                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
-                FROM {TableName.Building}
-                WHERE (@countyId IS NULL OR county_id = @countyId)
-                  AND min_x <> 'NaN'::float8
-                  AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@minX, @minY), point(@maxX, @maxY));";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y });
-
-            return await ReadAsync_Building(npgsqlCommand, cancellationToken);
-        }
-
+        
         /// <summary>
         /// Asynchronously updates a collection of <see cref="Building"/> records in the PostgreSQL database.
         /// </summary>
@@ -324,7 +522,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    BoundingBox2D? boundingBox2D = new (
+                    BoundingBox2D? boundingBox2D = new(
                         new Point2D(boundingBox3D.MinX, boundingBox3D.MinY),
                         new Point2D(boundingBox3D.MaxX, boundingBox3D.MaxY));
 
@@ -526,153 +724,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
-
-        /// <summary>
-        /// Asynchronously checks for the existence of a collection of references, optionally filtered by a county identifier.
-        /// </summary>
-        /// <param name="references">An <see cref="IEnumerable{T}"/> of strings representing the references to be checked.</param>
-        /// <param name="countyId">The optional integer identifier for the county; if null, the search is not filtered by county.</param>
-        /// <param name="inverted">A boolean value indicating whether to return the set of references that do not exist (true) or those that do exist (false).</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
-        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, CancellationToken cancellationToken = default)
-        {
-            if (references is null)
-            {
-                return null;
-            }
-
-            if (!references.Any())
-            {
-                return [];
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            HashSet<string> result = [];
-
-            const string commandText = $@"
-                SELECT input_ref
-                FROM UNNEST(@refs) AS input_ref
-                LEFT JOIN {TableName.Building} u ON u.reference = input_ref
-                    AND (@county_id IS NULL OR u.county_id = @county_id)
-                WHERE
-                    (@inverted = false AND u.reference IS NOT NULL)
-                    OR
-                    (@inverted = true AND u.reference IS NULL);";
-
-            try
-            {
-                await npgsqlConnection.OpenAsync(cancellationToken);
-
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-                string[] referenceArray = [.. references.Distinct()];
-
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
-
-                await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    result.Add(reader.GetString(0));
-                }
-            }
-            catch (NpgsqlException ex)
-            {
-                Console.WriteLine($"Database error in {nameof(ContainsByReferencesAsync)}: {ex.Message}");
-                throw;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified reference and optional county identifier.
-        /// </summary>
-        /// <param name="reference">The string reference of the buildings to search for.</param>
-        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
-        public async Task<List<Building>?> GetBuildingsByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(reference))
-            {
-                return null;
-            }
-
-            return await GetBuildingsByReferencesAsync([reference], countyId, cancellationToken);
-        }
-
-        /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
-        /// </summary>
-        /// <param name="references">A collection of strings representing the references to search for.</param>
-        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
-        public async Task<List<Building>?> GetBuildingsByReferencesAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
-        {
-            if (references is null)
-            {
-                return null;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            return await GetBuildingsByReferencesAsync(npgsqlConnection, references, countyId, cancellationToken);
-        }
-
-        /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Building"/> records based on the specified references and optional county identifier.
-        /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
-        /// <param name="references">A collection of strings representing the references to search for.</param>
-        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or references are null.</returns>
-        public static async Task<List<Building>?> GetBuildingsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
-        {
-            if (npgsqlConnection is null || references is null)
-            {
-                return null;
-            }
-
-            List<Building>? result = [];
-
-            if (!references.Any())
-            {
-                return result;
-            }
-
-            const string commandText = $@"
-                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
-                FROM {TableName.Building}
-                WHERE reference = ANY(@references)
-                  AND (@countyId IS NULL OR county_id = @countyId);";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-
-            result = await ReadAsync_Building(npgsqlCommand, cancellationToken);
-
-            return result;
-        }
-
+        
         private static Building Create_Building(NpgsqlDataReader npgsqlDataReader)
         {
             return new Building

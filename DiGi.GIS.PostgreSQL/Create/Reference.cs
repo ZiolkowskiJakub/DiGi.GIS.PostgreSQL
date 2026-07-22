@@ -16,7 +16,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <param name="buildingGuidObject">An optional specific building element (e.g. component, space) to include as the innermost reference in the chain.</param>
         /// <param name="countyId">An optional county identifier that anchors the reference to an <see cref="AdministrativeDivision"/> at the outermost level of the chain.</param>
         /// <returns>An <see cref="IReference"/> representing the containment chain, or <see langword="null"/> if <paramref name="buildingModel"/> is <see langword="null"/>.</returns>
-        public static IReference? Reference(DiGi.Analytical.Building.Classes.BuildingModel buildingModel, IBuildingGuidObject? buildingGuidObject = null,  int? countyId = null)
+        public static IReference? Reference(DiGi.Analytical.Building.Classes.BuildingModel buildingModel, IBuildingGuidObject? buildingGuidObject = null, int? countyId = null)
         {
             if (buildingModel is null)
             {
@@ -27,13 +27,13 @@ namespace DiGi.GIS.PostgreSQL
 
             // Ordered from the root of the containment chain inwards - administrative area, then building, then
             // building element - so a ComplexReference reads AdministrativeArea -> Building -> element.
-            if(countyId is not null)
+            if (countyId is not null)
             {
                 serializableRefrences.Add(new UniqueIdReference(new TypeReference(typeof(AdministrativeDivision)), countyId.Value.ToString()));
             }
 
             string? reference = buildingModel.GetValue<string>(Analytical.Enums.BuildingModelParameter.Reference);
-            if(!string.IsNullOrWhiteSpace(reference))
+            if (!string.IsNullOrWhiteSpace(reference))
             {
                 serializableRefrences.Add(new UniqueIdReference(new TypeReference(typeof(DiGi.Analytical.Building.Classes.BuildingModel)), reference));
             }
@@ -42,18 +42,17 @@ namespace DiGi.GIS.PostgreSQL
                 serializableRefrences.Add(new GuidReference(buildingModel));
             }
 
-            if(buildingGuidObject is not null)
+            if (buildingGuidObject is not null)
             {
                 serializableRefrences.Add(new GuidReference(buildingGuidObject));
             }
 
-            if(serializableRefrences.Count == 1)
+            if (serializableRefrences.Count == 1)
             {
                 return serializableRefrences[0];
             }
 
             return new ComplexReference(serializableRefrences);
-
         }
     }
 }

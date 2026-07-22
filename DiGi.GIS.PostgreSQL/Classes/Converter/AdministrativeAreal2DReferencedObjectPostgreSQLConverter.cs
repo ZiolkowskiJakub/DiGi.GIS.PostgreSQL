@@ -237,7 +237,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Standard PostgreSQL statement termination
             commandText += ";";
 
-            await using NpgsqlCommand npgsqlCommand = new (commandText, npgsqlConnection);
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding parameters
