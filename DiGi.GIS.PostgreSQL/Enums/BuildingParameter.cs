@@ -19,5 +19,15 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// Model year.
         /// </summary>
         [ParameterProperties("3ec1627e-001c-4a19-a227-eaf57a85f87b", "Year", "Year", Core.Parameter.Enums.AccessType.Read), IntegerParameterValue()] Year,
+
+        /// <summary>
+        /// Area code.
+        /// </summary>
+        [ParameterProperties("14030ee5-681e-4f5d-ab0e-4c2d13185230", "Code", "Code", Core.Parameter.Enums.AccessType.Read), StringParameterValue()] Code,
+
+        /// <summary>
+        /// Source information.
+        /// </summary>
+        [ParameterProperties("1c8aa27e-230e-4c36-9399-62f4dd393a74", "Source", "Source", Core.Parameter.Enums.AccessType.Read), StringParameterValue()] Source,
     }
 }

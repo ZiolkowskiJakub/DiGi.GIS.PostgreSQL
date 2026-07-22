@@ -107,3 +107,15 @@ Level of Detail\.
 `Year` 1
 
 Model year\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingParameter.Code'></a>
+
+`Code` 2
+
+Area code\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingParameter.Source'></a>
+
+`Source` 3
+
+Source information\.
