@@ -77,10 +77,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously gets the estimated row count for the specified county identifiers in the PostgreSQL database.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> to use for the query.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> to use for the query.</param>
         /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
         /// <param name="analyze">A boolean indicating whether to run a vacuum analyze operation before fetching the count.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a long, or -1 if an error occurs.</returns>
         public async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -104,7 +104,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the estimate.</param>
         /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count as a <see cref="System.Int64"/>, or -1 if an error occurs.</returns>
         public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -144,7 +144,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="id">The long integer unique identifier of the item to retrieve.</param>
         /// <param name="countyId">The optional integer identifier of the county associated with the item.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the retrieved <seeref name="TBuilding2DReferencedObject"/>, or null if no item with the specified identifier was found.</returns>
         public async Task<TBuilding2DReferencedObject?> GetItemByIdAsync(long id, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -156,7 +156,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="reference">The string reference of the item to retrieve.</param>
         /// <param name="countyId">The optional integer identifier for the county.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the matching <seeref name="TBuilding2DReferencedObject"/> if found; otherwise, null.</returns>
         public async Task<TBuilding2DReferencedObject?> GetItemByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -171,10 +171,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves a list of items of type <typeparamref name="TBuilding2DReferencedObject"/> based on the specified identifiers and county identifier.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="ids">A collection of <see cref="System.Int64"/> identifiers for the items to retrieve.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}"/> of matching items, or null if the connection or identifiers are null.</returns>
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<long>? ids, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -211,7 +211,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="ids">A collection of long identifiers of the items to retrieve.</param>
         /// <param name="countyId">The optional nullable integer identifier of the county used to filter the results.</param>
-        /// <param name="cancellationToken">A <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}"/> of matching items, or null if no items are found or the provided identifiers are null.</returns>
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdsAsync(IEnumerable<long>? ids, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -237,7 +237,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="reference">The string reference used to identify the items.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
         /// <param name="limit">The optional maximum number of items to retrieve, specified as a long integer.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <typeparamref name="TBuilding2DReferencedObject"/> objects if matching items are found; otherwise, null.</returns>
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferenceAsync(string reference, int? countyId, long? limit = null, CancellationToken cancellationToken = default)
         {
@@ -252,11 +252,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves a list of items that implement <typeparamref name="TBuilding2DReferencedObject" /> based on the provided references and optional filters.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
         /// <param name="references">A collection of <see cref="System.String" /> representing the references of the items to be retrieved.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
         /// <param name="limit">The optional maximum number of items to retrieve as a <see cref="System.Int64" />.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}" /> of matching items, or null if the connection or references are null.</returns>
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, long? limit = null, CancellationToken cancellationToken = default)
         {
@@ -413,8 +413,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional <see cref="System.Int32"/> identifier for the county associated with the building.</param>
         /// <param name="uniqueId">The optional <see cref="System.String"/> representing a unique identification code.</param>
         /// <param name="reference">The optional <see cref="System.String"/> used as a reference for the record.</param>
-        /// <param name="object">The optional <see cref="System.Text.Json.Nodes.JsonObject"/> containing raw data for initialization.</param>
-        /// <param name="createdAt">The optional <see cref="System.DateTime"/> indicating when the record was created.</param>
+        /// <param name="object">The optional <see cref="JsonObject"/> containing raw data for initialization.</param>
+        /// <param name="createdAt">The optional <see cref="DateTime"/> indicating when the record was created.</param>
         /// <returns>A new instance of <seeref name="TBuilding2DReferencedObject"/>.</returns>
         protected abstract TBuilding2DReferencedObject Create(long id, int? countyId, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt);
 

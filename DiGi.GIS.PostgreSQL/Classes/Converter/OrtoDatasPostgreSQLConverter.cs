@@ -1,4 +1,4 @@
-﻿using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
@@ -53,10 +53,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="countyId">The optional integer identifier for the county; if null, the estimate is calculated across all counties.</param>
         /// <param name="analyze">A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a long integer.</returns>
         public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -77,10 +77,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> to use for the query.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> to use for the query.</param>
         /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
         /// <param name="analyze">A boolean indicating whether to run an analysis operation before fetching the estimated count.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total estimated row count as a long, or -1 if an error occurs.</returns>
         public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -159,10 +159,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves a list of <see cref="OrtoDatas" /> based on the specified references and optional county identifier.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> used to connect to the database.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the database.</param>
         /// <param name="references">A collection of strings representing the references to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas" /> objects, or null if the connection is null or no matching data is found.</returns>
         public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
         {
@@ -285,7 +285,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the count of records, optionally filtered by a specific county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved for all counties.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total row count as a long.</returns>
         public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
         {
@@ -311,7 +311,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyId">The optional <see cref="System.Int32"/> identifier of the county to filter the estimate; if null, the estimate is calculated for all counties.</param>
         /// <param name="analyze">A <see cref="System.Boolean"/> value indicating whether to run an analysis operation before fetching the count to improve accuracy.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a <see cref="System.Int64"/>, or -1 if an error occurs or the target does not exist.</returns>
         public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -448,7 +448,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="reference">The string reference used to identify the orthodata.</param>
         /// <param name="countyId">The optional integer identifier of the county.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatas"/> object if found; otherwise, null.</returns>
         public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
         {

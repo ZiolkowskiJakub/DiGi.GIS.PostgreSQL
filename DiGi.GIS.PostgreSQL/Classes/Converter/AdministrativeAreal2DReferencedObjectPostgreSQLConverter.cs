@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Interfaces;
+using DiGi.Core.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -82,7 +82,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously gets an estimated row count.
         /// </summary>
         /// <param name="analyze">A boolean indicating whether to run VACUUM ANALYZE before fetching the count.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a long, or -1 if an error occurs or the table does not exist.</returns>
         public async Task<long> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
         {
@@ -128,7 +128,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves a list of administrative areal 2D referenced objects based on the provided identifiers.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection" /> used to connect to the database.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the database.</param>
         /// <param name="ids">A collection of integers representing the unique identifiers of the objects to retrieve.</param>
         /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <seeref name="TAdministrativeAreal2DReferencedObject"/> matching the provided identifiers, or null if the connection or the collection of identifiers is null.</returns>
@@ -162,8 +162,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves a list of administrative areal 2D referenced objects based on the specified identifiers.
         /// </summary>
         /// <param name="ids">A collection of <see cref="System.Int32"/> representing the unique identifiers of the items to retrieve. This parameter can be null.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="System.Collections.Generic.List{TAdministrativeAreal2DReferencedObject}"/> of matching objects, or null if no items are found or the provided identifiers collection is null.</returns>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TAdministrativeAreal2DReferencedObject}"/> of matching objects, or null if no items are found or the provided identifiers collection is null.</returns>
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByIdsAsync(IEnumerable<int>? ids, CancellationToken cancellationToken = default)
         {
             if (ids is null)
@@ -187,7 +187,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="reference">The string reference used to identify the items.</param>
         /// <param name="limit">An optional long integer specifying the maximum number of items to return.</param>
-        /// <param name="cancellationToken">The <see cref="System.Threading.CancellationToken"/> to observe for cancellation requests.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <typeparamref name="TAdministrativeAreal2DReferencedObject"/> objects, or null if no items are found.</returns>
         public async Task<List<TAdministrativeAreal2DReferencedObject>?> GetItemsByReferenceAsync(string reference, long? limit = null, CancellationToken cancellationToken = default)
         {
@@ -371,8 +371,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="id">The integer identifier for the object.</param>
         /// <param name="uniqueId">The optional unique string identifier for the object.</param>
         /// <param name="reference">The optional reference string associated with the object.</param>
-        /// <param name="object">The optional <see cref="System.Text.Json.Nodes.JsonObject"/> containing additional data for the object.</param>
-        /// <param name="createdAt">The optional <see cref="System.DateTime"/> indicating when the object was created.</param>
+        /// <param name="object">The optional <see cref="JsonObject"/> containing additional data for the object.</param>
+        /// <param name="createdAt">The optional <see cref="DateTime"/> indicating when the object was created.</param>
         /// <returns>A new instance of <seeref name="TAdministrativeAreal2DReferencedObject"/>.</returns>
         protected abstract TAdministrativeAreal2DReferencedObject Create(int id, string? uniqueId, string? reference, JsonObject? @object, DateTime? createdAt);
 

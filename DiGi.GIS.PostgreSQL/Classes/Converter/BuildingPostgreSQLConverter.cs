@@ -128,8 +128,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
-            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references.ToArray() });
+            // Use an explicitly typed parameter so PostgreSQL can determine the type of the '@countyId IS NULL'
+            // branch when countyId is null; an untyped DBNull.Value fails the all-counties lookup with 42P18.
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             result = await ReadAsync_Building(npgsqlCommand, cancellationToken);
 

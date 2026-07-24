@@ -11,7 +11,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously creates the AdministrativeArea2D table in the PostgreSQL database.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
@@ -244,9 +244,9 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously creates the Building 2D Referenced Object table for the specified table name.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
-        /// <returns>A <see cref="System.Threading.Tasks.Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
+        /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
         {
             if (npgsqlConnection is null)
@@ -317,7 +317,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously creates the OrtoDatas table in the PostgreSQL database.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="Npgsql.NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the OrtoDatas table was created successfully; otherwise, false.</returns>
         public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
         {

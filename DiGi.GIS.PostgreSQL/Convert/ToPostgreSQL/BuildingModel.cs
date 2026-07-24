@@ -18,12 +18,12 @@ namespace DiGi.GIS.PostgreSQL
 
             //TODO: Use ComplexReference instead CountyId
 
-            if (!buildingModel.TryGetValue<string>(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
+            if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
             {
                 return null;
             }
 
-            if (!buildingModel.TryGetValue<int?>(Analytical.Enums.BuildingModelParameter.CountyId, out int? countyId))
+            if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.CountyId, out int? countyId))
             {
                 return null;
             }
