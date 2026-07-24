@@ -5,25 +5,19 @@ namespace DiGi.GIS.PostgreSQL
     public static partial class Convert
     {
         /// <summary>
-        /// Converts the specified analytical building model to a PostgreSQL-compatible building model object, reading the reference and county identifier from the building model parameters.
+        /// Converts the specified analytical building model to a PostgreSQL-compatible building model object, reading the reference from the building model parameters and taking the county identifier as an argument.
         /// </summary>
         /// <param name="buildingModel">The analytical building model to convert.</param>
-        /// <returns>A <see cref="BuildingModel" /> object if the provided building model is not null and carries the <see cref="Analytical.Enums.BuildingModelParameter.Reference"/> and <see cref="Analytical.Enums.BuildingModelParameter.CountyId"/> parameter values; otherwise, null.</returns>
-        public static BuildingModel? ToPostgreSQL(this DiGi.Analytical.Building.Classes.BuildingModel? buildingModel)
+        /// <param name="countyId">The identifier of the county the building model belongs to, resolved by the caller from the administrative area code.</param>
+        /// <returns>A <see cref="BuildingModel" /> object if the provided building model is not null and carries the <see cref="Analytical.Enums.BuildingModelParameter.Reference"/> parameter value; otherwise, null.</returns>
+        public static BuildingModel? ToPostgreSQL(this DiGi.Analytical.Building.Classes.BuildingModel? buildingModel, int? countyId = null)
         {
             if (buildingModel is null)
             {
                 return null;
             }
 
-            //TODO: Use ComplexReference instead CountyId
-
             if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
-            {
-                return null;
-            }
-
-            if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.CountyId, out int? countyId))
             {
                 return null;
             }
