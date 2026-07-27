@@ -25,12 +25,12 @@ namespace DiGi.GIS.PostgreSQL
 
             Core.Parameter.Classes.GetValueSettings getValueSettings = new(true, false);
 
-            if (!building.TryGetValue(Enums.BuildingParameter.Year, out short? year, getValueSettings))
+            if (!building.TryGetValue(Analytical.Enums.BuildingParameter.Year, out short? year, getValueSettings))
             {
                 year = null;
             }
 
-            if (!building.TryGetValue(Enums.BuildingParameter.LOD, out CityGML.Enums.LOD? lOD, getValueSettings))
+            if (!building.TryGetValue(Analytical.Enums.BuildingParameter.LOD, out CityGML.Enums.LOD? lOD, getValueSettings))
             {
                 lOD = null;
             }
