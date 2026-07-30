@@ -14,7 +14,7 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="table">The table to update</param>
         /// <param name="building2DReferences">The building2DReferences to use for updating</param>
-        public static async void Update_Id(this Table? table, IEnumerable<Building2DReference>? building2DReferences)
+        public static void Update_Id(this Table? table, IEnumerable<Building2DReference>? building2DReferences)
         {
             if (table is null || building2DReferences is null)
             {
@@ -96,7 +96,7 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="table">The PostgreSQL table to be updated.</param>
         /// <param name="building2DOccupancyDatas">A collection of <see cref="Building2DOccupancyData"/> objects containing the new occupancy information.</param>
-        public static async void Update_Occupancy(this Table? table, IEnumerable<Building2DOccupancyData>? building2DOccupancyDatas)
+        public static void Update_Occupancy(this Table? table, IEnumerable<Building2DOccupancyData>? building2DOccupancyDatas)
         {
             if (table is null || building2DOccupancyDatas is null)
             {

@@ -8114,7 +8114,7 @@ Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.Pos
 
 ## PostgreSQLBuildingDataUpdateTask\(GISPostgreSQLConverterManager\) Constructor
 
-Constructor with Dependency Injection\.
+Initializes a new instance of the [PostgreSQLBuildingDataUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask') class\.
 
 ```csharp
 public PostgreSQLBuildingDataUpdateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
@@ -8132,7 +8132,7 @@ The GIS PostgreSQL converter manager used to retrieve converters and execute ope
 
 ## PostgreSQLBuildingDataUpdateTask\.gISPostgreSQLConverterManager Field
 
-Gets the GIS PostgreSQL converter manager used to retrieve converters and execute operations\.
+The GIS PostgreSQL converter manager used to retrieve converters and execute operations\.
 
 ```csharp
 private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
@@ -8142,14 +8142,14 @@ private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
 ### Properties
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UIBuildingDataUpdateOptions'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PostgreSQLBuildingDataUpdateOptions'></a>
 
-## PostgreSQLBuildingDataUpdateTask\.UIBuildingDataUpdateOptions Property
+## PostgreSQLBuildingDataUpdateTask\.PostgreSQLBuildingDataUpdateOptions Property
 
 Gets or sets the options used to configure the PostgreSQL building data update process\.
 
 ```csharp
-public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions UIBuildingDataUpdateOptions { get; set; }
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions PostgreSQLBuildingDataUpdateOptions { get; set; }
 ```
 
 #### Property Value
@@ -8181,7 +8181,7 @@ A cancellation token that can be used to cancel the operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. Returns true if the update was successful; otherwise, false\.
+A task representing the asynchronous operation\. Returns true when every processed subdivision was updated without error; otherwise, false\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask'></a>
 

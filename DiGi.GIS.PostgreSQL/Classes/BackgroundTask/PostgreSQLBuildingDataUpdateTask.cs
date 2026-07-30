@@ -1,4 +1,5 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
+using DiGi.Core.IO.Table.Classes;
 using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
@@ -17,17 +18,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
         /// <summary>
-        /// Gets the GIS PostgreSQL converter manager used to retrieve converters and execute operations.
+        /// The GIS PostgreSQL converter manager used to retrieve converters and execute operations.
         /// </summary>
         private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         /// <summary>
         /// Gets or sets the options used to configure the PostgreSQL building data update process.
         /// </summary>
-        public PostgreSQLBuildingDataUpdateOptions UIBuildingDataUpdateOptions { get; set; } = new PostgreSQLBuildingDataUpdateOptions();
+        public PostgreSQLBuildingDataUpdateOptions PostgreSQLBuildingDataUpdateOptions { get; set; } = new();
 
         /// <summary>
-        /// Constructor with Dependency Injection.
+        /// Initializes a new instance of the <see cref="PostgreSQLBuildingDataUpdateTask"/> class.
         /// </summary>
         /// <param name="gISPostgreSQLConverterManager">The GIS PostgreSQL converter manager used to retrieve converters and execute operations.</param>
         public PostgreSQLBuildingDataUpdateTask(GISPostgreSQLConverterManager gISPostgreSQLConverterManager)
@@ -40,9 +41,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true if the update was successful; otherwise, false.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when every processed subdivision was updated without error; otherwise, false.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
+            if (PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes is not IEnumerable<BuildingDataUpdateType> buildingDataUpdateTypes_Temp || !buildingDataUpdateTypes_Temp.Any())
+            {
+                return false;
+            }
+
+            HashSet<BuildingDataUpdateType> buildingDataUpdateTypes = [.. buildingDataUpdateTypes_Temp];
+
             BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingDataPostgreSQLConverter>();
             if (buildingDataPostgreSQLConverter is null)
             {
@@ -61,52 +69,66 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, cancellationToken: cancellationToken);
+            Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy) ? gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>() : null;
+
+            // Bulk reads/writes over hundreds of thousands of records exceed the 30s default; allow up to 10 minutes per statement.
+            const int commandTimeout = 600;
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return false;
             }
 
-            UIBuildingDataUpdateOptions ??= new PostgreSQLBuildingDataUpdateOptions();
-
-            if (UIBuildingDataUpdateOptions.BuildingDataUpdateTypes is not IEnumerable<BuildingDataUpdateType> buildingDataUpdateTypes || !buildingDataUpdateTypes.Any())
-            {
-                return false;
-            }
+            // Update_RadialRatios evaluates the radiuses largest-first, so the spatial query must cover the largest one.
+            List<double> radiuses = [200, 400, 600, 1000];
+            double radius_Max = radiuses.Max();
 
             long totalUpdated = 0;
+            long failedCount = 0;
 
             foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (administrativeAreal2DReference.CountyId is not int countyId)
                 {
                     continue;
                 }
 
-                List<Building2D>? building2Ds = null;
-                AdministrativeAreal2DReference? administrativeAreal2DReference_Subdivision = null;
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = null;
+                // The references were queried by AdministrativeArealType.Subdivison, so Id is the subdivision id.
+                int subdivisionId = administrativeAreal2DReference.Id;
 
+                List<Building2D>? building2Ds = null;
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = null;
                 List<Building2DReference>? building2DReferences = null;
 
                 try
                 {
-                    AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference, cancellationToken);
+                    AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference, cancellationToken: cancellationToken);
 
-                    administrativeAreal2DReference_Subdivision = administrativeAreal2DReferencePath?[AdministrativeArealType.Subdivison];
+                    // GetAdministrativeAreal2DsByIdsAsync treats a null or empty id collection as 'no filter' and reads the whole table.
+                    if (administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id) is List<int> ids && ids.Count != 0)
+                    {
+                        administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(ids);
+                    }
 
-                    administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(administrativeAreal2DReferencePath?.AdministrativeAreal2DReferences?.ConvertAll(x => x.Id));
-
-                    building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(administrativeAreal2DReference.CountyId.Value, administrativeAreal2DReference_Subdivision?.Id, excludedReferences: null, cancellationToken: cancellationToken);
+                    building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                     if (building2DReferences is null || building2DReferences.Count == 0)
                     {
                         continue;
                     }
 
-                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences);
+                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception)
                 {
+                    failedCount++;
+                    continue;
                 }
 
                 if (building2Ds is null || building2Ds.Count == 0)
@@ -114,23 +136,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                Core.IO.Table.Classes.Table table = new();
+                List<GIS.Classes.Building2D> building2Ds_GIS = building2Ds.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>().ToList();
+                List<GIS.Classes.AdministrativeAreal2D>? administrativeAreal2Ds_GIS = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeAreal2D>().ToList();
+
+                Table table = new();
 
                 try
                 {
                     if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.General))
                     {
-                        IO.Modify.Update(table, countyId, administrativeAreal2DReference_Subdivision?.Id, building2Ds?.ConvertAll(x => x.ToDiGi()!), administrativeAreal2Ds: administrativeAreal2Ds?.ConvertAll(x => x.ToDiGi()!));
+                        IO.Modify.Update(table, countyId, subdivisionId, building2Ds_GIS, administrativeAreal2Ds: administrativeAreal2Ds_GIS);
                     }
 
                     if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy))
                     {
-                        IO.Modify.Update_Building2D_Occupancy(table, countyId, building2Ds?.ConvertAll(x => x.ToDiGi()!));
+                        IO.Modify.Update_Building2D_Occupancy(table, countyId, building2Ds_GIS);
 
-                        Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>();
                         if (building2DOccupancyDataPostgreSQLConverter is not null)
                         {
-                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(building2DReferences?.ConvertAll(x => x.Reference!), countyId, cancellationToken: cancellationToken);
+                            List<string> references = building2DReferences.Select(x => x.Reference).OfType<string>().ToList();
+
+                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, cancellationToken: cancellationToken);
                             if (building2DOccupancyDatas is not null)
                             {
                                 Modify.Update_Occupancy(table, building2DOccupancyDatas);
@@ -145,68 +171,66 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios))
                     {
-                        if (building2Ds is not null)
+                        foreach (GIS.Classes.Building2D building2D_GIS in building2Ds_GIS)
                         {
-                            List<double> radiuses = [200, 400, 600, 1000];
+                            cancellationToken.ThrowIfCancellationRequested();
 
-                            Building2DPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DPostgreSQLConverter>();
-
-                            if (building2DOccupancyDataPostgreSQLConverter is not null)
+                            Point2D? point2D_Centroid = building2D_GIS.PolygonalFace2D?.Centroid();
+                            if (point2D_Centroid is null)
                             {
-                                foreach (Building2D building2D in building2Ds)
-                                {
-                                    if (building2D.ToDiGi() is not GIS.Classes.Building2D building2D_GIS)
-                                    {
-                                        continue;
-                                    }
-
-                                    Point2D? centroid = building2D_GIS.PolygonalFace2D?.Centroid();
-                                    if (centroid is null)
-                                    {
-                                        continue;
-                                    }
-
-                                    Circle2D circle2D = new(centroid, radiuses[0]);
-
-                                    List<Building2D>? building2Ds_Circle = await building2DOccupancyDataPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(circle2D, cancellationToken: cancellationToken);
-
-                                    //TODO: Finish implementation for Radial Ratios
-                                    throw new NotImplementedException();
-                                    //IO.Modify.Update_RadialRatios(table, , countyId, building2D);
-                                }
+                                continue;
                             }
+
+                            Circle2D circle2D = new(point2D_Centroid, radius_Max);
+
+                            List<Building2D>? building2Ds_Circle = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(circle2D, cancellationToken: cancellationToken);
+
+                            List<GIS.Classes.Building2D> building2Ds_Circle_GIS = building2Ds_Circle?.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>().ToList() ?? [];
+
+                            IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2D_GIS, building2Ds_Circle_GIS);
                         }
                     }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception)
                 {
+                    failedCount++;
+                    continue;
                 }
 
-                if (table is not null)
+                if (table.RowCount == 0)
                 {
-                    int count = table.RowCount;
-
-                    if (count != 0)
-                    {
-                        bool updated = false;
-                        try
-                        {
-                            updated = await buildingDataPostgreSQLConverter.PushAsync(table);
-                        }
-                        catch (Exception)
-                        {
-                        }
-
-                        if (updated)
-                        {
-                            totalUpdated += count;
-                            progress.Report(totalUpdated);
-                        }
-                    }
+                    continue;
                 }
+
+                bool updated;
+                try
+                {
+                    updated = await buildingDataPostgreSQLConverter.PushAsync(table);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception)
+                {
+                    updated = false;
+                }
+
+                if (!updated)
+                {
+                    failedCount++;
+                    continue;
+                }
+
+                totalUpdated += table.RowCount;
+                progress.Report(totalUpdated);
             }
 
-            return true;
+            return failedCount == 0;
         }
     }
 }
