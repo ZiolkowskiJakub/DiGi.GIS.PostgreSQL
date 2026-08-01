@@ -199,7 +199,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             npgsqlCommand.Parameters.AddWithValue("ids", ids.ToArray());
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            // The type has to be stated explicitly: an untyped DBNull leaves the server unable to resolve
+            // the parameter type for the '@countyId IS NULL' occurrence, which fails the whole query.
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             result = await ReadAsync(npgsqlCommand, cancellationToken);
 
@@ -289,7 +292,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // Adding parameters with explicit handling of nulls for PostgreSQL
             npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
-            npgsqlCommand.Parameters.AddWithValue("countyId", (object?)countyId ?? DBNull.Value);
+
+            // The type has to be stated explicitly: an untyped DBNull leaves the server unable to resolve
+            // the parameter type for the '@countyId IS NULL' occurrence, which fails the whole query.
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             if (limit.HasValue)
             {

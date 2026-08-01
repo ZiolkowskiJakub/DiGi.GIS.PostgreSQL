@@ -1,4 +1,9 @@
+using DiGi.Analytical.Building;
+using DiGi.Analytical.Building.Interfaces;
+using DiGi.Geometry.Spatial.Classes;
+using DiGi.Geometry.Spatial.Interfaces;
 using DiGi.GIS.PostgreSQL.Classes;
+using System.Collections.Generic;
 
 namespace DiGi.GIS.PostgreSQL
 {
@@ -18,6 +23,15 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
+            {
+                return null;
+            }
+
+            // Last gate before the database. A component sitting on a non-finite plane cannot be rendered
+            // or measured, and once stored it is no longer traceable to the file it came from - the state
+            // that filled the building model table with unusable rows. Such a model is not converted, so
+            // the caller counts it as not written rather than persisting it.
+            if (!buildingModel.IsValid())
             {
                 return null;
             }
