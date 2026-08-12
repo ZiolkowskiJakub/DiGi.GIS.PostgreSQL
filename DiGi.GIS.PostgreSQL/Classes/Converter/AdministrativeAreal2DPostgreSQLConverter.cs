@@ -16,6 +16,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Provides functionality to convert and manage <see cref="AdministrativeAreal2D"/> entities within a PostgreSQL database, implementing the <see cref="IGISPostgreSQLConverter{T}"/> interface.
+    /// <para><b>A code is not a key.</b> The table is loaded from BDOT10k, which stores an administrative unit whose territory is disconnected as one <c>OT_ADJA_A</c> feature per polygon part, and every feature becomes its own row. 18 of Poland's 380 counties are multi-part, so <c>type_id = 2</c> holds 406 rows for 380 codes, up to four rows sharing one code. The row count for a code always equals the feature count in that code's source package - none of this is a re-import artifact, and the extra rows carry real territory (for code <c>2412</c> the largest polygon is only 52% of the county), so they must never be deduplicated away.</para>
+    /// <para><b>Every part carries its own ancestor chain.</b> <c>type_id = 0</c> and <c>type_id = 1</c> also hold 406 rows each - one country and one voivodeship per county part - so <c>country_id</c> and <c>voivodeship_id</c> on a county row point into that county's own private chain and differ between two rows of the same county. A county row's own <c>county_id</c> is null; its identity is <c>id</c>.</para>
+    /// <para><b>Consequences for callers.</b> Resolve by <c>id</c> wherever possible. <see cref="GetIdByCodeAsync(NpgsqlConnection, string, System.Nullable{AdministrativeArealType}, CancellationToken)"/> collapses a code to the lowest matching row and reports nothing; <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, System.Nullable{int}, System.Nullable{AdministrativeArealType}, CancellationToken)"/> returns every part and is the one to use when ambiguity matters. Any new <c>LIMIT</c> or <c>FirstOrDefault</c> over this table needs an explicit <c>ORDER BY</c> - without one the row returned changes with the query plan, a vacuum or heap ordering, which is exactly how building models came to be filed under one part while its siblings read back empty.</para>
+    /// <para>Full analysis: https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/1</para>
     /// </summary>
     public class AdministrativeAreal2DPostgreSQLConverter : PostgreSQLConverter<AdministrativeAreal2D>, IGISPostgreSQLConverter<AdministrativeAreal2D>
     {
@@ -920,6 +924,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> to filter the search.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifier of the administrative areal if found; otherwise, null.</returns>
+        /// <remarks>A code can match several rows - a multi-part county holds one row per polygon part - and this method collapses them to the lowest identifier. Callers that need to know a code was ambiguous, or that need every part, must use <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, System.Nullable{int}, System.Nullable{AdministrativeArealType}, CancellationToken)"/> instead.</remarks>
         public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -933,7 +938,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return ids.ElementAt(0);
+            // The query already orders by id, so this is the lowest matching row. Min() states that
+            // outright rather than relying on HashSet enumeration order, which guarantees nothing.
+            return ids.Min();
         }
 
         /// <summary>
@@ -952,12 +959,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Base query
+            // A code is not unique: BDOT10k stores a county whose territory is disconnected as one
+            // OT_ADJA_A feature per polygon part, and every part becomes its own row (18 of Poland's
+            // 380 counties, up to four rows each). ORDER BY is therefore what makes LIMIT meaningful -
+            // without it the row returned changes with the query plan, a vacuum or heap ordering, and
+            // the same code has already resolved to different ids on different occasions.
             string commandText = $@"
                 SELECT id
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE (@typeId IS NULL OR type_id = @typeId)
-                  AND code = @code";
+                  AND code = @code
+                ORDER BY id ASC";
 
             // Dynamically append LIMIT if provided
             if (limit.HasValue)
@@ -1854,6 +1866,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync();
 
             return await GetIdByCodeAsync(npgsqlConnection, code, administrativeArealType);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves every administrative areal 2D identifier matching the specified code and type.
+        /// <para>A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than <see cref="GetIdByCodeAsync(string, System.Nullable{AdministrativeArealType})"/>, which silently collapses the match to the lowest identifier.</para>
+        /// </summary>
+        /// <param name="code">The identification code of the administrative areal entity.</param>
+        /// <param name="administrativeArealType">The type of the administrative areal entity.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the matching identifiers, an empty set when the code matches nothing, or <c>null</c> when the connection could not be established.</returns>
+        public async Task<HashSet<int>?> GetIdsByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        {
+            if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
         }
 
         /// <summary>

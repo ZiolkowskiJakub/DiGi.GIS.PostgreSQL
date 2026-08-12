@@ -41,12 +41,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets or sets the county ID associated with this item.
+        /// <para>This is the identifier of an <c>administrative_areal_2d</c> row, which is one <b>polygon part</b> of a county rather than the whole county - a multi-part county has several such identifiers. It is the parent county, so it is <c>null</c> on a reference that already is a county.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName("CountyId")]
         public int? CountyId { get; set; }
 
         /// <summary>
         /// Gets or sets the reference string associated with this item.
+        /// <para>Not globally unique: the same building reference is stored once per county row it was imported under, so it is unique only in combination with <see cref="CountyId"/>. Roughly 86 000 <c>building_2d</c> rows are duplicated this way across sibling parts of multi-part counties.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName("Reference")]
         public string? Reference { get; set; }

@@ -7,6 +7,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Represents a reference to a 2D administrative area within the Polish territorial division hierarchy (country, voivodeship, county, municipality).
+    /// <para><see cref="Id"/> is the identity; <see cref="CountryId"/>, <see cref="VoivodeshipId"/>, <see cref="Areal2DReference.CountyId"/> and <see cref="MunicipalityId"/> are the <b>parent</b> chain and are never self-references. On a county-type reference <see cref="Areal2DReference.CountyId"/> is therefore <c>null</c> - to key building data by county, pass <see cref="Id"/>.</para>
+    /// <para>A reference identifies one <b>polygon part</b>: a multi-part county returns several references sharing a <see cref="Code"/>, each with a different <see cref="Id"/> and a different parent chain. Enumerating counties yields 406 references for 380 codes. See <see cref="AdministrativeAreal2DPostgreSQLConverter"/> for why.</para>
     /// </summary>
     public class AdministrativeAreal2DReference : Areal2DReference
     {

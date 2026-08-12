@@ -9,6 +9,8 @@
 
 Represents a 2D administrative area within the Polish territorial division hierarchy \(country, voivodeship, county, municipality\)\.
 
+An instance is one <b>polygon part</b> of a unit, not the whole unit. BDOT10k stores a unit whose territory is disconnected as several features, and each becomes its own instance, so a multi-part county yields several instances sharing a `Code` - each with its own [Id](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D.Id 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D\.Id') and its own private country/voivodeship ancestor chain. Treat [Id](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D.Id 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D\.Id') as the identity and `Code` as descriptive; see [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter') for the full storage model.
+
 ```csharp
 public class AdministrativeAreal2D : DiGi.GIS.PostgreSQL.Classes.Areal2D<DiGi.GIS.Classes.AdministrativeAreal2D>
 ```
@@ -258,6 +260,14 @@ public override string TableName { get; }
 ## AdministrativeAreal2DPostgreSQLConverter Class
 
 Provides functionality to convert and manage [AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D') entities within a PostgreSQL database, implementing the [IGISPostgreSQLConverter&lt;TTableObject&gt;](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter_TTableObject_ 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter\<TTableObject\>') interface\.
+
+<b>A code is not a key.</b> The table is loaded from BDOT10k, which stores an administrative unit whose territory is disconnected as one `OT_ADJA_A` feature per polygon part, and every feature becomes its own row. 18 of Poland's 380 counties are multi-part, so `type_id = 2` holds 406 rows for 380 codes, up to four rows sharing one code. The row count for a code always equals the feature count in that code's source package - none of this is a re-import artifact, and the extra rows carry real territory (for code `2412` the largest polygon is only 52% of the county), so they must never be deduplicated away.
+
+<b>Every part carries its own ancestor chain.</b>`type_id = 0` and `type_id = 1` also hold 406 rows each - one country and one voivodeship per county part - so `country_id` and `voivodeship_id` on a county row point into that county's own private chain and differ between two rows of the same county. A county row's own `county_id` is null; its identity is `id`.
+
+<b>Consequences for callers.</b> Resolve by `id` wherever possible. [GetIdByCodeAsync\(NpgsqlConnection, string, Nullable&lt;AdministrativeArealType&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(Npgsql.NpgsqlConnection,string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetIdByCodeAsync\(Npgsql\.NpgsqlConnection, string, System\.Nullable\<DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\>, System\.Threading\.CancellationToken\)') collapses a code to the lowest matching row and reports nothing; [GetIdsByCodeAsync\(NpgsqlConnection, string, Nullable&lt;int&gt;, Nullable&lt;AdministrativeArealType&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(Npgsql.NpgsqlConnection,string,System.Nullable_int_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetIdsByCodeAsync\(Npgsql\.NpgsqlConnection, string, System\.Nullable\<int\>, System\.Nullable\<DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\>, System\.Threading\.CancellationToken\)') returns every part and is the one to use when ambiguity matters. Any new `LIMIT` or `FirstOrDefault` over this table needs an explicit `ORDER BY` - without one the row returned changes with the query plan, a vacuum or heap ordering, which is exactly how building models came to be filed under one part while its siblings read back empty.
+
+Full analysis: https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/1
 
 ```csharp
 public class AdministrativeAreal2DPostgreSQLConverter : DiGi.PostgreSQL.Classes.PostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLObject, DiGi.Core.Interfaces.IObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject
@@ -1975,6 +1985,9 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifier of the administrative areal if found; otherwise, null\.
 
+### Remarks
+A code can match several rows \- a multi\-part county holds one row per polygon part \- and this method collapses them to the lowest identifier\. Callers that need to know a code was ambiguous, or that need every part, must use [GetIdsByCodeAsync\(NpgsqlConnection, string, Nullable&lt;int&gt;, Nullable&lt;AdministrativeArealType&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(Npgsql.NpgsqlConnection,string,System.Nullable_int_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetIdsByCodeAsync\(Npgsql\.NpgsqlConnection, string, System\.Nullable\<int\>, System\.Nullable\<DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\>, System\.Threading\.CancellationToken\)') instead\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetIdByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
@@ -2088,6 +2101,41 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.HashSet&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1') of integers representing the IDs if found; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DPostgreSQLConverter\.GetIdsByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
+
+Asynchronously retrieves every administrative areal 2D identifier matching the specified code and type\.
+
+A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than [GetIdByCodeAsync\(string, Nullable&lt;AdministrativeArealType&gt;\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetIdByCodeAsync\(string, System\.Nullable\<DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\>\)'), which silently collapses the match to the lowest identifier.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> GetIdsByCodeAsync(string? code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The identification code of the administrative areal entity\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The type of the administrative areal entity\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the matching identifiers, an empty set when the code matches nothing, or `null` when the connection could not be established\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetSubCodesAsync(string)'></a>
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetSubCodesAsync\(string\) Method
@@ -2189,6 +2237,10 @@ A task that represents the asynchronous operation\. The task result contains a [
 ## AdministrativeAreal2DReference Class
 
 Represents a reference to a 2D administrative area within the Polish territorial division hierarchy \(country, voivodeship, county, municipality\)\.
+
+[Id](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.Id 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.Id') is the identity; [CountryId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.CountryId 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.CountryId'), [VoivodeshipId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.VoivodeshipId 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.VoivodeshipId'), [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference\.CountyId') and [MunicipalityId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.MunicipalityId 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.MunicipalityId') are the <b>parent</b> chain and are never self-references. On a county-type reference [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference\.CountyId') is therefore `null` - to key building data by county, pass [Id](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.Id 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.Id').
+
+A reference identifies one <b>polygon part</b>: a multi-part county returns several references sharing a [Code](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.Code 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.Code'), each with a different [Id](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference.Id 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\.Id') and a different parent chain. Enumerating counties yields 406 references for 380 codes. See [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter') for why.
 
 ```csharp
 public class AdministrativeAreal2DReference : DiGi.GIS.PostgreSQL.Classes.Areal2DReference
@@ -3250,6 +3302,8 @@ The JsonObject containing the serialized data\.
 
 Gets or sets the county ID associated with this item\.
 
+This is the identifier of an `administrative_areal_2d` row, which is one <b>polygon part</b> of a county rather than the whole county - a multi-part county has several such identifiers. It is the parent county, so it is `null` on a reference that already is a county.
+
 ```csharp
 public System.Nullable<int> CountyId { get; set; }
 ```
@@ -3262,6 +3316,8 @@ public System.Nullable<int> CountyId { get; set; }
 ## Areal2DReference\.Reference Property
 
 Gets or sets the reference string associated with this item\.
+
+Not globally unique: the same building reference is stored once per county row it was imported under, so it is unique only in combination with [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference\.CountyId'). Roughly 86 000 `building_2d` rows are duplicated this way across sibling parts of multi-part counties.
 
 ```csharp
 public string? Reference { get; set; }
@@ -3570,6 +3626,12 @@ public override string TableName { get; }
 ## Building2DPostgreSQLConverter Class
 
 Provides functionality for converting and managing [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') entities within a PostgreSQL database, implementing the [IGISPostgreSQLConverter&lt;TTableObject&gt;](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter_TTableObject_ 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter\<TTableObject\>') interface\.
+
+<b>
+  <c>county_id</c> is a polygon part, not a county.</b> It points at an `administrative_areal_2d` row, and a county whose territory is disconnected has one such row per part - so the buildings of a single county can be spread over several `county_id` values, and querying one part never returns the whole county. See [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter') for the storage model.
+
+<b>
+  <c>reference</c> is not unique.</b> Repeated imports resolving the same county code to different parts stored the same building under more than one `county_id`: roughly 86 000 rows are duplicated this way. A reference is unique only per `county_id`, so any lookup keyed on reference alone must impose an explicit `ORDER BY` and may still be answering about a different part than the caller meant.
 
 ```csharp
 public class Building2DPostgreSQLConverter : DiGi.PostgreSQL.Classes.PostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.Building2D>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.Building2D>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLObject, DiGi.Core.Interfaces.IObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject
@@ -3918,6 +3980,8 @@ A list of populated Building2DReference objects found in the database\.
 ## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(IEnumerable\<int\>, CancellationToken\) Method
 
 Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers\.
+
+Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its [Subdivison](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivison 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivison') descendants and the buildings are then fetched per `county_id` plus `subdivision_id`. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with `GetBuilding2DReferencesByCountyIdAsync` before concluding anything about coverage.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));

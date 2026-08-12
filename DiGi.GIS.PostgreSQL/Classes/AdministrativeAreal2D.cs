@@ -6,6 +6,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Represents a 2D administrative area within the Polish territorial division hierarchy (country, voivodeship, county, municipality).
+    /// <para>An instance is one <b>polygon part</b> of a unit, not the whole unit. BDOT10k stores a unit whose territory is disconnected as several features, and each becomes its own instance, so a multi-part county yields several instances sharing a <c>Code</c> - each with its own <see cref="Id"/> and its own private country/voivodeship ancestor chain. Treat <see cref="Id"/> as the identity and <c>Code</c> as descriptive; see <see cref="AdministrativeAreal2DPostgreSQLConverter"/> for the full storage model.</para>
     /// </summary>
     public class AdministrativeAreal2D : Areal2D<GIS.Classes.AdministrativeAreal2D>
     {

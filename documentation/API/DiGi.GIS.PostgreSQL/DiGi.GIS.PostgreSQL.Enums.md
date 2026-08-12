@@ -9,6 +9,8 @@
 
 Represents the type of administrative area\.
 
+The value is the `type_id` column of `administrative_areal_2d` and travels the wire as an <b>integer</b>. One row is stored per polygon part of a unit, so a level holds more rows than there are real units - counties are 406 rows for 380 codes, and both country and voivodeship are 406 rows because every county part carries its own ancestor chain.
+
 ```csharp
 public enum AdministrativeArealType
 ```
@@ -49,6 +51,8 @@ Municipality \(gmina\) level administrative area\.
 `Subdivison` 4
 
 Subdivision level administrative area\.
+
+The member name is misspelled (`Subdivison`, missing the second `i`) and the misspelling reaches the wire: a request carrying the correctly spelled `Subdivision` is rejected with HTTP 400. Pass the integer `4`, or the exact misspelling. Renaming this member is a breaking API change.
 
 <a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType'></a>
 

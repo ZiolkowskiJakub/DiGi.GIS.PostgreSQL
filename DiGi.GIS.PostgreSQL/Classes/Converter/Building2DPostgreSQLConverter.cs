@@ -17,6 +17,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Provides functionality for converting and managing <see cref="Building2D"/> entities within a PostgreSQL database, implementing the <see cref="IGISPostgreSQLConverter{T}"/> interface.
+    /// <para><b><c>county_id</c> is a polygon part, not a county.</b> It points at an <c>administrative_areal_2d</c> row, and a county whose territory is disconnected has one such row per part - so the buildings of a single county can be spread over several <c>county_id</c> values, and querying one part never returns the whole county. See <see cref="AdministrativeAreal2DPostgreSQLConverter"/> for the storage model.</para>
+    /// <para><b><c>reference</c> is not unique.</b> Repeated imports resolving the same county code to different parts stored the same building under more than one <c>county_id</c>: roughly 86 000 rows are duplicated this way. A reference is unique only per <c>county_id</c>, so any lookup keyed on reference alone must impose an explicit <c>ORDER BY</c> and may still be answering about a different part than the caller meant.</para>
     /// </summary>
     public class Building2DPostgreSQLConverter : PostgreSQLConverter<Building2D>, IGISPostgreSQLConverter<Building2D>
     {
@@ -570,10 +572,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
+            // A reference is not unique across counties: the same building is stored once per county row
+            // it was imported under, and a multi-part county has one row per polygon part. Without an
+            // explicit order the county_id handed back here varies, and a caller that feeds it straight
+            // into a county-keyed lookup gets an empty result for a building that does exist.
             string commandText = $@"
                     SELECT id, county_id, reference, subdivision_id
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = @reference{(countyId is null ? "" : " AND county_id = @countyId")};";
+                    WHERE reference = @reference{(countyId is null ? "" : " AND county_id = @countyId")}
+                    ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("reference", reference);
@@ -686,6 +693,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers.
+        /// <para>Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its <see cref="AdministrativeArealType.Subdivison"/> descendants and the buildings are then fetched per <c>county_id</c> plus <c>subdivision_id</c>. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with <c>GetBuilding2DReferencesByCountyIdAsync</c> before concluding anything about coverage.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to filter by.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
@@ -1345,6 +1353,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             Dictionary<string, int> dictionary_Code = [];
 
+            // County assignment runs in three tiers, in descending reliability:
+            //   1. building2D.CountyId - already names the part, nothing to infer.
+            //   2. building2D.Code     - names the county but not which of its parts; a multi-part
+            //                            county collapses to one part here, so the whole batch lands
+            //                            on that part regardless of where the buildings actually are.
+            //   3. bounding box        - geometry decides, and this is the only tier that can put a
+            //                            building on the part that really contains it.
+            // Tier 2 is why building_2d holds ~86k rows duplicated across sibling parts: separate runs
+            // resolved the same code to different parts back when that resolution had no ORDER BY.
             foreach (Building2D building2D in building2Ds)
             {
                 if (building2D is null)
