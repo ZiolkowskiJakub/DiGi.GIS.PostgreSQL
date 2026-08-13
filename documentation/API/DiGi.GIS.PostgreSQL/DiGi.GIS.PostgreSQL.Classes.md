@@ -5421,6 +5421,72 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TBuilding2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.TBuilding2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.TBuilding2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [TBuilding2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.TBuilding2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.TBuilding2DReferencedObject') objects if matches are found; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetReferencesAsync(int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetReferencesAsync\(int, CancellationToken\) Method
+
+Asynchronously retrieves every reference held under a single county row\.
+
+The whole row is not read - only the reference column - so this stays usable on a county part holding tens of thousands of rows, which reading the objects would not be.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> GetReferencesAsync(int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetReferencesAsync(int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetReferencesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the distinct references held under the county row, or null when the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(IEnumerable\<string\>, int, CancellationToken\) Method
+
+Deletes the rows holding the given references under a single county row\.
+
+A reference is unique only per `county_id`: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.
+
+It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references to delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to delete them from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateAsync(System.Collections.Generic.IEnumerable_TBuilding2DReferencedObject_,int)'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UpdateAsync\(IEnumerable\<TBuilding2DReferencedObject\>, int\) Method
@@ -6133,6 +6199,120 @@ public override string TableName { get; }
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_)'></a>
+
+## BuildingModelPostgreSQLConverter\.Create\(long, Nullable\<int\>, string, string, JsonObject, Nullable\<DateTime\>\) Method
+
+Creates a new instance of a building referenced object using the specified identification and metadata\.
+
+```csharp
+protected override DiGi.GIS.PostgreSQL.Classes.BuildingModel Create(long id, System.Nullable<int> countyId, string? uniqueId, string? reference, System.Text.Json.Nodes.JsonObject? @object, System.Nullable<System.DateTime> createdAt);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).id'></a>
+
+`id` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The unique [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64') identifier for the record\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32') identifier for the county associated with the building\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).uniqueId'></a>
+
+`uniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String') representing a unique identification code\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String') used as a reference for the record\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).object'></a>
+
+`object` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The optional [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing raw data for initialization\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_).createdAt'></a>
+
+`createdAt` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime') indicating when the record was created\.
+
+#### Returns
+[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')  
+A new instance of \<seeref name="TBuilding2DReferencedObject" /\>\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken)'></a>
+
+## BuildingModelPostgreSQLConverter\.GetSupersededCountAsync\(int, CancellationToken\) Method
+
+Asynchronously counts the rows of a county row that a correctly keyed row has already superseded\.
+
+A building model row is keyed on the reference of the building it describes. Rows written before that were keyed on the model's own identifier, which `ParametrizedGuidObject` hands out fresh on every model created, so the `ON CONFLICT (county_id, unique_id)` upsert could not match one and inserted a second model for the same building instead of replacing it. Such a row is superseded once a row keyed on the reference exists beside it.
+
+This is the counterpart of [RemoveSupersededAsync\(int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter\.RemoveSupersededAsync\(int, System\.Threading\.CancellationToken\)') and reads nothing else - run it first and compare the two numbers.
+
+```csharp
+public System.Threading.Tasks.Task<long> GetSupersededCountAsync(int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to count in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the number of superseded rows, or \-1 when the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken)'></a>
+
+## BuildingModelPostgreSQLConverter\.RemoveSupersededAsync\(int, CancellationToken\) Method
+
+Deletes the rows of a county row that a correctly keyed row has already superseded, as described on [GetSupersededCountAsync\(int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter\.GetSupersededCountAsync\(int, System\.Threading\.CancellationToken\)')\.
+
+A row is deleted only when a row keyed on the same building's reference exists beside it, so the building keeps a model either way. That makes the delete independent of when it is run: before a regeneration it removes nothing, after one it removes exactly what the regeneration replaced, and a part that has never been regenerated is left alone rather than emptied.
+
+It removes data and has no undo - run [GetSupersededCountAsync\(int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter\.GetSupersededCountAsync\(int, System\.Threading\.CancellationToken\)') first and review what it reports.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveSupersededAsync(int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to delete from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is the only evidence the delete matched what was counted\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter'></a>
 

@@ -413,6 +413,96 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves every reference held under a single county row.
+        /// <para>The whole row is not read - only the reference column - so this stays usable on a county part holding tens of thousands of rows, which reading the objects would not be.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county row to read.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the distinct references held under the county row, or null when the connection could not be created.</returns>
+        public async Task<HashSet<string>?> GetReferencesAsync(int countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = $@"
+                SELECT DISTINCT reference
+                FROM {TableName}
+                WHERE county_id = @countyId
+                  AND reference IS NOT NULL;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+
+            HashSet<string> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetString(0));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Deletes the rows holding the given references under a single county row.
+        /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="references">The references to delete.</param>
+        /// <param name="countyId">The identifier of the county row to delete them from.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there.</returns>
+        public async Task<HashSet<long>?> RemoveAsync(IEnumerable<string>? references, int countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // ANY keeps this one statement rather than one per reference, and RETURNING reports what was
+            // really removed - the count is the only evidence that the delete matched what was intended.
+            string commandText = $@"
+                DELETE FROM {TableName}
+                WHERE county_id = @countyId
+                  AND reference = ANY(@references)
+                RETURNING id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+
+            HashSet<long> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt64(0));
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Creates a new instance of a building referenced object using the specified identification and metadata.
         /// </summary>
         /// <param name="id">The unique <see cref="System.Int64"/> identifier for the record.</param>
