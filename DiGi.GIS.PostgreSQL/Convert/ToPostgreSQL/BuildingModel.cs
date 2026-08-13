@@ -11,6 +11,8 @@ namespace DiGi.GIS.PostgreSQL
     {
         /// <summary>
         /// Converts the specified analytical building model to a PostgreSQL-compatible building model object, reading the reference from the building model parameters and taking the county identifier as an argument.
+        /// <para>The row is keyed by the reference of the 2D building the model describes, not by the identifier of the model object. The table upserts <c>ON CONFLICT (county_id, unique_id)</c>, and a building model is handed a fresh <see cref="System.Guid"/> every time one is created - keying by that identifier meant a regeneration never matched an existing row and inserted a second model for the same building instead of replacing it. A building has one model per county, so the reference is what identifies the row.</para>
+        /// <para>The identifier of the model object is not lost; it travels inside the stored JSON and comes back on read.</para>
         /// </summary>
         /// <param name="buildingModel">The analytical building model to convert.</param>
         /// <param name="countyId">The identifier of the county the building model belongs to, resolved by the caller from the administrative area code.</param>
@@ -22,7 +24,7 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference))
+            if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
@@ -40,7 +42,7 @@ namespace DiGi.GIS.PostgreSQL
             {
                 Reference = reference,
                 Object = buildingModel.ToJsonObject(),
-                UniqueId = buildingModel.UniqueId,
+                UniqueId = reference,
                 CountyId = countyId
             };
 

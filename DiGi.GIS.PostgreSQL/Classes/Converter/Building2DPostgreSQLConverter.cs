@@ -1351,17 +1351,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             Dictionary<int, List<Building2D>> dictionary_Building2D = [];
 
-            Dictionary<string, int> dictionary_Code = [];
+            Dictionary<string, List<AdministrativeAreal2D>> dictionary_Code = [];
 
             // County assignment runs in three tiers, in descending reliability:
             //   1. building2D.CountyId - already names the part, nothing to infer.
-            //   2. building2D.Code     - names the county but not which of its parts; a multi-part
-            //                            county collapses to one part here, so the whole batch lands
-            //                            on that part regardless of where the buildings actually are.
-            //   3. bounding box        - geometry decides, and this is the only tier that can put a
-            //                            building on the part that really contains it.
-            // Tier 2 is why building_2d holds ~86k rows duplicated across sibling parts: separate runs
-            // resolved the same code to different parts back when that resolution had no ORDER BY.
+            //   2. building2D.Code     - names the county but not which of its parts. A code holding a
+            //                            single part resolves outright; a multi-part code only narrows
+            //                            the candidates and hands them to tier 3.
+            //   3. geometry            - decides which candidate part really contains the building, and
+            //                            is the only tier that can.
+            // Tier 2 used to collapse a multi-part county onto one part by itself, which is why
+            // building_2d holds ~86k rows duplicated across sibling parts: separate runs resolved the
+            // same code to different parts back when that resolution had no ORDER BY. Narrowing instead
+            // of choosing is what stops that recurring, and it also makes tier 3 cheaper - the candidate
+            // set is the county's own parts rather than every county overlapping the bounding box.
             foreach (Building2D building2D in building2Ds)
             {
                 if (building2D is null)
@@ -1371,21 +1374,28 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 int? countyId = building2D.CountyId;
 
+                List<AdministrativeAreal2D>? administrativeAreal2Ds_Candidate = null;
+
                 if (countyId is null || !countyId.HasValue)
                 {
                     if (!string.IsNullOrWhiteSpace(building2D.Code))
                     {
-                        if (dictionary_Code.TryGetValue(building2D.Code, out int countyId_Dictionary))
+                        if (!dictionary_Code.TryGetValue(building2D.Code, out List<AdministrativeAreal2D>? administrativeAreal2Ds_Code) || administrativeAreal2Ds_Code is null)
                         {
-                            countyId = countyId_Dictionary;
+                            // Cached per batch: the parts of a code and their polygons are the same for
+                            // every building carrying it, and re-reading them per row would put a query
+                            // and a polygon parse on each one.
+                            administrativeAreal2Ds_Code = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(npgsqlConnection, building2D.Code, AdministrativeArealType.County) ?? [];
+                            dictionary_Code[building2D.Code] = administrativeAreal2Ds_Code;
                         }
-                        else
+
+                        if (administrativeAreal2Ds_Code.Count == 1)
                         {
-                            if (await AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(npgsqlConnection, building2D.Code, AdministrativeArealType.County) is int countyId_Code)
-                            {
-                                countyId = countyId_Code;
-                                dictionary_Code[building2D.Code] = countyId_Code;
-                            }
+                            countyId = administrativeAreal2Ds_Code[0].Id;
+                        }
+                        else if (administrativeAreal2Ds_Code.Count > 1)
+                        {
+                            administrativeAreal2Ds_Candidate = administrativeAreal2Ds_Code;
                         }
                     }
                 }
@@ -1394,88 +1404,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     BoundingBox2D? boundingBox2D = building2D.BoundingBox2D;
 
-                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.County, tolerance);
-                    if (administrativeAreal2Ds != null)
+                    // Only a code that named nothing falls back to searching every county by bounding box.
+                    List<AdministrativeAreal2D>? administrativeAreal2Ds = administrativeAreal2Ds_Candidate ?? await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.County, tolerance);
+                    if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
                     {
-                        int count = administrativeAreal2Ds.Count;
-                        if (count == 1)
+                        if (administrativeAreal2Ds.Count == 1)
                         {
                             countyId = administrativeAreal2Ds[0].Id;
                         }
-                        else if (count > 1)
+                        else
                         {
-                            GIS.Classes.Building2D? building2D_GIS = building2D.ToDiGi();
-
-                            Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D_Building2D = building2D_GIS?.PolygonalFace2D?.ExternalEdge;
-                            if (polygonal2D_Building2D is null)
-                            {
-                                continue;
-                            }
-
-                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi()?.PolygonalFace2D?.ExternalEdge));
-                            tuples_AdministrativeAreal2D.RemoveAll(x => x?.Item2 is null);
-
-                            if (tuples_AdministrativeAreal2D.Count == 1)
-                            {
-                                countyId = tuples_AdministrativeAreal2D[0].Item1.Id;
-                            }
-                            else if (count > 1)
-                            {
-                                List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2_Temp = tuples_AdministrativeAreal2D.FindAll(x => x.Item2!.InRange(polygonal2D_Building2D, tolerance));
-                                if (tuples_AdministrativeAreal2_Temp.Count == 0)
-                                {
-                                    List<Tuple<AdministrativeAreal2D, double>> tuples_Distance = [];
-                                    foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2D)
-                                    {
-                                        Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
-
-                                        double distance = Geometry.Planar.Query.Distance(polygonal2D_Building2D, polygonal2D_AdministrativeAreal2D, out _, out _, tolerance);
-
-                                        tuples_Distance.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, distance));
-                                    }
-
-                                    if (tuples_Distance.Count != 0)
-                                    {
-                                        tuples_Distance.Sort((x, y) => x.Item2.CompareTo(y.Item2));
-
-                                        countyId = tuples_Distance[0].Item1.Id;
-                                    }
-                                }
-                                else if (tuples_AdministrativeAreal2_Temp.Count == 1)
-                                {
-                                    countyId = tuples_AdministrativeAreal2_Temp[0].Item1.Id;
-                                }
-                                else
-                                {
-                                    List<Tuple<AdministrativeAreal2D, double>> tuples_Area = [];
-                                    foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2_Temp)
-                                    {
-                                        Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
-
-                                        List<Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<Geometry.Planar.Interfaces.IPolygonal2D, Geometry.Planar.Interfaces.IPolygonal2D>([polygonal2D_AdministrativeAreal2D, polygonal2D_Building2D], tolerance);
-
-                                        double area = 0;
-                                        if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
-                                        {
-                                            area = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
-                                        }
-
-                                        if (area <= tolerance)
-                                        {
-                                            continue;
-                                        }
-
-                                        tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
-                                    }
-
-                                    if (tuples_Area.Count != 0)
-                                    {
-                                        tuples_Area.Sort((x, y) => x.Item2.CompareTo(y.Item2));
-
-                                        countyId = tuples_Area[0].Item1.Id;
-                                    }
-                                }
-                            }
+                            countyId = administrativeAreal2Ds.CountyId(building2D.ToDiGi()?.PolygonalFace2D?.ExternalEdge, tolerance);
                         }
                     }
                 }
@@ -1750,6 +1689,59 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
             return await ReadAsync_Building2DReference(npgsqlDataReader, cancellationToken);
+        }
+
+        /// <summary>
+        /// Deletes the rows holding the given references under a single county row.
+        /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
+        /// <para>Intended for repairing the parts a building was filed under by mistake. It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it, and make sure the building survives under the part it belongs to first.</para>
+        /// </summary>
+        /// <param name="references">The references to delete.</param>
+        /// <param name="countyId">The identifier of the county row to delete them from.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there.</returns>
+        public async Task<HashSet<long>?> RemoveAsync(IEnumerable<string>? references, int countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // UNNEST keeps this one statement rather than one per reference, and RETURNING reports what was
+            // really removed - the count is the only evidence that the delete matched what was intended.
+            string commandText = $@"
+                DELETE FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId
+                  AND reference = ANY(@references)
+                RETURNING id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+
+            HashSet<long> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt64(0));
+            }
+
+            return result;
         }
 
         private static async Task<List<Building2DReference>> ReadAsync_Building2DReference(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
