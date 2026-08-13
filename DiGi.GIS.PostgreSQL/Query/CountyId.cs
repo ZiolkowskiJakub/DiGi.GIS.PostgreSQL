@@ -24,56 +24,62 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            List<Tuple<AdministrativeAreal2D, IPolygonal2D>> tuples = [];
-            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
-            {
-                if (administrativeAreal2D?.ToDiGi()?.PolygonalFace2D?.ExternalEdge is IPolygonal2D polygonal2D_AdministrativeAreal2D)
-                {
-                    tuples.Add(new Tuple<AdministrativeAreal2D, IPolygonal2D>(administrativeAreal2D, polygonal2D_AdministrativeAreal2D));
-                }
-            }
+            return Polygonal2DsByCountyId(administrativeAreal2Ds).CountyId(polygonal2D, tolerance);
+        }
 
-            if (tuples.Count == 0)
+        /// <summary>
+        /// Picks which of the candidate county rows a 2D building belongs to, from parts whose polygons the caller has already converted.
+        /// <para>The decision is the one described on the <see cref="AdministrativeAreal2D"/> overload; only where the polygons come from differs. Deriving a part's polygon means deserializing the stored geometry, and a county polygon carries thousands of vertices, so a caller deciding many buildings against the same parts should convert once with <see cref="Polygonal2DsByCountyId"/> and call this - the other overload converts every candidate again on every building.</para>
+        /// </summary>
+        /// <param name="polygonal2Ds_ByCountyId">The candidate parts, keyed by the identifier of their county row.</param>
+        /// <param name="polygonal2D">The external edge of the building footprint.</param>
+        /// <param name="tolerance">The distance tolerance used for the containment and overlap tests.</param>
+        /// <returns>The identifier of the county row the building belongs to, or <see langword="null"/> when it cannot be decided.</returns>
+        public static int? CountyId(this IDictionary<int, IPolygonal2D>? polygonal2Ds_ByCountyId, IPolygonal2D? polygonal2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        {
+            if (polygonal2Ds_ByCountyId is null || polygonal2Ds_ByCountyId.Count == 0 || polygonal2D is null)
             {
                 return null;
             }
 
-            if (tuples.Count == 1)
+            List<KeyValuePair<int, IPolygonal2D>> keyValuePairs = [.. polygonal2Ds_ByCountyId];
+
+            if (keyValuePairs.Count == 1)
             {
-                return tuples[0].Item1.Id;
+                return keyValuePairs[0].Key;
             }
 
-            List<Tuple<AdministrativeAreal2D, IPolygonal2D>> tuples_InRange = tuples.FindAll(x => x.Item2.InRange(polygonal2D, tolerance));
+            List<KeyValuePair<int, IPolygonal2D>> keyValuePairs_InRange = keyValuePairs.FindAll(x => x.Value.InRange(polygonal2D, tolerance));
 
-            if (tuples_InRange.Count == 1)
+            if (keyValuePairs_InRange.Count == 1)
             {
-                return tuples_InRange[0].Item1.Id;
+                return keyValuePairs_InRange[0].Key;
             }
 
-            if (tuples_InRange.Count == 0)
+            if (keyValuePairs_InRange.Count == 0)
             {
                 // Nothing contains it - a footprint on a part boundary, or coordinates slightly outside
                 // every polygon. The nearest part is the least wrong answer available.
-                List<Tuple<AdministrativeAreal2D, double>> tuples_Distance = [];
-                foreach (Tuple<AdministrativeAreal2D, IPolygonal2D> tuple in tuples)
+                List<Tuple<int, double>> tuples_Distance = [];
+                foreach (KeyValuePair<int, IPolygonal2D> keyValuePair in keyValuePairs)
                 {
-                    tuples_Distance.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, Geometry.Planar.Query.Distance(polygonal2D, tuple.Item2, out _, out _, tolerance)));
+                    tuples_Distance.Add(new Tuple<int, double>(keyValuePair.Key, Geometry.Planar.Query.Distance(polygonal2D, keyValuePair.Value, out _, out _, tolerance)));
                 }
 
                 tuples_Distance.Sort((x, y) =>
                 {
                     int result = x.Item2.CompareTo(y.Item2);
-                    return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
+                    return result != 0 ? result : x.Item1.CompareTo(y.Item1);
                 });
 
-                return tuples_Distance[0].Item1.Id;
+                return tuples_Distance[0].Item1;
             }
 
             // Several parts contain it, so it straddles a boundary: it belongs to the one it lies in most.
-            List<Tuple<AdministrativeAreal2D, double>> tuples_Area = [];
-            foreach (Tuple<AdministrativeAreal2D, IPolygonal2D> tuple in tuples_InRange)
+            List<Tuple<int, double>> tuples_Area = [];
+            foreach (KeyValuePair<int, IPolygonal2D> keyValuePair in keyValuePairs_InRange)
             {
-                List<IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<IPolygonal2D, IPolygonal2D>([tuple.Item2, polygonal2D], tolerance);
+                List<IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<IPolygonal2D, IPolygonal2D>([keyValuePair.Value, polygonal2D], tolerance);
 
                 double area = 0;
                 if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
@@ -86,25 +92,25 @@ namespace DiGi.GIS.PostgreSQL
                     continue;
                 }
 
-                tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
+                tuples_Area.Add(new Tuple<int, double>(keyValuePair.Key, area));
             }
 
             if (tuples_Area.Count == 0)
             {
                 // Every overlap collapsed to nothing measurable; fall back to the lowest of the parts that
                 // reported containment rather than returning nothing.
-                tuples_InRange.Sort((x, y) => x.Item1.Id.CompareTo(y.Item1.Id));
+                keyValuePairs_InRange.Sort((x, y) => x.Key.CompareTo(y.Key));
 
-                return tuples_InRange[0].Item1.Id;
+                return keyValuePairs_InRange[0].Key;
             }
 
             tuples_Area.Sort((x, y) =>
             {
                 int result = y.Item2.CompareTo(x.Item2);
-                return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
+                return result != 0 ? result : x.Item1.CompareTo(y.Item1);
             });
 
-            return tuples_Area[0].Item1.Id;
+            return tuples_Area[0].Item1;
         }
     }
 }

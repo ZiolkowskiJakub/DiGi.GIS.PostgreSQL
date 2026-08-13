@@ -1353,6 +1353,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             Dictionary<string, List<AdministrativeAreal2D>> dictionary_Code = [];
 
+            // The parts of a code are cached above; their polygons are cached here, because deriving one
+            // deserializes a county-sized geometry and every building carrying the code is tested against
+            // the same set.
+            Dictionary<string, Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>> dictionary_Polygonal2D = [];
+
             // County assignment runs in three tiers, in descending reliability:
             //   1. building2D.CountyId - already names the part, nothing to infer.
             //   2. building2D.Code     - names the county but not which of its parts. A code holding a
@@ -1375,6 +1380,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 int? countyId = building2D.CountyId;
 
                 List<AdministrativeAreal2D>? administrativeAreal2Ds_Candidate = null;
+                string? code_Candidate = null;
 
                 if (countyId is null || !countyId.HasValue)
                 {
@@ -1396,6 +1402,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         else if (administrativeAreal2Ds_Code.Count > 1)
                         {
                             administrativeAreal2Ds_Candidate = administrativeAreal2Ds_Code;
+                            code_Candidate = building2D.Code;
                         }
                     }
                 }
@@ -1412,8 +1419,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         {
                             countyId = administrativeAreal2Ds[0].Id;
                         }
+                        else if (code_Candidate is not null)
+                        {
+                            if (!dictionary_Polygonal2D.TryGetValue(code_Candidate, out Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_ByCountyId) || polygonal2Ds_ByCountyId is null)
+                            {
+                                polygonal2Ds_ByCountyId = administrativeAreal2Ds.Polygonal2DsByCountyId();
+                                dictionary_Polygonal2D[code_Candidate] = polygonal2Ds_ByCountyId;
+                            }
+
+                            countyId = polygonal2Ds_ByCountyId.CountyId(building2D.ToDiGi()?.PolygonalFace2D?.ExternalEdge, tolerance);
+                        }
                         else
                         {
+                            // The bounding box path answers a different candidate set per building, so there
+                            // is nothing to cache across them.
                             countyId = administrativeAreal2Ds.CountyId(building2D.ToDiGi()?.PolygonalFace2D?.ExternalEdge, tolerance);
                         }
                     }
