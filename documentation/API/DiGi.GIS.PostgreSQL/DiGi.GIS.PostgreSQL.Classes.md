@@ -4640,7 +4640,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously updates the specified collection of 2D buildings using a defined distance tolerance\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2D>? building2Ds, double tolerance=0.001);
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2D>? building2Ds, double tolerance=0.001);
 ```
 #### Parameters
 
@@ -4657,8 +4657,8 @@ The enumerable collection of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GI
 The double precision value used as the distance tolerance for the update operation\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains a nullable long indicating the outcome of the update, or null if the operation could not be completed\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReference'></a>
 
@@ -6879,7 +6879,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously updates a collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records in the PostgreSQL database\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building>? buildings, double tolerance=0.001);
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building>? buildings, double tolerance=0.001);
 ```
 #### Parameters
 
@@ -6896,8 +6896,8 @@ The collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.
 The tolerance to use for spatial classification if county ID is missing\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.HashSet&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1') of updated building IDs, or null if the operation fails\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.EPWFilePostgreSQLConverter'></a>
 
@@ -7784,7 +7784,7 @@ A task that represents the asynchronous operation\. The task result contains a l
 Asynchronously updates the data based on the provided orthodata and tolerance\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.OrtoDatas>? ortoDatas, double tolerance=0.001);
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.OrtoDatas>? ortoDatas, double tolerance=0.001);
 ```
 #### Parameters
 
@@ -7801,8 +7801,8 @@ A nullable enumerable collection of [OrtoDatas](DiGi.GIS.PostgreSQL.Classes.md#D
 A double\-precision floating\-point number representing the distance tolerance used during the update process\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains a nullable long, which may represent a unique identifier or the number of updated records\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateBuilding2DReferencesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_,System.Threading.CancellationToken)'></a>
 
@@ -8918,6 +8918,107 @@ public DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions PostgreSQLUp
 #### Property Value
 [PostgreSQLUpdateOccupancyOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult'></a>
+
+## PostgreSQLUpdateResult Class
+
+The outcome of a database update: the identifiers that were written, and the rows that were not\.
+
+[Ids](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.Ids 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult\.Ids') alone cannot report a shortfall. It is a set, and every table written here uses `INSERT ... ON CONFLICT (reference, county_id) DO UPDATE ... RETURNING id`, so two rows of one batch colliding on the conflict key return the same identifier and the set keeps one. Comparing its count against the number of rows sent therefore proves nothing in either direction - [Rejections](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.Rejections 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult\.Rejections') is the exact figure.
+
+```csharp
+public class PostgreSQLUpdateResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PostgreSQLUpdateResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult)'></a>
+
+## PostgreSQLUpdateResult\(PostgreSQLUpdateResult\) Constructor
+
+Initializes a new instance of the [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult') class by copying an existing one\.
+
+```csharp
+public PostgreSQLUpdateResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult).postgreSQLUpdateResult'></a>
+
+`postgreSQLUpdateResult` [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')
+
+The [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(System.Collections.Generic.IEnumerable_long_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_)'></a>
+
+## PostgreSQLUpdateResult\(IEnumerable\<long\>, IEnumerable\<Rejection\>\) Constructor
+
+Initializes a new instance of the [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult') class\.
+
+```csharp
+public PostgreSQLUpdateResult(System.Collections.Generic.IEnumerable<long>? ids, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Rejection>? rejections);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(System.Collections.Generic.IEnumerable_long_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers returned by the update, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(System.Collections.Generic.IEnumerable_long_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_).rejections'></a>
+
+`rejections` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The rows dropped before the database, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLUpdateResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PostgreSQLUpdateResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.PostgreSQLUpdateResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.Ids'></a>
+
+## PostgreSQLUpdateResult\.Ids Property
+
+Gets the identifiers of the rows written by the update, from the `RETURNING id` of both the insert and the update branch\.
+
+```csharp
+public System.Collections.Generic.HashSet<long> Ids { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult.Rejections'></a>
+
+## PostgreSQLUpdateResult\.Rejections Property
+
+Gets the rows that were dropped before the database, each named with the reason it was dropped\.
+
+```csharp
+public System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Rejection> Rejections { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.ReferencedObject_TUniqueObject_'></a>
 
 ## ReferencedObject\<TUniqueObject\> Class
@@ -9153,6 +9254,111 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a boolean value indicating whether the clear operation was successful\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection'></a>
+
+## Rejection Class
+
+One row that was dropped before the database, and why\.
+
+A row that cannot be filed under a county part is not written, and naming it is the only way the caller learns which rows are missing - the identifiers returned by an update describe what was stored, never what was lost.
+
+```csharp
+public class Rejection : DiGi.Core.Classes.SerializableObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → Rejection
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(DiGi.GIS.PostgreSQL.Classes.Rejection)'></a>
+
+## Rejection\(Rejection\) Constructor
+
+Initializes a new instance of the [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection') class by copying an existing one\.
+
+```csharp
+public Rejection(DiGi.GIS.PostgreSQL.Classes.Rejection? rejection);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(DiGi.GIS.PostgreSQL.Classes.Rejection).rejection'></a>
+
+`rejection` [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')
+
+The [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(string,DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason)'></a>
+
+## Rejection\(string, UpdateRejectionReason\) Constructor
+
+Initializes a new instance of the [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection') class\.
+
+```csharp
+public Rejection(string? reference, DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason updateRejectionReason);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(string,DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The reference of the dropped row, or null when it carried none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(string,DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason).updateRejectionReason'></a>
+
+`updateRejectionReason` [UpdateRejectionReason](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason 'DiGi\.GIS\.PostgreSQL\.Enums\.UpdateRejectionReason')
+
+The reason the row was dropped\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Rejection\(JsonObject\) Constructor
+
+Initializes a new instance of the [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Rejection(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Rejection(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.Reference'></a>
+
+## Rejection\.Reference Property
+
+Gets the reference of the dropped row\.
+
+Null when the row carried none. A row reaching an update has not been inserted yet, so its identifier is still zero and there is no second identity to fall back on.
+
+```csharp
+public string? Reference { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Rejection.UpdateRejectionReason'></a>
+
+## Rejection\.UpdateRejectionReason Property
+
+Gets the reason the row was dropped\.
+
+It decides what the caller should do next: a payload defect is worth correcting and reposting, a footprint falling outside every candidate county part is not.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason UpdateRejectionReason { get; }
+```
+
+#### Property Value
+[UpdateRejectionReason](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason 'DiGi\.GIS\.PostgreSQL\.Enums\.UpdateRejectionReason')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_'></a>
 

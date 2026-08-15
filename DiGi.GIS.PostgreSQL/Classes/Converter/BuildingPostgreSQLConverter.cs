@@ -476,8 +476,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
         /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
-        /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of updated building IDs, or null if the operation fails.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        /// <returns>A task representing the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (buildings is null)
             {
@@ -498,11 +498,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            HashSet<long> result = [];
+            HashSet<long> ids = [];
+            List<Rejection> rejections = [];
 
             if (!buildings.Any())
             {
-                return result;
+                return new PostgreSQLUpdateResult(ids, rejections);
             }
 
             Dictionary<int, List<Building>> dictionary_Buildings = [];
@@ -511,6 +512,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 if (building_Temp is null)
                 {
+                    // Recorded rather than skipped in silence, so the rejection count stays an exact
+                    // account of the rows that never reached the database.
+                    rejections.Add(new Rejection(null, Enums.UpdateRejectionReason.Undefined));
                     continue;
                 }
 
@@ -521,6 +525,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     BoundingBox3D? boundingBox3D = building_Temp.BoundingBox3D;
                     if (boundingBox3D is null)
                     {
+                        // No county was named and there is no geometry to infer one from, so resolution
+                        // never even starts. A defect in the posted payload, unlike the tiers below.
+                        rejections.Add(new Rejection(building_Temp.Reference, Enums.UpdateRejectionReason.MissingGeometry));
                         continue;
                     }
 
@@ -611,6 +618,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (countyId is null || !countyId.HasValue)
                 {
+                    // Resolution ran and named no part. The row is dropped, and naming it here is the only
+                    // place that can - nothing downstream knows which rows never made the batch.
+                    rejections.Add(new Rejection(building_Temp.Reference, Enums.UpdateRejectionReason.CountyUnresolved));
                     continue;
                 }
 
@@ -625,6 +635,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
 
+            // Filled alongside the batch commands rather than from dictionary_Buildings afterwards. The
+            // identifiers come back in batch order, and a county whose partition could not be created
+            // contributes no commands - reading the dictionary would shift every identifier after it onto
+            // the wrong building.
+            List<Building> buildings_Ordered = [];
+
             foreach (KeyValuePair<int, List<Building>> keyValuePair in dictionary_Buildings)
             {
                 int countyId = keyValuePair.Key;
@@ -632,6 +648,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 succeeded = await Create.TableAsync_Building_Partition(npgsqlConnection, countyId);
                 if (!succeeded)
                 {
+                    // A whole county's worth of rows disappears here, and it is the one drop that is never
+                    // the caller's doing.
+                    foreach (Building building_Rejected in keyValuePair.Value)
+                    {
+                        rejections.Add(new Rejection(building_Rejected.Reference, Enums.UpdateRejectionReason.PartitionUnavailable));
+                    }
+
                     continue;
                 }
 
@@ -696,37 +719,42 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     });
 
                     npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
+                    buildings_Ordered.Add(building_Temp);
                 }
+            }
+
+            // Every row was dropped, so there is nothing to execute. Npgsql 10.0.2 answers a zero-command
+            // batch with an empty reader rather than throwing, which is precisely why the all-dropped case
+            // used to be indistinguishable from an unreachable database: both returned an empty id set. The
+            // rejections tell them apart now, and the round trip buys nothing.
+            if (npgsqlBatch.BatchCommands.Count == 0)
+            {
+                return new PostgreSQLUpdateResult(ids, rejections);
             }
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
 
             int buildingIndex = 0;
-            List<Building> orderedBuildings = [];
-            foreach (KeyValuePair<int, List<Building>> keyValuePair in dictionary_Buildings)
-            {
-                orderedBuildings.AddRange(keyValuePair.Value);
-            }
 
             do
             {
                 while (await npgsqlDataReader.ReadAsync())
                 {
                     long id = npgsqlDataReader.GetInt64(0);
-                    result.Add(id);
+                    ids.Add(id);
 
-                    if (buildingIndex < orderedBuildings.Count)
+                    if (buildingIndex < buildings_Ordered.Count)
                     {
-                        orderedBuildings[buildingIndex].Id = id;
+                        buildings_Ordered[buildingIndex].Id = id;
                         buildingIndex++;
                     }
                 }
             }
             while (await npgsqlDataReader.NextResultAsync());
 
-            return result;
+            return new PostgreSQLUpdateResult(ids, rejections);
         }
-        
+
         private static Building Create_Building(NpgsqlDataReader npgsqlDataReader)
         {
             return new Building

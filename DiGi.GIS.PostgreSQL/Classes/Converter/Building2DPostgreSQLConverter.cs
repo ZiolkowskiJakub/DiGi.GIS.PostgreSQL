@@ -1320,8 +1320,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2Ds">The enumerable collection of <see cref="Building2D"/> objects to be updated; may be null.</param>
         /// <param name="tolerance">The double precision value used as the distance tolerance for the update operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a nullable long indicating the outcome of the update, or null if the operation could not be completed.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<Building2D>? building2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building2D>? building2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (building2Ds is null)
             {
@@ -1342,11 +1342,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            HashSet<long> result = [];
+            HashSet<long> ids = [];
+            List<Rejection> rejections = [];
 
             if (!building2Ds.Any())
             {
-                return result;
+                return new PostgreSQLUpdateResult(ids, rejections);
             }
 
             Dictionary<int, List<Building2D>> dictionary_Building2D = [];
@@ -1374,6 +1375,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 if (building2D is null)
                 {
+                    // Recorded rather than skipped in silence, so the rejection count stays an exact
+                    // account of the rows that never reached the database.
+                    rejections.Add(new Rejection(null, UpdateRejectionReason.Undefined));
                     continue;
                 }
 
@@ -1440,6 +1444,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (countyId is null || !countyId.HasValue)
                 {
+                    // All three tiers ran and named no part. The building is dropped, and naming it here is
+                    // the only place that can - nothing downstream knows which rows never made the batch.
+                    rejections.Add(new Rejection(building2D.Reference, UpdateRejectionReason.CountyUnresolved));
                     continue;
                 }
 
@@ -1461,6 +1468,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 succeded = await Create.TableAsync_Building2D_Partition(npgsqlConnection, countyId);
                 if (!succeded)
                 {
+                    // A whole county's worth of rows disappears here, which is the largest silent drop of
+                    // the three and the one least likely to be the caller's doing.
+                    foreach (Building2D building2D in keyValuePair.Value)
+                    {
+                        rejections.Add(new Rejection(building2D.Reference, UpdateRejectionReason.PartitionUnavailable));
+                    }
+
                     continue;
                 }
 
@@ -1503,6 +1517,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
+            // Every row was dropped, so there is nothing to execute. Npgsql 10.0.2 answers a zero-command
+            // batch with an empty reader rather than throwing, which is precisely why the all-dropped case
+            // used to be indistinguishable from an unreachable database: both returned an empty id set. The
+            // rejections tell them apart now, and the round trip buys nothing.
+            if (npgsqlBatch.BatchCommands.Count == 0)
+            {
+                return new PostgreSQLUpdateResult(ids, rejections);
+            }
+
             // Execute batch and collect IDs
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
 
@@ -1512,12 +1535,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     // The RETURNING id works for both INSERT and UPDATE cases
                     long id = npgsqlDataReader.GetInt64(0);
-                    result.Add(id);
+                    ids.Add(id);
                 }
             }
             while (await npgsqlDataReader.NextResultAsync());
 
-            return result;
+            return new PostgreSQLUpdateResult(ids, rejections);
         }
 
         private static Building2D Create_Building2D(NpgsqlDataReader npgsqlDataReader)

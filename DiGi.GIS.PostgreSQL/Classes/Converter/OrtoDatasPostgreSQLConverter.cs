@@ -490,8 +490,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="ortoDatas">A nullable enumerable collection of <see cref="OrtoDatas"/> to be processed for the update.</param>
         /// <param name="tolerance">A double-precision floating-point number representing the distance tolerance used during the update process. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a nullable long, which may represent a unique identifier or the number of updated records.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (ortoDatas is null)
             {
@@ -512,11 +512,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            HashSet<long> result = [];
+            HashSet<long> ids = [];
+            List<Rejection> rejections = [];
 
             if (!ortoDatas.Any())
             {
-                return result;
+                return new PostgreSQLUpdateResult(ids, rejections);
             }
 
             Dictionary<int, List<OrtoDatas>> dictionary_OrtoDatas = [];
@@ -525,6 +526,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 if (ortoDatas_Temp is null)
                 {
+                    // Recorded rather than skipped in silence, so the rejection count stays an exact
+                    // account of the rows that never reached the database.
+                    rejections.Add(new Rejection(null, Enums.UpdateRejectionReason.Undefined));
                     continue;
                 }
 
@@ -535,6 +539,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     BoundingBox2D? boundingBox2D = ortoDatas_Temp.BoundingBox2D;
                     if (boundingBox2D is null)
                     {
+                        // No county was named and there is no geometry to infer one from, so resolution
+                        // never even starts. A defect in the posted payload, unlike the tiers below.
+                        rejections.Add(new Rejection(ortoDatas_Temp.Reference, Enums.UpdateRejectionReason.MissingGeometry));
                         continue;
                     }
 
@@ -621,6 +628,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (countyId is null || !countyId.HasValue)
                 {
+                    // Resolution ran and named no part. The row is dropped, and naming it here is the only
+                    // place that can - nothing downstream knows which rows never made the batch.
+                    rejections.Add(new Rejection(ortoDatas_Temp.Reference, Enums.UpdateRejectionReason.CountyUnresolved));
                     continue;
                 }
 
@@ -642,6 +652,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 succeded = await Create.TableAsync_OrtoDatas_Partition(npgsqlConnection, countyId);
                 if (!succeded)
                 {
+                    // A whole county's worth of rows disappears here, and it is the one drop that is never
+                    // the caller's doing.
+                    foreach (OrtoDatas ortoDatas_Rejected in keyValuePair.Value)
+                    {
+                        rejections.Add(new Rejection(ortoDatas_Rejected.Reference, Enums.UpdateRejectionReason.PartitionUnavailable));
+                    }
+
                     continue;
                 }
 
@@ -682,6 +699,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
+            // Every row was dropped, so there is nothing to execute. Npgsql 10.0.2 answers a zero-command
+            // batch with an empty reader rather than throwing, which is precisely why the all-dropped case
+            // used to be indistinguishable from an unreachable database: both returned an empty id set. The
+            // rejections tell them apart now, and the round trip buys nothing.
+            if (npgsqlBatch.BatchCommands.Count == 0)
+            {
+                return new PostgreSQLUpdateResult(ids, rejections);
+            }
+
             // Execute batch and collect IDs
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
 
@@ -691,12 +717,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     // The RETURNING id works for both INSERT and UPDATE cases
                     long id = npgsqlDataReader.GetInt64(0);
-                    result.Add(id);
+                    ids.Add(id);
                 }
             }
             while (await npgsqlDataReader.NextResultAsync());
 
-            return result;
+            return new PostgreSQLUpdateResult(ids, rejections);
         }
 
         /// <summary>
