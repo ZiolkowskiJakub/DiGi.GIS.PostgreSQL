@@ -991,6 +991,49 @@ The distance tolerance used for the containment and overlap tests\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
 The identifier of the county row the building belongs to, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it cannot be decided\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_)'></a>
+
+## Query\.IsInScope\(int, string, ICollection\<int\>, ICollection\<string\>\) Method
+
+Decides whether a county row is in scope for a task that runs over a subset of the country\.
+
+A county code is not a key - it names one row per polygon part - so scope is expressed two ways at once: by county row identifier, and by the two-digit voivodeship code a county code starts with. Both filters must admit the row, so a task can be pointed at one voivodeship, at a handful of parts, or at the parts of one voivodeship named by identifier.
+
+A null filter admits everything, which is what makes a national pass the default. A row without a code cannot be placed in a voivodeship, so it is out of scope whenever [voivodeshipCodes](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_).voivodeshipCodes 'DiGi\.GIS\.PostgreSQL\.Query\.IsInScope\(int, string, System\.Collections\.Generic\.ICollection\<int\>, System\.Collections\.Generic\.ICollection\<string\>\)\.voivodeshipCodes') is given.
+
+```csharp
+public static bool IsInScope(int countyId, string? code, System.Collections.Generic.ICollection<int>? countyIds, System.Collections.Generic.ICollection<string>? voivodeshipCodes);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row\. A negative value is never in scope\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The county code, whose leading digits name the voivodeship\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.ICollection&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.icollection-1 'System\.Collections\.Generic\.ICollection\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.icollection-1 'System\.Collections\.Generic\.ICollection\`1')
+
+The county row identifiers in scope, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') for every row\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_).voivodeshipCodes'></a>
+
+`voivodeshipCodes` [System\.Collections\.Generic\.ICollection&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.icollection-1 'System\.Collections\.Generic\.ICollection\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.icollection-1 'System\.Collections\.Generic\.ICollection\`1')
+
+The voivodeship codes in scope, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') for every voivodeship\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+[true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the county row is in scope, otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.ParentAdministrativeArealType(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 
 ## Query\.ParentAdministrativeArealType\(this AdministrativeArealType\) Method
@@ -1057,6 +1100,81 @@ The county rows to derive polygons from\.
 #### Returns
 [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.interfaces.ipolygonal2d 'DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
 The external edge of each row that has one, keyed by row identifier\. Empty when nothing could be derived\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int)'></a>
+
+## Query\.RandomSeed\(int, int\) Method
+
+Combines a run seed with a county row identifier into a seed for that county alone\.
+
+A single generator advanced across counties makes each county's draw depend on how many items every preceding county held, so changing the scope of a run - or the population of one county - changes what every county after it draws. Seeding per county removes that: a county draws the same sample whether it is verified on its own, with its voivodeship, or nationally.
+
+<b>Do not replace this with <see cref="M:System.HashCode.Combine``2(``0,``1)"/>.</b> That mixes in a seed randomized per process, so it returns a different value on every run - the opposite of what this exists to provide.
+
+```csharp
+public static int RandomSeed(int randomSeed, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int).randomSeed'></a>
+
+`randomSeed` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The seed identifying the run\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row\.
+
+#### Returns
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')  
+The seed to draw that county's sample with\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random)'></a>
+
+## Query\.Sample\<T\>\(this IEnumerable\<T\>, int, Random\) Method
+
+Draws a reproducible sample of the given size from a collection\.
+
+A partial Fisher-Yates shuffle over a copy: every item is equally likely to be drawn and none is drawn twice, without shuffling a list that can hold tens of thousands of entries in full.
+
+The draw consumes exactly one value from [random](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).random 'DiGi\.GIS\.PostgreSQL\.Query\.Sample\<T\>\(this System\.Collections\.Generic\.IEnumerable\<T\>, int, System\.Random\)\.random') per item returned, so a generator shared across several calls hands each call a different stream depending on how large the preceding populations were. Seed a fresh generator per call with [RandomSeed\(int, int\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int) 'DiGi\.GIS\.PostgreSQL\.Query\.RandomSeed\(int, int\)') when the draws are meant to be independent of one another.
+
+```csharp
+public static System.Collections.Generic.List<T>? Sample<T>(this System.Collections.Generic.IEnumerable<T>? values, int sampleSize, System.Random? random);
+```
+#### Type parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).T'></a>
+
+`T`
+
+The item type\.
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).values'></a>
+
+`values` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[T](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).T 'DiGi\.GIS\.PostgreSQL\.Query\.Sample\<T\>\(this System\.Collections\.Generic\.IEnumerable\<T\>, int, System\.Random\)\.T')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The items to draw from\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).sampleSize'></a>
+
+`sampleSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of items to draw\. A value of zero or less takes them all\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).random'></a>
+
+`random` [System\.Random](https://learn.microsoft.com/en-us/dotnet/api/system.random 'System\.Random')
+
+The random source, seeded by the caller so the draw can be repeated\.
+
+#### Returns
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[T](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).T 'DiGi\.GIS\.PostgreSQL\.Query\.Sample\<T\>\(this System\.Collections\.Generic\.IEnumerable\<T\>, int, System\.Random\)\.T')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
+The drawn items, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when [values](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).values 'DiGi\.GIS\.PostgreSQL\.Query\.Sample\<T\>\(this System\.Collections\.Generic\.IEnumerable\<T\>, int, System\.Random\)\.values') or [random](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random).random 'DiGi\.GIS\.PostgreSQL\.Query\.Sample\<T\>\(this System\.Collections\.Generic\.IEnumerable\<T\>, int, System\.Random\)\.random') is [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.TryParse(thisstring,string,System.Nullable_int_,DiGi.Core.Classes.GuidReference)'></a>
 
