@@ -136,7 +136,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                List<GIS.Classes.Building2D> building2Ds_GIS = building2Ds.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>().ToList();
+                List<GIS.Classes.Building2D> building2Ds_GIS = [.. building2Ds.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
                 List<GIS.Classes.AdministrativeAreal2D>? administrativeAreal2Ds_GIS = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeAreal2D>().ToList();
 
                 Table table = new();

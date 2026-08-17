@@ -1869,32 +1869,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves every administrative areal 2D identifier matching the specified code and type.
-        /// <para>A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than <see cref="GetIdByCodeAsync(string, System.Nullable{AdministrativeArealType})"/>, which silently collapses the match to the lowest identifier.</para>
-        /// </summary>
-        /// <param name="code">The identification code of the administrative areal entity.</param>
-        /// <param name="administrativeArealType">The type of the administrative areal entity.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the matching identifiers, an empty set when the code matches nothing, or <c>null</c> when the connection could not be established.</returns>
-        public async Task<HashSet<int>?> GetIdsByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
-        {
-            if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
-            {
-                return null;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
-        }
-
-        /// <summary>
         /// Asynchronously retrieves all identifiers for administrative areal 2D entities from the database.
         /// </summary>
         /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of integers containing the IDs, or <c>null</c> if the database connection could not be established.</returns>
@@ -1961,6 +1935,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return ids;
         }
 
+        /// <summary>
+        /// Asynchronously retrieves every administrative areal 2D identifier matching the specified code and type.
+        /// <para>A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than <see cref="GetIdByCodeAsync(string, System.Nullable{AdministrativeArealType})"/>, which silently collapses the match to the lowest identifier.</para>
+        /// </summary>
+        /// <param name="code">The identification code of the administrative areal entity.</param>
+        /// <param name="administrativeArealType">The type of the administrative areal entity.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the matching identifiers, an empty set when the code matches nothing, or <c>null</c> when the connection could not be established.</returns>
+        public async Task<HashSet<int>?> GetIdsByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        {
+            if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
+        }
         /// <summary>
         /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database.
         /// </summary>
