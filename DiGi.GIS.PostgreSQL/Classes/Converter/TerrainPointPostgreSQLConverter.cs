@@ -20,17 +20,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
     public class TerrainPointPostgreSQLConverter : PostgreSQLConverter<TerrainPoint>, IGISPostgreSQLConverter<TerrainPoint>
     {
         /// <summary>
-        /// The name of the session-local staging table that a binary import is streamed into before being moved into the partitioned table.
-        /// </summary>
-        private const string TemporaryTableName = "tmp_terrain_point";
-
-        /// <summary>
-        /// The default radius, in model units, searched around a point when no explicit one is given.
-        /// <para>One metre, a single step of the national elevation grid. A coordinate handed in by a caller is almost never one of the stored grid points, so a radius smaller than the grid spacing finds nothing.</para>
-        /// </summary>
-        public const double DefaultSearchRadius = 1.0;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="TerrainPointPostgreSQLConverter"/> class.
         /// </summary>
         /// <param name="connectionData">The <see cref="ConnectionData"/> containing the connection settings required to establish a connection to the PostgreSQL database. This value can be null.</param>
@@ -204,16 +193,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously writes a <see cref="PointCloud3D"/> to the database for a specific county, creating the table and the county partition first.
-        /// <para>Points already stored under the same county and plan coordinates are left as they are, so the same cloud can be written twice and overlapping source tiles can repeat a point without failing the write. <see cref="TerrainPointUpdateResult.Count"/> therefore reports the points newly stored, not the points sent.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="countyId">The integer identifier of the county partition.</param>
         /// <param name="pointCloud3D">The <see cref="PointCloud3D"/> containing the point coordinates to write.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision.</param>
-        /// <param name="binaryInsert">A boolean indicating whether to stream the points through a PostgreSQL binary COPY (true, faster for large clouds) or send them as a single array-valued INSERT (false, cheaper for small ones).</param>
+        /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created.</returns>
-        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = true, CancellationToken cancellationToken = default)
+        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -238,31 +226,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
             long count;
             if (binaryInsert)
             {
-                await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
-
-                await CreateTemporaryTableAsync(npgsqlConnection, cancellationToken);
-
                 DateTime createdAt = DateTime.UtcNow;
 
-                await using (NpgsqlBinaryImporter npgsqlBinaryImporter = await npgsqlConnection.BeginBinaryImportAsync(CopyCommandText(), cancellationToken))
-                {
-                    int count_Points = pointCloud3D.Count;
-                    for (int i = 0; i < count_Points; i++)
-                    {
-                        if (!pointCloud3D.TryGetPoint(i, out double x, out double y, out double z))
-                        {
-                            continue;
-                        }
+                await using NpgsqlBinaryImporter npgsqlBinaryImporter = await npgsqlConnection.BeginBinaryImportAsync(CopyCommandText(countyId), cancellationToken);
 
-                        await WriteRowAsync(npgsqlBinaryImporter, countyId, subdivisionId, x, y, z, createdAt, cancellationToken);
+                int count_Points = pointCloud3D.Count;
+                for (int i = 0; i < count_Points; i++)
+                {
+                    if (!pointCloud3D.TryGetPoint(i, out double x, out double y, out double z))
+                    {
+                        continue;
                     }
 
-                    await npgsqlBinaryImporter.CompleteAsync(cancellationToken);
+                    await WriteRowAsync(npgsqlBinaryImporter, countyId, subdivisionId, x, y, z, createdAt, cancellationToken);
                 }
 
-                count = await MoveTemporaryTableAsync(npgsqlConnection, cancellationToken);
-
-                await npgsqlTransaction.CommitAsync(cancellationToken);
+                count = (long)await npgsqlBinaryImporter.CompleteAsync(cancellationToken);
             }
             else
             {
@@ -299,10 +278,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition.</param>
         /// <param name="pointCloud3D">The <see cref="PointCloud3D"/> containing the point coordinates to write.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision.</param>
-        /// <param name="binaryInsert">A boolean indicating whether to stream the points through a PostgreSQL binary COPY (true) or send them as a single array-valued INSERT (false).</param>
+        /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when no connection could be opened.</returns>
-        public async Task<TerrainPointUpdateResult?> UpdateAsync(int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = true, CancellationToken cancellationToken = default)
+        public async Task<TerrainPointUpdateResult?> UpdateAsync(int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -316,14 +295,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously writes a collection of <see cref="TerrainPoint"/> entities to the database, creating the table and every county partition first.
-        /// <para>Points already stored under the same county and plan coordinates are left as they are, so the same collection can be written twice without failing. Points carrying no county or no geometry are recorded in <see cref="TerrainPointUpdateResult.Rejections"/> one by one; a county whose partition cannot be created contributes a single rejection naming the county, because a terrain batch runs to millions of points and one rejection each would cost more than the batch itself.</para>
+        /// <para>Points carrying no county or no geometry are recorded in <see cref="TerrainPointUpdateResult.Rejections"/> one by one; a county whose partition cannot be created contributes a single rejection naming the county, because a terrain batch runs to millions of points and one rejection each would cost more than the batch itself.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="terrainPoints">The collection of <see cref="TerrainPoint"/> objects to write.</param>
-        /// <param name="binaryInsert">A boolean indicating whether to stream the points through a PostgreSQL binary COPY (true, faster for large collections) or send them as a single array-valued INSERT (false, cheaper for small ones).</param>
+        /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created.</returns>
-        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = true, CancellationToken cancellationToken = default)
+        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -394,24 +373,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return new TerrainPointUpdateResult(0, rejections);
             }
 
-            long count;
+            long count = 0;
             if (binaryInsert)
             {
-                await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
-
-                await CreateTemporaryTableAsync(npgsqlConnection, cancellationToken);
-
                 DateTime createdAt_Default = DateTime.UtcNow;
 
-                await using (NpgsqlBinaryImporter npgsqlBinaryImporter = await npgsqlConnection.BeginBinaryImportAsync(CopyCommandText(), cancellationToken))
+                // One COPY per county: a binary import names a single table, and the points are streamed
+                // into that county's partition rather than through the partitioned parent.
+                foreach (IGrouping<int, TerrainPoint> grouping in terrainPoints_Accepted.GroupBy(x => x.CountyId!.Value))
                 {
-                    foreach (TerrainPoint terrainPoint in terrainPoints_Accepted)
+                    await using NpgsqlBinaryImporter npgsqlBinaryImporter = await npgsqlConnection.BeginBinaryImportAsync(CopyCommandText(grouping.Key), cancellationToken);
+
+                    foreach (TerrainPoint terrainPoint in grouping)
                     {
                         Point3D point3D = terrainPoint.Point3D!;
 
                         await WriteRowAsync(
                             npgsqlBinaryImporter,
-                            terrainPoint.CountyId!.Value,
+                            grouping.Key,
                             terrainPoint.SubdivisionId,
                             point3D.X,
                             point3D.Y,
@@ -420,12 +399,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             cancellationToken);
                     }
 
-                    await npgsqlBinaryImporter.CompleteAsync(cancellationToken);
+                    count += (long)await npgsqlBinaryImporter.CompleteAsync(cancellationToken);
                 }
-
-                count = await MoveTemporaryTableAsync(npgsqlConnection, cancellationToken);
-
-                await npgsqlTransaction.CommitAsync(cancellationToken);
             }
             else
             {
@@ -462,10 +437,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously writes a collection of <see cref="TerrainPoint"/> entities to the database, automatically managing the connection.
         /// </summary>
         /// <param name="terrainPoints">The collection of <see cref="TerrainPoint"/> objects to write.</param>
-        /// <param name="binaryInsert">A boolean indicating whether to stream the points through a PostgreSQL binary COPY (true) or send them as a single array-valued INSERT (false).</param>
+        /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when no connection could be opened.</returns>
-        public async Task<TerrainPointUpdateResult?> UpdateAsync(IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = true, CancellationToken cancellationToken = default)
+        public async Task<TerrainPointUpdateResult?> UpdateAsync(IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -478,14 +453,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a radius of the specified plan coordinate.
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a distance of the specified plan coordinate.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
-        /// <param name="searchRadius">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="DefaultSearchRadius"/>. This is a search distance, not a comparison tolerance - a value below the elevation grid spacing finds nothing.</param>
+        /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the radius or if the provided point is null.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, double searchRadius = DefaultSearchRadius, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point is null.</returns>
+        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || point2D is null)
             {
@@ -493,17 +468,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             BoundingBox2D boundingBox2D = new(point2D, point2D);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, searchRadius, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
         }
 
         /// <summary>
-        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a radius of the specified plan coordinate, automatically managing the connection.
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a distance of the specified plan coordinate, automatically managing the connection.
         /// </summary>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
-        /// <param name="searchRadius">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="DefaultSearchRadius"/>. This is a search distance, not a comparison tolerance - a value below the elevation grid spacing finds nothing.</param>
+        /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the radius or if the provided point is null.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, double searchRadius = DefaultSearchRadius, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point is null.</returns>
+        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
@@ -517,7 +492,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, searchRadius, cancellationToken);
+            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, tolerance, cancellationToken);
         }
 
         /// <summary>
@@ -788,38 +763,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return Constants.TableName.TerrainPoint;
         }
 
-        private static string CopyCommandText()
+        private static string CopyCommandText(int countyId)
         {
             return $@"
-                COPY {TemporaryTableName} (county_id, subdivision_id, x, y, z, created_at)
+                COPY {TableName(countyId)} (county_id, subdivision_id, x, y, z, created_at)
                 FROM STDIN (FORMAT BINARY)";
-        }
-
-        private static async Task CreateTemporaryTableAsync(NpgsqlConnection npgsqlConnection, CancellationToken cancellationToken)
-        {
-            // COPY cannot carry an ON CONFLICT clause, so streaming straight into the partitioned table
-            // makes any repeated point - a re-imported county, or two source tiles overlapping - abort the
-            // whole import on the primary key. The points land here first and are moved across in one
-            // statement that can ignore the ones already stored. The table is session-local and dropped by
-            // the commit, so two counties importing at the same time do not see each other's staging rows.
-            string commandText = $@"
-                CREATE TEMP TABLE {TemporaryTableName} (LIKE {Constants.TableName.TerrainPoint} INCLUDING DEFAULTS)
-                ON COMMIT DROP;";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        private static async Task<long> MoveTemporaryTableAsync(NpgsqlConnection npgsqlConnection, CancellationToken cancellationToken)
-        {
-            string commandText = $@"
-                INSERT INTO {Constants.TableName.TerrainPoint} (county_id, subdivision_id, x, y, z, created_at)
-                SELECT county_id, subdivision_id, x, y, z, created_at
-                FROM {TemporaryTableName}
-                ON CONFLICT (county_id, x, y) DO NOTHING;";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            return await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
         private static async Task WriteRowAsync(NpgsqlBinaryImporter npgsqlBinaryImporter, int countyId, int? subdivisionId, double x, double y, double z, DateTime createdAt, CancellationToken cancellationToken)

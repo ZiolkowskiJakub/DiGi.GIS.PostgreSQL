@@ -9656,35 +9656,6 @@ public TerrainPointPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData? c
 `connectionData` [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData')
 
 The [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData') containing the connection settings required to establish a connection to the PostgreSQL database\. This value can be null\.
-### Fields
-
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius'></a>
-
-## TerrainPointPostgreSQLConverter\.DefaultSearchRadius Field
-
-The default radius, in model units, searched around a point when no explicit one is given\.
-
-One metre, a single step of the national elevation grid. A coordinate handed in by a caller is almost never one of the stored grid points, so a radius smaller than the grid spacing finds nothing.
-
-```csharp
-public const double DefaultSearchRadius = 1;
-```
-
-#### Field Value
-[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
-
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.TemporaryTableName'></a>
-
-## TerrainPointPostgreSQLConverter\.TemporaryTableName Field
-
-The name of the session\-local staging table that a binary import is streamed into before being moved into the partitioned table\.
-
-```csharp
-private const string TemporaryTableName = "tmp_terrain_point";
-```
-
-#### Field Value
-[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 ### Methods
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken)'></a>
@@ -10123,10 +10094,10 @@ A task containing the [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3
 
 ## TerrainPointPostgreSQLConverter\.GetPointCloud3DByPoint2DAsync\(Point2D, double, CancellationToken\) Method
 
-Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a radius of the specified plan coordinate, automatically managing the connection\.
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a distance of the specified plan coordinate, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double searchRadius=1.0, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10136,11 +10107,11 @@ public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.Poin
 
 The [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') coordinate to search around\. This value can be null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).searchRadius'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).tolerance'></a>
 
-`searchRadius` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DefaultSearchRadius](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.DefaultSearchRadius')\. This is a search distance, not a comparison tolerance \- a value below the elevation grid spacing finds nothing\.
+The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance'), which is a millimetre \- well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -10150,16 +10121,16 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the radius or if the provided point is null\.
+A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the distance or if the provided point is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken)'></a>
 
 ## TerrainPointPostgreSQLConverter\.GetPointCloud3DByPoint2DAsync\(NpgsqlConnection, Point2D, double, CancellationToken\) Method
 
-Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a radius of the specified plan coordinate\.
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a distance of the specified plan coordinate\.
 
 ```csharp
-public static System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.Point2D? point2D, double searchRadius=1.0, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10175,11 +10146,11 @@ The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgs
 
 The [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') coordinate to search around\. This value can be null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).searchRadius'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).tolerance'></a>
 
-`searchRadius` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DefaultSearchRadius](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.DefaultSearchRadius')\. This is a search distance, not a comparison tolerance \- a value below the elevation grid spacing finds nothing\.
+The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance'), which is a millimetre \- well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -10189,7 +10160,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the radius or if the provided point is null\.
+A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the distance or if the provided point is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
 
@@ -10366,7 +10337,7 @@ A task that represents the asynchronous operation\. The task result contains a l
 Asynchronously writes a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') to the database for a specific county, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10392,7 +10363,7 @@ The optional integer identifier of the subdivision\.
 
 `binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
-A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true\) or send them as a single array\-valued INSERT \(false\)\.
+Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds \- a repeated import, or two source tiles overlapping, fails on the primary key\. Left at its default the points are sent as a single array\-valued INSERT that leaves existing points as they are, so the write can be repeated safely\. Set it true only for data known to carry no point already stored\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -10410,10 +10381,8 @@ A task whose result carries the number of points stored and any rejections, or n
 
 Asynchronously writes a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') to the database for a specific county, creating the table and the county partition first\.
 
-Points already stored under the same county and plan coordinates are left as they are, so the same cloud can be written twice and overlapping source tiles can repeat a point without failing the write. [Count](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Count 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Count') therefore reports the points newly stored, not the points sent.
-
 ```csharp
-public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10445,7 +10414,7 @@ The optional integer identifier of the subdivision\.
 
 `binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
-A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true, faster for large clouds\) or send them as a single array\-valued INSERT \(false, cheaper for small ones\)\.
+Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds \- a repeated import, or two source tiles overlapping, fails on the primary key\. Left at its default the points are sent as a single array\-valued INSERT that leaves existing points as they are, so the write can be repeated safely\. Set it true only for data known to carry no point already stored\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -10463,10 +10432,10 @@ A task whose result carries the number of points stored and any rejections, or n
 
 Asynchronously writes a collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') entities to the database, creating the table and every county partition first\.
 
-Points already stored under the same county and plan coordinates are left as they are, so the same collection can be written twice without failing. Points carrying no county or no geometry are recorded in [Rejections](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Rejections 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Rejections') one by one; a county whose partition cannot be created contributes a single rejection naming the county, because a terrain batch runs to millions of points and one rejection each would cost more than the batch itself.
+Points carrying no county or no geometry are recorded in [Rejections](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Rejections 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Rejections') one by one; a county whose partition cannot be created contributes a single rejection naming the county, because a terrain batch runs to millions of points and one rejection each would cost more than the batch itself.
 
 ```csharp
-public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10486,7 +10455,7 @@ The collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.Postgre
 
 `binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
-A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true, faster for large collections\) or send them as a single array\-valued INSERT \(false, cheaper for small ones\)\.
+Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds \- a repeated import, or two source tiles overlapping, fails on the primary key\. Left at its default the points are sent as a single array\-valued INSERT that leaves existing points as they are, so the write can be repeated safely\. Set it true only for data known to carry no point already stored\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -10505,7 +10474,7 @@ A task whose result carries the number of points stored and any rejections, or n
 Asynchronously writes a collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') entities to the database, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10519,7 +10488,7 @@ The collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.Postgre
 
 `binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
-A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true\) or send them as a single array\-valued INSERT \(false\)\.
+Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds \- a repeated import, or two source tiles overlapping, fails on the primary key\. Left at its default the points are sent as a single array\-valued INSERT that leaves existing points as they are, so the write can be repeated safely\. Set it true only for data known to carry no point already stored\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).cancellationToken'></a>
 
