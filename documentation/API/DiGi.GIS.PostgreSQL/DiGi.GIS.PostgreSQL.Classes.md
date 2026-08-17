@@ -9480,6 +9480,1160 @@ Implements [ToDiGi\(\)](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.In
 [TSerializableObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_.TSerializableObject 'DiGi\.GIS\.PostgreSQL\.Classes\.TableSerializableObject\<TSerializableObject\>\.TSerializableObject')  
 The deserialized TSerializableObject, or default if conversion fails\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint'></a>
+
+## TerrainPoint Class
+
+One row of the terrain point table: a single elevation point and the administrative identifiers it is filed under\.
+
+Named for what one row is, as the rest of this family is - it is a point, not a terrain. The terrain assembled from many of these is [DiGi\.Analytical\.Building\.Classes\.PointCloudTerrain](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.pointcloudterrain 'DiGi\.Analytical\.Building\.Classes\.PointCloudTerrain'), which wraps a whole [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D').
+
+```csharp
+public class TerrainPoint : DiGi.Core.Classes.SerializableObject, DiGi.GIS.PostgreSQL.Interfaces.ITableObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → TerrainPoint
+
+Implements [ITableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.ITableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableObject'), [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint()'></a>
+
+## TerrainPoint\(\) Constructor
+
+Initializes a new instance of the [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') class\.
+
+```csharp
+public TerrainPoint();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(DiGi.GIS.PostgreSQL.Classes.TerrainPoint)'></a>
+
+## TerrainPoint\(TerrainPoint\) Constructor
+
+Initializes a new instance of the [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') class by copying data from another [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') instance\.
+
+```csharp
+public TerrainPoint(DiGi.GIS.PostgreSQL.Classes.TerrainPoint? terrainPoint);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(DiGi.GIS.PostgreSQL.Classes.TerrainPoint).terrainPoint'></a>
+
+`terrainPoint` [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')
+
+The [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') instance to copy data from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,System.Nullable_int_)'></a>
+
+## TerrainPoint\(Nullable\<int\>, Point3D, Nullable\<int\>\) Constructor
+
+Initializes a new instance of the [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') class with specified county, 3D point, and optional subdivision identifier\.
+
+```csharp
+public TerrainPoint(System.Nullable<int> countyId, DiGi.Geometry.Spatial.Classes.Point3D? point3D, System.Nullable<int> subdivisionId=null);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,System.Nullable_int_).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The integer identifier of the county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,System.Nullable_int_).point3D'></a>
+
+`point3D` [DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D')
+
+The [Point3D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint.Point3D 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint\.Point3D') representing the terrain point coordinates \(X, Y, Z\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Nullable_int_,DiGi.Geometry.Spatial.Classes.Point3D,System.Nullable_int_).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Text.Json.Nodes.JsonObject)'></a>
+
+## TerrainPoint\(JsonObject\) Constructor
+
+Initializes a new instance of the [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public TerrainPoint(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.TerrainPoint(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.CountyId'></a>
+
+## TerrainPoint\.CountyId Property
+
+Gets or sets the county identifier associated with this terrain point\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.CreatedAt'></a>
+
+## TerrainPoint\.CreatedAt Property
+
+Gets or sets the creation timestamp of the record\.
+
+Stamped by the primary constructor rather than a property initializer, so a point read back from the database or copied keeps the timestamp it was stored with instead of being restamped on every construction.
+
+```csharp
+public System.Nullable<System.DateTime> CreatedAt { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.Point3D'></a>
+
+## TerrainPoint\.Point3D Property
+
+Gets or sets the 3D point coordinates \(X, Y, Z\) of the terrain elevation point\.
+
+```csharp
+public DiGi.Geometry.Spatial.Classes.Point3D? Point3D { get; set; }
+```
+
+#### Property Value
+[DiGi\.Geometry\.Spatial\.Classes\.Point3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.point3d 'DiGi\.Geometry\.Spatial\.Classes\.Point3D')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPoint.SubdivisionId'></a>
+
+## TerrainPoint\.SubdivisionId Property
+
+Gets or sets the subdivision identifier associated with this terrain point\.
+
+```csharp
+public System.Nullable<int> SubdivisionId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter'></a>
+
+## TerrainPointPostgreSQLConverter Class
+
+Provides functionality for converting, querying, and managing [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') entities and [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') point cloud data within a PostgreSQL database\.
+
+```csharp
+public class TerrainPointPostgreSQLConverter : DiGi.PostgreSQL.Classes.PostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLObject, DiGi.Core.Interfaces.IObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1') → TerrainPointPostgreSQLConverter
+
+Implements [DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter&lt;](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter_TTableObject_ 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter\<TTableObject\>')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter_TTableObject_ 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter\<TTableObject\>'), [IGISPostgreSQLConverter](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter'), [DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.interfaces.ipostgresqlconverter 'DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLConverter'), [DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLObject](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.interfaces.ipostgresqlobject 'DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.TerrainPointPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData)'></a>
+
+## TerrainPointPostgreSQLConverter\(ConnectionData\) Constructor
+
+Initializes a new instance of the [TerrainPointPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter') class\.
+
+```csharp
+public TerrainPointPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData? connectionData);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.TerrainPointPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData).connectionData'></a>
+
+`connectionData` [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData')
+
+The [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData') containing the connection settings required to establish a connection to the PostgreSQL database\. This value can be null\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius'></a>
+
+## TerrainPointPostgreSQLConverter\.DefaultSearchRadius Field
+
+The default radius, in model units, searched around a point when no explicit one is given\.
+
+One metre, a single step of the national elevation grid. A coordinate handed in by a caller is almost never one of the stored grid points, so a radius smaller than the grid spacing finds nothing.
+
+```csharp
+public const double DefaultSearchRadius = 1;
+```
+
+#### Field Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.TemporaryTableName'></a>
+
+## TerrainPointPostgreSQLConverter\.TemporaryTableName Field
+
+The name of the session\-local staging table that a binary import is streamed into before being moved into the partitioned table\.
+
+```csharp
+private const string TemporaryTableName = "tmp_terrain_point";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.ClearAsync\(NpgsqlConnection, Nullable\<int\>, CancellationToken\) Method
+
+Asynchronously clears all records from the terrain point table or a specific county partition\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> ClearAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county partition to clear\. If null, the entire table is cleared\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if the operation succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(System.Nullable_int_,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.ClearAsync\(Nullable\<int\>, CancellationToken\) Method
+
+Asynchronously clears all records from the terrain point table or a specific county partition, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> ClearAsync(System.Nullable<int> countyId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county partition to clear\. If null, the entire table is cleared\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.ClearAsync(System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if the operation succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetCountAsync\(NpgsqlConnection, Nullable\<int\>, CancellationToken\) Method
+
+Asynchronously retrieves the exact count of records from the database, optionally filtered by a specific county identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<long> GetCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county partition used to filter the count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the total count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(System.Nullable_int_,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetCountAsync\(Nullable\<int\>, CancellationToken\) Method
+
+Asynchronously retrieves the exact count of records from the database, optionally filtered by a specific county identifier, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<long> GetCountAsync(System.Nullable<int> countyId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county partition used to filter the count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the total count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database\.
+
+```csharp
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\. When null, the estimate is read from the partitioned parent instead\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run an analysis operation before fetching the estimated count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\. Counties with no partition contribute nothing rather than subtracting from the total\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier for the county; if null, the estimate is read from the partitioned parent\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\. When null, the estimate is read from the partitioned parent instead\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run an analysis operation before fetching the estimated count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier for the county; if null, the estimate is read from the partitioned parent\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByBoundingBox2DAsync\(BoundingBox2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the specified 2D bounding box across all intersecting counties, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by, both when discovering counties and when selecting points\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the combined [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') across all matching county partitions, or null if the box meets no county or no points match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByBoundingBox2DAsync\(BoundingBox2D, int, Nullable\<int\>, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the specified 2D bounding box for a specific county partition, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, int countyId, System.Nullable<int> subdivisionId=null, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision to filter by\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the bounding box, or null if no points match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the specified 2D bounding box across all intersecting counties, discovering the counties automatically\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by, both when discovering counties and when selecting points\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the combined [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') across all matching county partitions, or null if the box meets no county or no points match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, int, Nullable\<int\>, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the specified 2D bounding box for a specific county partition\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, int countyId, System.Nullable<int> subdivisionId=null, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision to filter by\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') within the bounding box, or null if no points match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByPoint2DAsync\(Point2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a radius of the specified plan coordinate, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double searchRadius=1.0, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).point2D'></a>
+
+`point2D` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') coordinate to search around\. This value can be null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).searchRadius'></a>
+
+`searchRadius` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DefaultSearchRadius](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.DefaultSearchRadius')\. This is a search distance, not a comparison tolerance \- a value below the elevation grid spacing finds nothing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the radius or if the provided point is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetPointCloud3DByPoint2DAsync\(NpgsqlConnection, Point2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') of the terrain points lying within a radius of the specified plan coordinate\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D?> GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.Point2D? point2D, double searchRadius=1.0, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).point2D'></a>
+
+`point2D` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') coordinate to search around\. This value can be null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).searchRadius'></a>
+
+`searchRadius` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The half\-width, in model units, of the square searched around the coordinate\. Defaults to [DefaultSearchRadius](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DefaultSearchRadius 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.DefaultSearchRadius')\. This is a search distance, not a comparison tolerance \- a value below the elevation grid spacing finds nothing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByPoint2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task containing the matching [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D'), or null if no points are found within the radius or if the provided point is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetTerrainPointsByBoundingBox2DAsync\(BoundingBox2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') records within the specified 2D bounding box across all intersecting counties, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by, both when discovering counties and when selecting points\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of all [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects across matching counties, or null if the box meets no county or no records match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetTerrainPointsByBoundingBox2DAsync\(BoundingBox2D, int, Nullable\<int\>, double, CancellationToken\) Method
+
+Asynchronously retrieves a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') records within the specified 2D bounding box for a specific county partition, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, int countyId, System.Nullable<int> subdivisionId=null, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision to filter by\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects, or null if no records match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetTerrainPointsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, CancellationToken\) Method
+
+Asynchronously retrieves a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') records within the specified 2D bounding box across all intersecting counties, discovering the counties automatically\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by, both when discovering counties and when selecting points\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of all [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects across matching counties, or null if the box meets no county or no records match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetTerrainPointsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, int, Nullable\<int\>, double, CancellationToken\) Method
+
+Asynchronously retrieves a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') records within the specified 2D bounding box for a specific county partition\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, int countyId, System.Nullable<int> subdivisionId=null, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the search area\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision to filter by\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search bounding box is expanded by\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetTerrainPointsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects, or null if no records match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.UpdateAsync\(int, PointCloud3D, Nullable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously writes a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') to the database for a specific county, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).pointCloud3D'></a>
+
+`pointCloud3D` [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')
+
+The [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') containing the point coordinates to write\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).binaryInsert'></a>
+
+`binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true\) or send them as a single array\-valued INSERT \(false\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of points stored and any rejections, or null when no connection could be opened\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.UpdateAsync\(NpgsqlConnection, int, PointCloud3D, Nullable\<int\>, bool, CancellationToken\) Method
+
+Asynchronously writes a [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') to the database for a specific county, creating the table and the county partition first\.
+
+Points already stored under the same county and plan coordinates are left as they are, so the same cloud can be written twice and overlapping source tiles can repeat a point without failing the write. [Count](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Count 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Count') therefore reports the points newly stored, not the points sent.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D, System.Nullable<int> subdivisionId=null, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).pointCloud3D'></a>
+
+`pointCloud3D` [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')
+
+The [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D') containing the point coordinates to write\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).binaryInsert'></a>
+
+`binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true, faster for large clouds\) or send them as a single array\-valued INSERT \(false, cheaper for small ones\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,int,DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.UpdateAsync\(NpgsqlConnection, IEnumerable\<TerrainPoint\>, bool, CancellationToken\) Method
+
+Asynchronously writes a collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') entities to the database, creating the table and every county partition first\.
+
+Points already stored under the same county and plan coordinates are left as they are, so the same collection can be written twice without failing. Points carrying no county or no geometry are recorded in [Rejections](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Rejections 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Rejections') one by one; a county whose partition cannot be created contributes a single rejection naming the county, because a terrain batch runs to millions of points and one rejection each would cost more than the batch itself.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).terrainPoints'></a>
+
+`terrainPoints` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects to write\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).binaryInsert'></a>
+
+`binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true, faster for large collections\) or send them as a single array\-valued INSERT \(false, cheaper for small ones\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.UpdateAsync\(IEnumerable\<TerrainPoint\>, bool, CancellationToken\) Method
+
+Asynchronously writes a collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') entities to the database, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.TerrainPoint>? terrainPoints, bool binaryInsert=true, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).terrainPoints'></a>
+
+`terrainPoints` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint') objects to write\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).binaryInsert'></a>
+
+`binaryInsert` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to stream the points through a PostgreSQL binary COPY \(true\) or send them as a single array\-valued INSERT \(false\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.TerrainPoint_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of points stored and any rejections, or null when no connection could be opened\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult'></a>
+
+## TerrainPointUpdateResult Class
+
+The outcome of a terrain point update: how many points were stored, and the points that were not\.
+
+Separate from [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult') because the terrain point table has no identity column - its key is the county and the coordinates - so there are no identifiers to return. [Count](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Count 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult\.Count') takes their place and is the figure that matters here: every write goes through `ON CONFLICT DO NOTHING`, so a re-import of unchanged data reports zero without failing, and the number distinguishes that from a batch that genuinely stored nothing.
+
+```csharp
+public class TerrainPointUpdateResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → TerrainPointUpdateResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult)'></a>
+
+## TerrainPointUpdateResult\(TerrainPointUpdateResult\) Constructor
+
+Initializes a new instance of the [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult') class by copying an existing one\.
+
+```csharp
+public TerrainPointUpdateResult(DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult? terrainPointUpdateResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult).terrainPointUpdateResult'></a>
+
+`terrainPointUpdateResult` [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')
+
+The [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(long,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_)'></a>
+
+## TerrainPointUpdateResult\(long, IEnumerable\<Rejection\>\) Constructor
+
+Initializes a new instance of the [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult') class\.
+
+```csharp
+public TerrainPointUpdateResult(long count, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Rejection>? rejections);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(long,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of points written to the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(long,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Rejection_).rejections'></a>
+
+`rejections` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The points dropped before the database, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## TerrainPointUpdateResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public TerrainPointUpdateResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.TerrainPointUpdateResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Count'></a>
+
+## TerrainPointUpdateResult\.Count Property
+
+Gets the number of points written by the update\.
+
+Points already present are not counted - the write conflicts on the county and the coordinates and does nothing - so a repeated import of the same data reports zero.
+
+```csharp
+public long Count { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult.Rejections'></a>
+
+## TerrainPointUpdateResult\.Rejections Property
+
+Gets the points that were dropped before the database, each named with the reason it was dropped\.
+
+```csharp
+public System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Rejection> Rejections { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.TypologyModel'></a>
 
 ## TypologyModel Class

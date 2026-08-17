@@ -185,6 +185,19 @@ public const string OrtoDatas_Building2DReference_Update = "orto_datas_building_
 #### Field Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
+<a name='DiGi.GIS.PostgreSQL.Constants.TableName.TerrainPoint'></a>
+
+## TableName\.TerrainPoint Field
+
+The name of the terrain point table\. One row is a single terrain elevation point\.
+
+```csharp
+public const string TerrainPoint = "terrain_point";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.PostgreSQL.Constants.TableName.TypologyModel'></a>
 
 ## TableName\.TypologyModel Field

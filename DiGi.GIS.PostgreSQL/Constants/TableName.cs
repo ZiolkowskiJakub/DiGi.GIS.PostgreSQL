@@ -64,5 +64,10 @@ namespace DiGi.GIS.PostgreSQL.Constants
         /// The name of the building model table.
         /// </summary>
         public const string BuildingModel = "building_model";
+
+        /// <summary>
+        /// The name of the terrain point table. One row is a single terrain elevation point.
+        /// </summary>
+        public const string TerrainPoint = "terrain_point";
     }
 }

@@ -111,6 +111,97 @@ namespace DiGi.GIS.PostgreSQL
         }
 
         /// <summary>
+        /// Asynchronously creates the partitioned <see cref="Building"/> table along with its supporting composite index, if it does not already exist.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_Building(this NpgsqlConnection? npgsqlConnection)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // Combined command: Create partitioned table and the supporting index
+            // The index on the parent table will be inherited by all child partitions.
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building} (
+                    id BIGINT GENERATED ALWAYS AS IDENTITY,
+                    county_id INT NOT NULL,
+                    reference TEXT NOT NULL,
+                    lod SMALLINT,
+                    year SMALLINT,
+                    min_x DOUBLE PRECISION,
+                    min_y DOUBLE PRECISION,
+                    min_z DOUBLE PRECISION,
+                    max_x DOUBLE PRECISION,
+                    max_y DOUBLE PRECISION,
+                    max_z DOUBLE PRECISION,
+                    object JSONB,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (id, county_id)
+                ) PARTITION BY LIST (county_id);
+
+                -- Optimization: Composite index for County + Reference + LOD + Year
+                -- NULLS NOT DISTINCT ensures ON CONFLICT works even when lod or year are NULL (PostgreSQL 15+)
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref_lod_year
+                ON {Constants.TableName.Building} (county_id, reference, lod, year) NULLS NOT DISTINCT;
+
+                -- CRITICAL: Spatial index using GiST and box type.
+                -- Enables an R-Tree lookup for the bounding box fallback in GetBuildingByReferenceAsync
+                -- instead of a sequential scan across the county partition.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_bbox
+                ON {Constants.TableName.Building} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
+
+                -- Supports GetBuildingByLatestCreatedAtAsync, which is ORDER BY created_at DESC LIMIT 1.
+                -- Without it that query is a sequential scan plus sort across every partition, and it is
+                -- what the import's resume prompt blocks on before any work can start.
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_created_at
+                ON {Constants.TableName.Building} (created_at DESC);
+                ";
+
+            try
+            {
+                // Explicitly using NpgsqlCommand type instead of implicit typing
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Building)}): {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously creates a partition for the <see cref="Building"/> table based on the specified county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_Building_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building}_{countyId} PARTITION OF {Constants.TableName.Building}
+                    FOR VALUES IN ({countyId});
+                ";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            await npgsqlCommand.ExecuteNonQueryAsync();
+
+            return true;
+        }
+
+        /// <summary>
         /// Asynchronously creates the Building2D table in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the command.</param>
@@ -315,6 +406,44 @@ namespace DiGi.GIS.PostgreSQL
         }
 
         /// <summary>
+        /// Asynchronously creates the epw_file table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_EPWFile(this NpgsqlConnection? npgsqlConnection)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.EPWFile} (
+                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                    name TEXT NOT NULL UNIQUE,
+                    x DOUBLE PRECISION NOT NULL,
+                    y DOUBLE PRECISION NOT NULL,
+                    object JSONB NOT NULL,
+                    created_at timestamptz DEFAULT now()
+                );
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.EPWFile}_location
+                ON {Constants.TableName.EPWFile} USING gist ((point(x, y)));
+            ";
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                await npgsqlCommand.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_EPWFile)}): {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Asynchronously creates the OrtoDatas table in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
@@ -368,98 +497,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
         }
-
-        /// <summary>
-        /// Asynchronously creates the partitioned <see cref="Building"/> table along with its supporting composite index, if it does not already exist.
-        /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building(this NpgsqlConnection? npgsqlConnection)
-        {
-            if (npgsqlConnection is null)
-            {
-                return false;
-            }
-
-            // Combined command: Create partitioned table and the supporting index
-            // The index on the parent table will be inherited by all child partitions.
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building} (
-                    id BIGINT GENERATED ALWAYS AS IDENTITY,
-                    county_id INT NOT NULL,
-                    reference TEXT NOT NULL,
-                    lod SMALLINT,
-                    year SMALLINT,
-                    min_x DOUBLE PRECISION,
-                    min_y DOUBLE PRECISION,
-                    min_z DOUBLE PRECISION,
-                    max_x DOUBLE PRECISION,
-                    max_y DOUBLE PRECISION,
-                    max_z DOUBLE PRECISION,
-                    object JSONB,
-                    created_at timestamptz DEFAULT now(),
-                    PRIMARY KEY (id, county_id)
-                ) PARTITION BY LIST (county_id);
-
-                -- Optimization: Composite index for County + Reference + LOD + Year
-                -- NULLS NOT DISTINCT ensures ON CONFLICT works even when lod or year are NULL (PostgreSQL 15+)
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_ref_lod_year
-                ON {Constants.TableName.Building} (county_id, reference, lod, year) NULLS NOT DISTINCT;
-
-                -- CRITICAL: Spatial index using GiST and box type.
-                -- Enables an R-Tree lookup for the bounding box fallback in GetBuildingByReferenceAsync
-                -- instead of a sequential scan across the county partition.
-                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_bbox
-                ON {Constants.TableName.Building} USING gist (box(point(min_x, min_y), point(max_x, max_y)));
-
-                -- Supports GetBuildingByLatestCreatedAtAsync, which is ORDER BY created_at DESC LIMIT 1.
-                -- Without it that query is a sequential scan plus sort across every partition, and it is
-                -- what the import's resume prompt blocks on before any work can start.
-                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Building}_created_at
-                ON {Constants.TableName.Building} (created_at DESC);
-                ";
-
-            try
-            {
-                // Explicitly using NpgsqlCommand type instead of implicit typing
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-                await npgsqlCommand.ExecuteNonQueryAsync();
-                return true;
-            }
-            catch (NpgsqlException ex)
-            {
-                // Logging the error to console - in ASP.NET Core we will later replace this with ILogger
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Building)}): {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Asynchronously creates a partition for the <see cref="Building"/> table based on the specified county identifier.
-        /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
-        /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
-        {
-            if (npgsqlConnection is null)
-            {
-                return false;
-            }
-
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building}_{countyId} PARTITION OF {Constants.TableName.Building}
-                    FOR VALUES IN ({countyId});
-                ";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-
-            await npgsqlCommand.ExecuteNonQueryAsync();
-
-            return true;
-        }
-
+        
         /// <summary>
         /// Asynchronously creates a partition for the OrtoDatas table based on the specified county identifier.
         /// </summary>
@@ -484,13 +522,67 @@ namespace DiGi.GIS.PostgreSQL
 
             return true;
         }
-
+        
         /// <summary>
-        /// Asynchronously creates the epw_file table in the PostgreSQL database.
+        /// Asynchronously creates the partitioned <see cref="Constants.TableName.TerrainPoint"/> table along with its supporting indexes in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_EPWFile(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_TerrainPoint(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            // The primary key is what makes a re-import idempotent: it is the conflict target of the
+            // ON CONFLICT DO NOTHING that every write goes through, so a county can be imported twice,
+            // and overlapping source tiles can repeat a point, without either aborting the import.
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.TerrainPoint} (
+                    county_id INT NOT NULL,
+                    subdivision_id INT,
+                    x DOUBLE PRECISION NOT NULL,
+                    y DOUBLE PRECISION NOT NULL,
+                    z DOUBLE PRECISION NOT NULL,
+                    created_at timestamptz DEFAULT now(),
+                    PRIMARY KEY (county_id, x, y)
+                ) PARTITION BY LIST (county_id);
+
+                -- 2D Geometric GiST Index: Fast R-Tree spatial indexing for bounding box queries
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.TerrainPoint}_point
+                ON {Constants.TableName.TerrainPoint} USING gist ((point(x, y)));
+
+                -- Hierarchy index: Subdivision filtering within a county
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.TerrainPoint}_subdivision_id
+                ON {Constants.TableName.TerrainPoint} (subdivision_id);
+                ";
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_TerrainPoint)}): {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously creates a partition for the <see cref="Constants.TableName.TerrainPoint"/> table based on the specified county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="countyId">The integer identifier of the county for which the partition is created.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_TerrainPoint_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -498,27 +590,20 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.EPWFile} (
-                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                    name TEXT NOT NULL UNIQUE,
-                    x DOUBLE PRECISION NOT NULL,
-                    y DOUBLE PRECISION NOT NULL,
-                    object JSONB NOT NULL,
-                    created_at timestamptz DEFAULT now()
-                );
-                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.EPWFile}_location
-                ON {Constants.TableName.EPWFile} USING gist ((point(x, y)));
-            ";
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.TerrainPoint}_{countyId} PARTITION OF {Constants.TableName.TerrainPoint}
+                    FOR VALUES IN ({countyId});
+                ";
 
             try
             {
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                await npgsqlCommand.ExecuteNonQueryAsync();
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
             {
-                Console.WriteLine($"Postgres Error ({nameof(TableAsync_EPWFile)}): {ex.Message}");
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_TerrainPoint_Partition)}): {ex.Message}");
                 return false;
             }
         }

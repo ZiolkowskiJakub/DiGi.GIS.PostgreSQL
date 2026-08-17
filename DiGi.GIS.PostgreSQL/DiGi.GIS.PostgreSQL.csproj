@@ -63,6 +63,9 @@
     <Reference Include="DiGi.Geometry.Object">
       <HintPath>..\..\DiGi.Geometry\bin\DiGi.Geometry.Object.dll</HintPath>
     </Reference>
+    <Reference Include="DiGi.Geometry.PointCloud">
+      <HintPath>..\..\DiGi.Geometry.PointCloud\bin\DiGi.Geometry.PointCloud.dll</HintPath>
+    </Reference>
     <Reference Include="DiGi.GIS">
       <HintPath>..\..\DiGi.GIS\bin\DiGi.GIS.dll</HintPath>
     </Reference>
