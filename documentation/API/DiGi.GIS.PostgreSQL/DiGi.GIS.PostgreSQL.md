@@ -49,9 +49,9 @@ A list of [TSerializableObject](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Conve
 
 Converts the specified analytical building model to a PostgreSQL\-compatible building model object, reading the reference from the building model parameters and taking the county identifier as an argument\.
 
-The row is keyed by the reference of the 2D building the model describes, not by the identifier of the model object. The table upserts `ON CONFLICT (county_id, unique_id)`, and a building model is handed a fresh [System\.Guid](https://learn.microsoft.com/en-us/dotnet/api/system.guid 'System\.Guid') every time one is created - keying by that identifier meant a regeneration never matched an existing row and inserted a second model for the same building instead of replacing it. A building has one model per county, so the reference is what identifies the row.
+The row carries the identifier of the <b>model</b> in `UniqueId` and the reference of the 2D building it describes in `Reference`, which is the addressing convention every referenced-object table follows - see [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>'). `(CountyId, Reference)` addresses everything held for the building; `UniqueId` addresses this one model within it.
 
-The identifier of the model object is not lost; it travels inside the stored JSON and comes back on read.
+A model is handed a fresh [System\.Guid](https://learn.microsoft.com/en-us/dotnet/api/system.guid 'System\.Guid') whenever one is created, so a regenerated model carries a new identifier and is stored <b>beside</b> the one the building already had rather than replacing it. That is the intended behaviour of the table, and it makes replacing a building's model the caller's job: remove what the building holds, then write. It is not a reason to key the row on the reference instead - that pins the table to one row per building and discards every record after the first.
 
 ```csharp
 public static DiGi.GIS.PostgreSQL.Classes.BuildingModel? ToPostgreSQL(this DiGi.Analytical.Building.Classes.BuildingModel? buildingModel, System.Nullable<int> countyId=null);
@@ -72,7 +72,7 @@ The identifier of the county the building model belongs to, resolved by the call
 
 #### Returns
 [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')  
-A [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel') object if the provided building model is not null and carries the [DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.analytical.enums.buildingmodelparameter.reference 'DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference') parameter value; otherwise, null\.
+A [BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel') object if the provided building model is not null and carries both the [DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.analytical.enums.buildingmodelparameter.reference 'DiGi\.GIS\.Analytical\.Enums\.BuildingModelParameter\.Reference') parameter value and its own unique identifier; otherwise, null\.
 
 <a name='DiGi.GIS.PostgreSQL.Convert.ToPostgreSQL(thisDiGi.CityGML.Classes.Building,System.Nullable_int_)'></a>
 

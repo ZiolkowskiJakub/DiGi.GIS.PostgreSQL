@@ -4970,6 +4970,97 @@ public Building2DReferencedObjectPostgreSQLConverter(DiGi.PostgreSQL.Classes.Con
 `connectionData` [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData')
 
 The [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData') containing the connection settings required to establish a connection to the PostgreSQL database\. This value can be null\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdBlockedCondition'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdBlockedCondition Field
+
+\[TEMPORARY\] The condition selecting the rows left alone because the identifier they would take is already held within the same county row\.
+
+Two rows carrying the same stored identifier cannot both be migrated: the table constrains `UNIQUE (county_id, unique_id)`, which PostgreSQL checks as each row is written, so one collision would roll back the update of the whole county row. Excluding them keeps the statement unable to abort, and turns a duplicate into a number to review rather than a failed run.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText').
+
+```csharp
+protected const string UniqueIdBlockedCondition = "(r.unique_id_target IS NOT NULL AND r.unique_id_target <> '' AND r.unique_id <> r.unique_id_target AND (r.target_count > 1 OR r.target_held))";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdDoneCondition'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdDoneCondition Field
+
+\[TEMPORARY\] The condition selecting the rows already carrying the identifier of the object they store, which need nothing done to them\.
+
+Every row of a table that was written correctly from the start matches this, which is what makes the count usable as a check against a table needing no migration at all.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText').
+
+```csharp
+protected const string UniqueIdDoneCondition = "(r.unique_id_target IS NOT NULL AND r.unique_id_target <> '' AND r.unique_id = r.unique_id_target)";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdMissingCondition'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdMissingCondition Field
+
+\[TEMPORARY\] The condition selecting the rows whose stored object carries no identifier to migrate\.
+
+Expected to match nothing. It is counted rather than assumed away because a row it matches is one the migration can do nothing with, and that has to be reported instead of silently skipped.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText').
+
+```csharp
+protected const string UniqueIdMissingCondition = "(r.unique_id_target IS NULL OR r.unique_id_target = '')";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdPendingCondition'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdPendingCondition Field
+
+\[TEMPORARY\] The condition selecting the rows the migration moves, being every row not already done, not missing an identifier and not blocked by one\.
+
+Used unchanged as the count of what a migration would do and as the `WHERE` of the statement doing it, so the two can never disagree.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText').
+
+```csharp
+protected const string UniqueIdPendingCondition = "(r.unique_id_target IS NOT NULL AND r.unique_id_target <> '' AND r.unique_id <> r.unique_id_target AND r.target_count = 1 AND NOT r.target_held)";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText Property
+
+\[TEMPORARY\] Gets the common table expression classifying every row of one county row against the convention that `unique_id` carries the identifier of the object the row stores\.
+
+It is a prefix rather than a statement: a caller appends the `SELECT` or `UPDATE` consuming `row_classified`, aliases it `r`, and supplies a `countyId` parameter. It exists so the query counting what a migration would do and the statement doing it classify a row identically - written out twice they would drift, and the count would stop being evidence about the update.
+
+`unique_id_target` is the value the stored object's own `UniqueId` produces. Every object held in these tables derives from [DiGi\.Core\.Classes\.GuidObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.guidobject 'DiGi\.Core\.Classes\.GuidObject'), whose `UniqueId` is its guid formatted `N` - 32 hexadecimal characters, lower case, no separators - while the serialized form of that same guid is the ordinary dashed one. Stripping the dashes and lower-casing is therefore exactly the transformation between the two, and neither half of it may be dropped.
+
+That assumption is what limits where this is meaningful. It holds for `building_model`, `occupancy_data_building_2d` and `year_built_data`, whose stored objects all derive from [DiGi\.Core\.Classes\.GuidObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.guidobject 'DiGi\.Core\.Classes\.GuidObject'); it does not automatically hold for a sibling table added later.
+
+Temporary - see the note above.
+
+```csharp
+protected string UniqueIdClassificationCommandText { protected get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 ### Methods
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.Create(long,System.Nullable_int_,string,string,System.Text.Json.Nodes.JsonObject,System.Nullable_System.DateTime_)'></a>
@@ -5513,6 +5604,82 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the distinct references held under the county row, or null when the connection could not be created\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdMigrationResultAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetUniqueIdMigrationResultAsync\(int, int, CancellationToken\) Method
+
+\[TEMPORARY\] Asynchronously counts how the rows of one county row stand against the convention that `unique_id` carries the identifier of the object the row stores\.
+
+Counts and writes nothing, so it is safe against a deployed database. It is the half to run first: the numbers it reports are what the migration should be reviewed against, and comparing them with what the migration returns is the only evidence the update matched what was counted.
+
+It is on this class rather than on the one table that needs migrating so it can be run through [Building2DOccupancyDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyDataPostgreSQLConverter') and [YearBuiltDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter') as well. Those two tables have always been written the way `building_model` is being changed to be, so every one of their rows must come back done - which is how the expression computing the target identifier is checked against real stored data before it is pointed at the table it is meant to repair.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText').
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult?> GetUniqueIdMigrationResultAsync(int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdMigrationResultAsync(int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to count in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdMigrationResultAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdMigrationResultAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the counts for the county row, or null when the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetUniqueIdsByReferencesAsync\(IEnumerable\<string\>, int, CancellationToken\) Method
+
+Asynchronously retrieves the unique identifiers of every row held for the given references under a single county row\.
+
+Only the identifier column is read. It is the counterpart of `GetItemsByReferencesAsync` for a caller that wants to address the rows rather than the objects inside them - reading the objects to reach one column would move every stored object across the connection, which on a table of building models is gigabytes fetched for a value a few characters long.
+
+This is the read half of replacing what a building holds. Take the identifiers first, write the new rows, then delete the identifiers taken here with `RemoveByUniqueIdsAsync(uniqueIds, countyId)`. Ordered that way round a run interrupted between the write and the delete leaves the building holding both its old and its new object, which is recoverable, rather than holding neither.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references whose rows are to be identified\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row holding them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the unique identifiers held for the references, or null when no references were given or the connection could not be created\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(IEnumerable\<string\>, int, CancellationToken\) Method
@@ -5549,6 +5716,45 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveByUniqueIdsAsync\(IEnumerable\<string\>, int, CancellationToken\) Method
+
+Deletes single stored objects from one county row, naming each of them by its own unique identifier without stating which building it belongs to\.
+
+The unguarded counterpart of `RemoveByUniqueIdsAsync(uniqueIds, reference, countyId)`. That overload matches the reference as well, so a unique identifier belonging to a different building cannot silently take out that building's object; it is the right one whenever the identifiers came from anywhere other than the rows being deleted, and it costs one statement per building.
+
+This one is for the case where the identifiers were read back from the very rows being replaced, with [GetUniqueIdsByReferencesAsync\(IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetUniqueIdsByReferencesAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)'). They already name exactly those rows, so the guard would only re-check what that read established, and a whole batch of buildings goes out in one statement instead of one each.
+
+It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable<string>? uniqueIds, int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).uniqueIds'></a>
+
+`uniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The unique identifiers of the stored objects to delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row holding them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken)'></a>
 
@@ -5601,7 +5807,7 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously updates the specified collection of building 2D referenced objects\.
 
-The upsert targets `(county_id, unique_id)`, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>') - so a caller that means to replace a building's data has to remove it first, with [RemoveAsync\(IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)') for the whole set or [RemoveByUniqueIdsAsync\(IEnumerable&lt;string&gt;, string, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveByUniqueIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, string, int, System\.Threading\.CancellationToken\)') for one object.
+The upsert targets `(county_id, unique_id)`, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>') - so a caller that means to replace a building's data has to remove it first, with [RemoveAsync\(IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)') for the whole set or `RemoveByUniqueIdsAsync` for one object.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateAsync(System.Collections.Generic.IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout=30);
@@ -6372,6 +6578,8 @@ A building model row is keyed on the reference of the building it describes. Row
 
 This is the counterpart of [RemoveSupersededAsync\(int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter\.RemoveSupersededAsync\(int, System\.Threading\.CancellationToken\)') and reads nothing else - run it first and compare the two numbers.
 
+[TEMPORARY] It describes the keying this table used before the unique_id migration of issue ZiolkowskiJakub/DiGi.GIS.PostgreSQL#5 and is inert against a migrated county row: after the migration no row is keyed on its reference, so nothing supersedes anything and this answers zero. It is kept because it is still the right tool if rows written by an un-migrated build reappear. TODO [BuildingModelRowIdentity]: remove it with the rest of that migration.
+
 ```csharp
 public System.Threading.Tasks.Task<long> GetSupersededCountAsync(int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -6393,6 +6601,49 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the number of superseded rows, or \-1 when the connection could not be created\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.MigrateUniqueIdsAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingModelPostgreSQLConverter\.MigrateUniqueIdsAsync\(int, int, CancellationToken\) Method
+
+\[TEMPORARY\] Promotes each row's stored identifier into its `unique_id` column, for one county row\.
+
+The rows of this table were keyed on the reference of the building they describe rather than on the identifier of the model they hold - the emergency fix for issue #1, which stopped a regeneration inserting a second model per building by changing what a row means. This puts the table back on the convention every other referenced-object table follows, without regenerating anything: the identifier is already stored, it travels inside the `object` column, and this reads it from there.
+
+It is a single statement per county row rather than a read-modify-write per row. The `object` column holds a complete building model, so pulling the rows to the client to reach one value in each would move gigabytes for a value a few characters long.
+
+Run [GetUniqueIdMigrationResultAsync\(int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdMigrationResultAsync(int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetUniqueIdMigrationResultAsync\(int, int, System\.Threading\.CancellationToken\)') first. It classifies rows exactly as this does, so its pending count is what this should return, and its blocked and missing counts are the rows this deliberately leaves alone.
+
+Unlike the deletes on this class it destroys nothing - the value it overwrites is the building's reference, which the row still carries in its own `reference` column - but it must be run against a database <b>before</b> a build converting models with their own identifier is deployed against it. In the other order the first upload matches no row and inserts a second model for every building, which is the duplication issue #1 removed.
+
+Temporary - see the note above [UniqueIdClassificationCommandText](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UniqueIdClassificationCommandText 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UniqueIdClassificationCommandText') on the base class.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> MigrateUniqueIdsAsync(int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.MigrateUniqueIdsAsync(int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row to migrate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.MigrateUniqueIdsAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.MigrateUniqueIdsAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually updated, which is the only evidence the update matched what was counted\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.RemoveSupersededAsync(int,System.Threading.CancellationToken)'></a>
 
 ## BuildingModelPostgreSQLConverter\.RemoveSupersededAsync\(int, CancellationToken\) Method
@@ -6402,6 +6653,8 @@ Deletes the rows of a county row that a correctly keyed row has already supersed
 A row is deleted only when a row keyed on the same building's reference exists beside it, so the building keeps a model either way. That makes the delete independent of when it is run: before a regeneration it removes nothing, after one it removes exactly what the regeneration replaced, and a part that has never been regenerated is left alone rather than emptied.
 
 It removes data and has no undo - run [GetSupersededCountAsync\(int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModelPostgreSQLConverter.GetSupersededCountAsync(int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModelPostgreSQLConverter\.GetSupersededCountAsync\(int, System\.Threading\.CancellationToken\)') first and review what it reports.
+
+[TEMPORARY] It describes the keying this table used before the unique_id migration of issue ZiolkowskiJakub/DiGi.GIS.PostgreSQL#5 and is inert against a migrated county row: after the migration no row is keyed on its reference, so nothing supersedes anything and this answers zero. It is kept because it is still the right tool if rows written by an un-migrated build reappear. TODO [BuildingModelRowIdentity]: remove it with the rest of that migration.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveSupersededAsync(int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -8621,6 +8874,207 @@ A cancellation token that can be used to cancel the operation\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true when every processed subdivision was updated without error; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationOptions Class
+
+\[TEMPORARY\] Provides the options for [PostgreSQLBuildingModelUniqueIdMigrationTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationTask')\.
+
+Scope is expressed the same two ways as every other national task - by county row identifier and by voivodeship code - and both filters have to admit a row. A null filter admits everything, which is what makes an unscoped national pass the default.
+
+Temporary - see the note at the top of this file.
+
+```csharp
+public class PostgreSQLBuildingModelUniqueIdMigrationOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLBuildingModelUniqueIdMigrationOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions.PostgreSQLBuildingModelUniqueIdMigrationOptions()'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingModelUniqueIdMigrationOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationOptions') class\.
+
+```csharp
+public PostgreSQLBuildingModelUniqueIdMigrationOptions();
+```
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions.CountyIds'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationOptions\.CountyIds Property
+
+Gets or sets the identifiers of the county rows to migrate\. When null every county row is migrated\.
+
+These are polygon parts, not counties - a multi-part county holds one row per part and each is migrated on its own.
+
+```csharp
+public System.Collections.Generic.IEnumerable<int>? CountyIds { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions.DryRun'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationOptions\.DryRun Property
+
+Gets or sets a value indicating whether the task only reports what it would do\. Defaults to [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool'), so it writes\.
+
+Armed by default because it destroys nothing: the value it overwrites is the building's reference, which the row still carries in its own `reference` column. Turning it on gives a report-only pass, which is worth doing once before a national run to see the blocked and missing counts.
+
+```csharp
+public bool DryRun { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions.VoivodeshipCodes'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationOptions\.VoivodeshipCodes Property
+
+Gets or sets the two\-digit voivodeship codes to migrate\. A county row is in scope when its code starts with one of them\. When null every voivodeship is migrated\.
+
+```csharp
+public System.Collections.Generic.IEnumerable<string>? VoivodeshipCodes { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask Class
+
+\[TEMPORARY\] Moves every stored building model's own identifier into the `unique_id` column of the row holding it\.
+
+The rows of `building_model` were keyed on the reference of the building they describe rather than on the identifier of the model they hold. That was the fix for issue #1 - a regeneration was inserting a second model per building instead of replacing one - but it changed what a row means, pinning the table to one row per building and making it the only referenced-object table not following the convention on [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>'). This puts it back without regenerating anything: the identifier is already stored, it travels inside the `object` column, and the migration reads it from there.
+
+<b>It has to run against a database before a build converting models with their own identifier is deployed against it.</b> In the other order the first upload matches no row and inserts a second model for every building, which is exactly the duplication issue #1 removed. Nothing enforces the order, so it is the operator's to keep.
+
+It destroys nothing. The value it overwrites is the building's reference, which the row still carries in its own `reference` column, so a migrated row can be read back either way round.
+
+The work is one statement per county row, not a read-modify-write per row: the `object` column holds a complete building model, so pulling the rows to the client to reach one value in each would move gigabytes for a value a few characters long.
+
+[UniqueIdMigrationResults](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.UniqueIdMigrationResults 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationTask\.UniqueIdMigrationResults') keeps what every county row reported, so a caller can log or show the totals when the run ends - this project has no logging dependency and does not need one to surface them.
+
+Temporary - see the note at the top of this file.
+
+```csharp
+public class PostgreSQLBuildingModelUniqueIdMigrationTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLBuildingModelUniqueIdMigrationTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.PostgreSQLBuildingModelUniqueIdMigrationTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\(GISPostgreSQLConverterManager\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingModelUniqueIdMigrationTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationTask') class\.
+
+```csharp
+public PostgreSQLBuildingModelUniqueIdMigrationTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.PostgreSQLBuildingModelUniqueIdMigrationTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The manager holding the PostgreSQL converters\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.gISPostgreSQLConverterManager'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\.gISPostgreSQLConverterManager Field
+
+The GIS PostgreSQL converter manager used to retrieve the converters this task works through\.
+
+```csharp
+private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+```
+
+#### Field Value
+[GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.uniqueIdMigrationResults'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\.uniqueIdMigrationResults Field
+
+What each county row reported, in the order the county rows were visited, whether or not the task went on to write\.
+
+```csharp
+private readonly List<UniqueIdMigrationResult> uniqueIdMigrationResults;
+```
+
+#### Field Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.PostgreSQLBuildingModelUniqueIdMigrationOptions'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\.PostgreSQLBuildingModelUniqueIdMigrationOptions Property
+
+Gets or sets the options used to configure the migration\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions PostgreSQLBuildingModelUniqueIdMigrationOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLBuildingModelUniqueIdMigrationOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.UniqueIdMigrationResults'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\.UniqueIdMigrationResults Property
+
+Gets what each county row reported, in the order the county rows were visited\.
+
+Counted before anything was written, so a dry run fills this exactly as an armed run does. It is the record to review a completed run against: a non-zero [Blocked](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Blocked 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Blocked') or [Missing](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Missing 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Missing') names a part whose rows the migration could not move and which the converter change will therefore strand.
+
+Cleared at the start of every run, so it always describes the last one.
+
+```csharp
+public System.Collections.Generic.IReadOnlyList<DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult> UniqueIdMigrationResults { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.IReadOnlyList&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')[UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLBuildingModelUniqueIdMigrationTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the migration over every county row in scope\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter carrying the running total of rows migrated\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true when every county row in scope was visited; otherwise, false\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask'></a>
 
@@ -11471,6 +11925,193 @@ The timestamp of when the record was created\.
 #### Returns
 [TypologyModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TypologyModel 'DiGi\.GIS\.PostgreSQL\.Classes\.TypologyModel')  
 A newly constructed [TypologyModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TypologyModel 'DiGi\.GIS\.PostgreSQL\.Classes\.TypologyModel') instance\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult'></a>
+
+## UniqueIdMigrationResult Class
+
+\[TEMPORARY\] How the rows of one county row stand against the convention that `unique_id` holds the identifier of the stored object itself\.
+
+Every row falls into exactly one of four classes, so [Done](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Done 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Done') + [Pending](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Pending 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Pending') + [Blocked](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Blocked 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Blocked') + [Missing](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Missing 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Missing') always equals [Total](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Total 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Total'). A table that has always been written correctly reports [Done](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Done 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Done') equal to [Total](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Total 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult\.Total') and nothing else, which is what makes this usable as a check on tables that need no migration at all.
+
+Not named after `building_model` because it is produced for three tables: the one being migrated, and `occupancy_data_building_2d` and `year_built_data`, which were written this way from the start and are read as the evidence that the migration computes the right value.
+
+Temporary - see the note at the top of this file.
+
+```csharp
+public class UniqueIdMigrationResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → UniqueIdMigrationResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult)'></a>
+
+## UniqueIdMigrationResult\(UniqueIdMigrationResult\) Constructor
+
+Initializes a new instance of the [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult') class by copying an existing one\.
+
+```csharp
+public UniqueIdMigrationResult(DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult? uniqueIdMigrationResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult).uniqueIdMigrationResult'></a>
+
+`uniqueIdMigrationResult` [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult')
+
+The [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long)'></a>
+
+## UniqueIdMigrationResult\(int, long, long, long, long, long\) Constructor
+
+Initializes a new instance of the [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult') class\.
+
+```csharp
+public UniqueIdMigrationResult(int countyId, long total, long done, long pending, long blocked, long missing);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the counts were taken from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).total'></a>
+
+`total` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of rows the county row holds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).done'></a>
+
+`done` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of rows already carrying the identifier of their stored object\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).pending'></a>
+
+`pending` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of rows that would be, or were, migrated\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).blocked'></a>
+
+`blocked` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of rows whose target identifier is already taken within the county row\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(int,long,long,long,long,long).missing'></a>
+
+`missing` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of rows whose stored object carries no identifier to migrate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## UniqueIdMigrationResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public UniqueIdMigrationResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.UniqueIdMigrationResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Blocked'></a>
+
+## UniqueIdMigrationResult\.Blocked Property
+
+Gets the number of rows left alone because the identifier they would take is already held by another row of the same county row\.
+
+Two rows carrying the same stored identifier is the duplicate case the migration cannot resolve on its own: writing both would breach `UNIQUE (county_id, unique_id)`, so they are reported rather than migrated and stay keyed as they are.
+
+```csharp
+public long Blocked { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.CountyId'></a>
+
+## UniqueIdMigrationResult\.CountyId Property
+
+Gets the identifier of the county row the counts were taken from\.
+
+This is a polygon part, not a county - a multi-part county holds one row per part and each is counted on its own.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Done'></a>
+
+## UniqueIdMigrationResult\.Done Property
+
+Gets the number of rows already carrying the identifier of the object they store, which need nothing done to them\.
+
+```csharp
+public long Done { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Missing'></a>
+
+## UniqueIdMigrationResult\.Missing Property
+
+Gets the number of rows whose stored object carries no identifier to migrate\.
+
+Expected to be zero: every object stored in these tables derives from [DiGi\.Core\.Classes\.GuidObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.guidobject 'DiGi\.Core\.Classes\.GuidObject') and is serialized with its guid. A non-zero count means the column holds something these tables were not built for.
+
+```csharp
+public long Missing { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Pending'></a>
+
+## UniqueIdMigrationResult\.Pending Property
+
+Gets the number of rows that would be, or were, migrated\.
+
+```csharp
+public long Pending { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult.Total'></a>
+
+## UniqueIdMigrationResult\.Total Property
+
+Gets the number of rows the county row holds\.
+
+```csharp
+public long Total { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltData'></a>
 

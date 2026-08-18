@@ -11,12 +11,12 @@ namespace DiGi.GIS.PostgreSQL
     {
         /// <summary>
         /// Converts the specified analytical building model to a PostgreSQL-compatible building model object, reading the reference from the building model parameters and taking the county identifier as an argument.
-        /// <para>The row is keyed by the reference of the 2D building the model describes, not by the identifier of the model object. The table upserts <c>ON CONFLICT (county_id, unique_id)</c>, and a building model is handed a fresh <see cref="System.Guid"/> every time one is created - keying by that identifier meant a regeneration never matched an existing row and inserted a second model for the same building instead of replacing it. A building has one model per county, so the reference is what identifies the row.</para>
-        /// <para>The identifier of the model object is not lost; it travels inside the stored JSON and comes back on read.</para>
+        /// <para>The row carries the identifier of the <b>model</b> in <c>UniqueId</c> and the reference of the 2D building it describes in <c>Reference</c>, which is the addressing convention every referenced-object table follows - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/>. <c>(CountyId, Reference)</c> addresses everything held for the building; <c>UniqueId</c> addresses this one model within it.</para>
+        /// <para>A model is handed a fresh <see cref="System.Guid"/> whenever one is created, so a regenerated model carries a new identifier and is stored <b>beside</b> the one the building already had rather than replacing it. That is the intended behaviour of the table, and it makes replacing a building's model the caller's job: remove what the building holds, then write. It is not a reason to key the row on the reference instead - that pins the table to one row per building and discards every record after the first.</para>
         /// </summary>
         /// <param name="buildingModel">The analytical building model to convert.</param>
         /// <param name="countyId">The identifier of the county the building model belongs to, resolved by the caller from the administrative area code.</param>
-        /// <returns>A <see cref="BuildingModel" /> object if the provided building model is not null and carries the <see cref="Analytical.Enums.BuildingModelParameter.Reference"/> parameter value; otherwise, null.</returns>
+        /// <returns>A <see cref="BuildingModel" /> object if the provided building model is not null and carries both the <see cref="Analytical.Enums.BuildingModelParameter.Reference"/> parameter value and its own unique identifier; otherwise, null.</returns>
         public static BuildingModel? ToPostgreSQL(this DiGi.Analytical.Building.Classes.BuildingModel? buildingModel, int? countyId = null)
         {
             if (buildingModel is null)
@@ -25,6 +25,16 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             if (!buildingModel.TryGetValue(Analytical.Enums.BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            // The column is NOT NULL and is half of what addresses the row, so a model that cannot state its
+            // own identifier has nowhere to be stored. It should not be reachable - the identifier comes from
+            // GuidObject and is always there - which is exactly why it is worth refusing rather than writing
+            // a row that nothing can address afterwards.
+            string? uniqueId = buildingModel.UniqueId;
+            if (string.IsNullOrWhiteSpace(uniqueId))
             {
                 return null;
             }
@@ -42,7 +52,7 @@ namespace DiGi.GIS.PostgreSQL
             {
                 Reference = reference,
                 Object = buildingModel.ToJsonObject(),
-                UniqueId = reference,
+                UniqueId = uniqueId,
                 CountyId = countyId
             };
 
