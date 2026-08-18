@@ -334,6 +334,8 @@ namespace DiGi.GIS.PostgreSQL
 
         /// <summary>
         /// Asynchronously creates the Building 2D Referenced Object table for the specified table name.
+        /// <para>The two constraints carry the addressing convention described on <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/>. <c>UNIQUE (county_id, unique_id)</c> makes one <b>stored object</b> the unit of a row, and the absence of any constraint on <c>(county_id, reference)</c> is deliberate: a building may hold several rows here, so writes append rather than replace.</para>
+        /// <para>Do not add a unique constraint on <c>(county_id, reference)</c> to stop the table growing on re-runs. It would reduce the table to one row per building and discard every record after the first.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
@@ -362,6 +364,12 @@ namespace DiGi.GIS.PostgreSQL
                 -- Note: The index name should be unique per database schema
                 CREATE INDEX IF NOT EXISTS idx_{tableName}_unique_id_county
                 ON {tableName} (county_id, unique_id);";
+
+            // The index above duplicates the UNIQUE (county_id, unique_id) constraint, which PostgreSQL
+            // already backs with an index on exactly those columns in that order, while reference - half
+            // of how a row is addressed, and what every read filters on - is not indexed at all. Tracked
+            // separately; changing it here needs a migration, because CREATE TABLE IF NOT EXISTS leaves
+            // deployed tables with whatever they were created with.
 
             try
             {

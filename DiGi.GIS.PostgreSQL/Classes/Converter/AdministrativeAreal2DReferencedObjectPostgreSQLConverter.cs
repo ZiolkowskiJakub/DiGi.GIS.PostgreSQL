@@ -110,6 +110,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves an item of type <seeref name="TAdministrativeAreal2DReferencedObject"/> using the specified reference.
+        /// <para>A reference can hold several rows, one per stored object, so this returns the most recently stored of them. Use <see cref="GetItemsByReferenceAsync"/> when the whole set is wanted.</para>
         /// </summary>
         /// <param name="reference">The string reference used to locate the object.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
@@ -222,11 +223,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            // Base query
+            // Base query.
+            // The ordering is not cosmetic: a reference can hold several rows - one per stored object -
+            // so without it a limited read returns whichever row the plan happened to reach first, and
+            // the answer changes with a vacuum or the heap ordering. created_at alone does not settle it
+            // either, because now() is transaction start and a bulk write stamps every row of the batch
+            // identically; id is what actually decides between them.
             string commandText = $@"
                 SELECT id, unique_id, reference, object, created_at
                 FROM {TableName}
-                WHERE reference = ANY(@references)";
+                WHERE reference = ANY(@references)
+                ORDER BY created_at DESC, id DESC";
 
             // Append LIMIT clause if limit has a value
             if (limit.HasValue)
@@ -361,6 +368,62 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
             while (await npgsqlDataReader.NextResultAsync());
+
+            return result;
+        }
+
+        /// <summary>
+        /// Deletes single stored objects from the set held for one administrative area, naming each of them by its own unique identifier.
+        /// <para>An area can hold several rows in this table - one per stored object - so this is the delete half of updating a single object: read the set with <see cref="GetItemsByReferenceAsync"/>, pick the one to change, remove it here, then write the replacement.</para>
+        /// <para><c>unique_id</c> already identifies the row on its own - the table declares it <c>UNIQUE</c>. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different area cannot silently take out that area's object.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
+        /// <param name="reference">The reference of the administrative area the objects belong to.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there.</returns>
+        public async Task<HashSet<int>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, string reference, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (uniqueIds is null || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            string[] uniqueIds_Array = [.. uniqueIds];
+            if (uniqueIds_Array.Length == 0)
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // ANY keeps this one statement rather than one per identifier, and RETURNING reports what was
+            // really removed - the count is the only evidence that the delete matched what was intended.
+            string commandText = $@"
+                DELETE FROM {TableName}
+                WHERE reference = @reference
+                  AND unique_id = ANY(@uniqueIds)
+                RETURNING id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("uniqueIds", uniqueIds_Array);
+
+            HashSet<int> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt32(0));
+            }
 
             return result;
         }

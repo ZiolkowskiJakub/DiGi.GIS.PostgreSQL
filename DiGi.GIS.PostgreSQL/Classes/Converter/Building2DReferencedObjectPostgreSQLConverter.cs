@@ -13,6 +13,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Provides a base implementation for a PostgreSQL converter specifically designed for building 2D referenced objects.
+    /// <para>Rows are addressed at two levels - <c>(county_id, reference)</c> for everything held for a building, <c>unique_id</c> for one stored object within that set - and a building may hold several rows. <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> describes the convention in full; it decides which of the read and remove methods below is the right one for a given job.</para>
     /// </summary>
     /// <typeparam name="TBuilding2DReferencedObject">The type of the building 2D referenced object.</typeparam>
     /// <typeparam name="TUniqueObject">The type of the unique object used for identification, which must implement the <see cref="IUniqueObject"/> interface.</typeparam>
@@ -153,6 +154,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a <seeref name="TBuilding2DReferencedObject"/> using the specified reference and optional county identifier.
+        /// <para>A reference can hold several rows, one per stored object, so this returns the most recently stored of them. Use <see cref="GetItemsByReferenceAsync"/> when the whole set is wanted.</para>
         /// </summary>
         /// <param name="reference">The string reference of the item to retrieve.</param>
         /// <param name="countyId">The optional integer identifier for the county.</param>
@@ -273,12 +275,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            // Base query with reference filter and optional countyId filter
+            // Base query with reference filter and optional countyId filter.
+            // The ordering is not cosmetic: a reference can hold several rows - one per stored object -
+            // so without it a limited read returns whichever row the plan happened to reach first, and
+            // the answer changes with a vacuum or the heap ordering. created_at alone does not settle it
+            // either, because now() is transaction start and a bulk write stamps every row of the batch
+            // identically; id is what actually decides between them.
             string commandText = $@"
                 SELECT id, county_id, unique_id, reference, object, created_at
                 FROM {TableName}
                 WHERE reference = ANY(@references)
-                  AND (@countyId IS NULL OR county_id = @countyId)";
+                  AND (@countyId IS NULL OR county_id = @countyId)
+                ORDER BY created_at DESC, id DESC";
 
             // Append LIMIT if provided
             if (limit.HasValue)
@@ -333,6 +341,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously updates the specified collection of building 2D referenced objects.
+        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync"/> for the whole set or <see cref="RemoveByUniqueIdsAsync"/> for one object.</para>
         /// </summary>
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
@@ -490,6 +499,63 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
             npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+
+            HashSet<long> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt64(0));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Deletes single stored objects from the set held for one building, naming each of them by its own unique identifier.
+        /// <para>A building can hold several rows in this table - one per stored object - so <see cref="RemoveAsync"/>, which takes out everything held for a reference, is too blunt to correct one of them. This is the delete half of updating a single object: read the set with <see cref="GetItemsByReferenceAsync"/>, pick the one to change, remove it here, then write the replacement.</para>
+        /// <para><c>county_id</c> and <c>unique_id</c> already identify the row on their own - the table declares <c>UNIQUE (county_id, unique_id)</c>. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different building cannot silently take out that building's object.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
+        /// <param name="reference">The reference of the building the objects belong to.</param>
+        /// <param name="countyId">The identifier of the county row holding them.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there.</returns>
+        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, string reference, int countyId, CancellationToken cancellationToken = default)
+        {
+            if (uniqueIds is null || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            string[] uniqueIds_Array = [.. uniqueIds];
+            if (uniqueIds_Array.Length == 0)
+            {
+                return [];
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // ANY keeps this one statement rather than one per identifier, and RETURNING reports what was
+            // really removed - the count is the only evidence that the delete matched what was intended.
+            string commandText = $@"
+                DELETE FROM {TableName}
+                WHERE county_id = @countyId
+                  AND reference = @reference
+                  AND unique_id = ANY(@uniqueIds)
+                RETURNING id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("uniqueIds", uniqueIds_Array);
 
             HashSet<long> result = [];
 

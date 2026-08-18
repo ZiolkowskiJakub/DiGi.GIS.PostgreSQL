@@ -460,6 +460,10 @@ A task that represents the asynchronous operation\. The task result is true if t
 
 Asynchronously creates the Building 2D Referenced Object table for the specified table name\.
 
+The two constraints carry the addressing convention described on [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>'). `UNIQUE (county_id, unique_id)` makes one <b>stored object</b> the unit of a row, and the absence of any constraint on `(county_id, reference)` is deliberate: a building may hold several rows here, so writes append rather than replace.
+
+Do not add a unique constraint on `(county_id, reference)` to stop the table growing on re-runs. It would reduce the table to one row per building and discard every record after the first.
+
 ```csharp
 public static System.Threading.Tasks.Task<bool> TableAsync_Building2DReferencedObject(this Npgsql.NpgsqlConnection? npgsqlConnection, string tableName);
 ```

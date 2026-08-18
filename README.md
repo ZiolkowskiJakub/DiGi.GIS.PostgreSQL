@@ -58,6 +58,69 @@ The GIS WebAPI project's `InitializeAsync` reads converters from the returned `G
 
 ---
 
+## 🗃️ How Building Data Is Referenced
+
+Everything stored about a building is addressed at **two levels**. Getting this wrong is the single
+easiest way to silently destroy data in this repository, so read it before touching any table created
+through `Create.TableAsync_Building2DReferencedObject`.
+
+| To address | Use | Meaning |
+|---|---|---|
+| A building, and so **all** data held for it | `(county_id, reference)` | The building itself |
+| **One stored object** within that data | `unique_id` | The object's own identifier |
+
+### The building key: `(county_id, reference)`
+
+* **`reference`** is the BDOT10k `<ot:lokalnyId>` of the building, taken from the source XML.
+* **`county_id`** is the `id` of the county row in `administrative_areal_2d` — **the identifier, never
+  the county code.** A code maps to one row per polygon part (18 of Poland's 380 counties have
+  disconnected territory, giving 406 county rows), so a code is not a key.
+* **`building_2d` is the source of truth** for the pair and constrains it `UNIQUE (reference, county_id)`.
+  The combination is nationally unique; a `reference` on its own is unique only within a county row.
+
+Every table holding building-related data carries both columns. To read a building's data: take
+`reference` and `county_id` from `building_2d`, then select every row in the target table with the same
+pair.
+
+### The row key: `unique_id`
+
+`unique_id` holds the identifier of **the stored object itself** — for a `GuidObject`, its guid — not the
+reference of the building it describes.
+
+**A building may legitimately hold several rows in one table.** Occupancy, for instance, can be
+recorded several times for one building, computed on different days or under different rules. The table
+therefore constrains `UNIQUE (county_id, unique_id)` and places **no** constraint on
+`(county_id, reference)`.
+
+### What that means when you write code
+
+Writes **append by default**: storing an object that was built fresh adds a row; only an object read
+back from the database, which kept its identifier, replaces its own row.
+
+```
+Read a building's data     GetItemsByReferenceAsync(reference, countyId)      -> every row held for it
+Read the newest record     GetItemByReferenceAsync(reference, countyId)       -> most recently stored only
+Delete a building's data   RemoveAsync(references, countyId)                  -> the whole set
+Delete one object          RemoveByUniqueIdsAsync(uniqueIds, reference, countyId)
+Update one object          read the set -> find it -> remove by unique_id -> add the replacement
+```
+
+There is no upsert that targets a single object, and the API read endpoints are named
+`itemsbyreference` (plural) because they return a list.
+
+> [!WARNING]
+> **Do not key a row on the reference to make writes idempotent.** A table that grows on every run
+> looks like a bug, and setting `unique_id = reference` appears to fix it. It does not — it pins the
+> table to one row per building and silently discards every record after the first. If a re-run should
+> replace data, delete it first.
+
+Reference types: `Classes/Building2DReferencedObject.cs` (the convention in full),
+`Classes/Converter/Building2DReferencedObjectPostgreSQLConverter.cs` (the read/write/remove methods),
+`Create/TableAsync.cs` (the DDL that enforces it). County handling is covered in detail by
+`AI Guidelines/Coding - GIS Administrative Data.md`.
+
+---
+
 ## 💻 Coding Guidelines for Developers & AI Agents
 
 To maintain codebase health, performance, and compatibility within Visual Studio 2026 / C# 10+ environments, all developers and AI agents must strictly comply with these guidelines.

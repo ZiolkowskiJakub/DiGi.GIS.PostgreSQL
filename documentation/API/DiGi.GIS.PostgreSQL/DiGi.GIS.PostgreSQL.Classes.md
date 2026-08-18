@@ -2740,6 +2740,8 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously retrieves an item of type \<seeref name="TAdministrativeAreal2DReferencedObject" /\> using the specified reference\.
 
+A reference can hold several rows, one per stored object, so this returns the most recently stored of them. Use [GetItemsByReferenceAsync\(string, Nullable&lt;long&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferenceAsync(string,System.Nullable_long_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferenceAsync\(string, System\.Nullable\<long\>, System\.Threading\.CancellationToken\)') when the whole set is wanted.
+
 ```csharp
 public System.Threading.Tasks.Task<TAdministrativeAreal2DReferencedObject?> GetItemByReferenceAsync(string reference, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -2943,6 +2945,51 @@ The cancellation token to observe while waiting for the task to complete\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TAdministrativeAreal2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.TAdministrativeAreal2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.TAdministrativeAreal2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of \<seeref name="TAdministrativeAreal2DReferencedObject" /\> objects, or null if no matching items are found or the references collection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.RemoveByUniqueIdsAsync\(IEnumerable\<string\>, string, int, CancellationToken\) Method
+
+Deletes single stored objects from the set held for one administrative area, naming each of them by its own unique identifier\.
+
+An area can hold several rows in this table - one per stored object - so this is the delete half of updating a single object: read the set with [GetItemsByReferenceAsync\(string, Nullable&lt;long&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemsByReferenceAsync(string,System.Nullable_long_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencedObjectPostgreSQLConverter\<TAdministrativeAreal2DReferencedObject,TUniqueObject\>\.GetItemsByReferenceAsync\(string, System\.Nullable\<long\>, System\.Threading\.CancellationToken\)'), pick the one to change, remove it here, then write the replacement.
+
+`unique_id` already identifies the row on its own - the table declares it `UNIQUE`. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different area cannot silently take out that area's object.
+
+It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable<string>? uniqueIds, string reference, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).uniqueIds'></a>
+
+`uniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The unique identifiers of the stored objects to delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The reference of the administrative area the objects belong to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.UpdateAsync(System.Collections.Generic.IEnumerable_TAdministrativeAreal2DReferencedObject_,int)'></a>
 
@@ -4767,6 +4814,18 @@ public System.Nullable<int> SubdivisionId { get; set; }
 
 Abstract base class for referenced objects associated with 2D buildings, providing county and identification properties\.
 
+<b>How a row is addressed.</b> Data belonging to a building is not keyed by one column but by two levels:
+
+1. `(CountyId, Reference)` identifies the <b>building</b>, and therefore the whole set of objects held for it. `Reference` is the BDOT10k `ot:lokalnyId` of the building; `CountyId` is the `id` of the county row in `administrative_areal_2d` - the identifier, never the county code, which maps to one row per polygon part. `building_2d` is the source of truth for the pair and constrains it `UNIQUE (reference, county_id)`, so the combination is nationally unique.
+
+2. `UniqueId` identifies <b>one stored object within that set</b>. It carries the identifier of the object itself - for a [DiGi\.Core\.Classes\.GuidObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.guidobject 'DiGi\.Core\.Classes\.GuidObject') its guid - not the reference of the building it describes.
+
+<b>A building may hold several rows.</b> Occupancy computed on different days or under different rules belongs to the same building as several records, so the table constrains `UNIQUE (county_id, unique_id)` and deliberately places no constraint on `(county_id, reference)`. Writes therefore append: storing an object that was built fresh adds a row rather than replacing one.
+
+<b>Consequences for callers.</b> Read everything held for a building with `GetItemsByReferenceAsync(reference, countyId)`; the singular `GetItemByReferenceAsync` returns only the most recently stored of them. Delete everything held for a building with `RemoveAsync(references, countyId)`. Update a single object by reading the set, finding the one of interest, removing it with `RemoveByUniqueIdsAsync(uniqueIds, reference, countyId)` and writing its replacement - there is no upsert that targets it.
+
+<b>Do not key a row on the reference</b> to make writes idempotent. It reads like a fix for a table that grows on every run, but it pins the table to one row per building and silently discards the second and later records the design is there to hold.
+
 ```csharp
 public abstract class Building2DReferencedObject<TUniqueObject> : DiGi.GIS.PostgreSQL.Classes.ReferencedObject<TUniqueObject>
     where TUniqueObject : DiGi.Core.Interfaces.IUniqueObject
@@ -4865,6 +4924,8 @@ public long Id { get; set; }
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\> Class
 
 Provides a base implementation for a PostgreSQL converter specifically designed for building 2D referenced objects\.
+
+Rows are addressed at two levels - `(county_id, reference)` for everything held for a building, `unique_id` for one stored object within that set - and a building may hold several rows. [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>') describes the convention in full; it decides which of the read and remove methods below is the right one for a given job.
 
 ```csharp
 public abstract class Building2DReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject,TUniqueObject> : DiGi.GIS.PostgreSQL.Classes.ReferencedObjectPostgreSQLConverter<TBuilding2DReferencedObject, TUniqueObject>
@@ -5199,6 +5260,8 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously retrieves a \<seeref name="TBuilding2DReferencedObject" /\> using the specified reference and optional county identifier\.
 
+A reference can hold several rows, one per stored object, so this returns the most recently stored of them. Use [GetItemsByReferenceAsync\(string, Nullable&lt;int&gt;, Nullable&lt;long&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByReferenceAsync(string,System.Nullable_int_,System.Nullable_long_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByReferenceAsync\(string, System\.Nullable\<int\>, System\.Nullable\<long\>, System\.Threading\.CancellationToken\)') when the whole set is wanted.
+
 ```csharp
 public System.Threading.Tasks.Task<TBuilding2DReferencedObject?> GetItemByReferenceAsync(string reference, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -5487,11 +5550,58 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveByUniqueIdsAsync\(IEnumerable\<string\>, string, int, CancellationToken\) Method
+
+Deletes single stored objects from the set held for one building, naming each of them by its own unique identifier\.
+
+A building can hold several rows in this table - one per stored object - so [RemoveAsync\(IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)'), which takes out everything held for a reference, is too blunt to correct one of them. This is the delete half of updating a single object: read the set with [GetItemsByReferenceAsync\(string, Nullable&lt;int&gt;, Nullable&lt;long&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByReferenceAsync(string,System.Nullable_int_,System.Nullable_long_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByReferenceAsync\(string, System\.Nullable\<int\>, System\.Nullable\<long\>, System\.Threading\.CancellationToken\)'), pick the one to change, remove it here, then write the replacement.
+
+`county_id` and `unique_id` already identify the row on their own - the table declares `UNIQUE (county_id, unique_id)`. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different building cannot silently take out that building's object.
+
+It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable<string>? uniqueIds, string reference, int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).uniqueIds'></a>
+
+`uniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The unique identifiers of the stored objects to delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The reference of the building the objects belong to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row holding them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateAsync(System.Collections.Generic.IEnumerable_TBuilding2DReferencedObject_,int)'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UpdateAsync\(IEnumerable\<TBuilding2DReferencedObject\>, int\) Method
 
 Asynchronously updates the specified collection of building 2D referenced objects\.
+
+The upsert targets `(county_id, unique_id)`, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see [Building2DReferencedObject&lt;TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObject_TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\<TUniqueObject\>') - so a caller that means to replace a building's data has to remove it first, with [RemoveAsync\(IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)') for the whole set or [RemoveByUniqueIdsAsync\(IEnumerable&lt;string&gt;, string, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RemoveByUniqueIdsAsync(System.Collections.Generic.IEnumerable_string_,string,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RemoveByUniqueIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, string, int, System\.Threading\.CancellationToken\)') for one object.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateAsync(System.Collections.Generic.IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout=30);
