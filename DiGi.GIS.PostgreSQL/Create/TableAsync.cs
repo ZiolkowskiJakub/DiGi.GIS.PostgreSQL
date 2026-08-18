@@ -1,3 +1,9 @@
+﻿// TODO [ReferencedObjectIndexes]: this file carries the one-off index migration for issue #6.
+// Two things in it are temporary and go away together, once every deployed database has run this
+// DDL at least once: the DROP INDEX statement in TableAsync_Building2DReferencedObject, and the
+// raised commandTimeout default on that method and on
+// TableAsync_AdministrativeArea2DReferencedObject. Nothing else in this file is temporary.
+
 using DiGi.GIS.PostgreSQL.Classes;
 using Npgsql;
 using System;
@@ -72,19 +78,20 @@ namespace DiGi.GIS.PostgreSQL
 
         /// <summary>
         /// Asynchronously creates the AdministrativeArea2DReferencedObject table for the specified table name.
+        /// <para><c>reference</c> is what every read of this table filters on, so it carries an index of its own. <c>unique_id</c> needs none: the <c>UNIQUE</c> constraint on it is already an index, and a second one on the same column would only cost storage and write time.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="tableName">The name of the table associated with the administrative area 2D referenced object.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
+        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600)
         {
             if (npgsqlConnection is null)
             {
                 return false;
             }
 
-            // Combined command: Create partitioned table and the supporting index
-            // The index on the parent table will be inherited by all child partitions.
+            // Combined command: create the table and the index supporting reads by reference.
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id SERIAL PRIMARY KEY,
@@ -92,12 +99,19 @@ namespace DiGi.GIS.PostgreSQL
                     reference TEXT NOT NULL,
                     object JSONB,
                     created_at timestamptz DEFAULT now()
-                );";
+                );
+
+                -- An area holds one row per stored object, so reference is not unique here. It is
+                -- however the only column reads filter on, and without this index every one of them
+                -- is a sequential scan of the whole table.
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_reference
+                ON {tableName} (reference);";
 
             try
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync();
                 return true;
@@ -335,20 +349,22 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously creates the Building 2D Referenced Object table for the specified table name.
         /// <para>The two constraints carry the addressing convention described on <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/>. <c>UNIQUE (county_id, unique_id)</c> makes one <b>stored object</b> the unit of a row, and the absence of any constraint on <c>(county_id, reference)</c> is deliberate: a building may hold several rows here, so writes append rather than replace.</para>
-        /// <para>Do not add a unique constraint on <c>(county_id, reference)</c> to stop the table growing on re-runs. It would reduce the table to one row per building and discard every record after the first.</para>
+        /// <para>Do not add a unique constraint on <c>(county_id, reference)</c> to stop the table growing on re-runs. It would reduce the table to one row per building and discard every record after the first. The plain index created on that pair is not a constraint and places no such restriction on what may be stored.</para>
+        /// <para>Indexes: <c>(county_id, reference)</c> is the primary access path and every read filters on it, so it carries an index. <c>(county_id, unique_id)</c> carries none of its own, because the <c>UNIQUE</c> constraint is already an index on exactly those columns in that order.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index across every partition before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
         /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName)
+        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600)
         {
             if (npgsqlConnection is null)
             {
                 return false;
             }
 
-            // Combined command: Create partitioned table and the supporting index
-            // The index on the parent table will be inherited by all child partitions.
+            // Combined command: create the partitioned table and the index supporting reads by
+            // reference. An index on the parent is inherited by every partition, existing and future.
             string commandText = $@"
                 CREATE TABLE IF NOT EXISTS {tableName} (
                     id BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -361,20 +377,28 @@ namespace DiGi.GIS.PostgreSQL
                     UNIQUE (county_id, unique_id)
                 ) PARTITION BY LIST (county_id);
 
-                -- Note: The index name should be unique per database schema
-                CREATE INDEX IF NOT EXISTS idx_{tableName}_unique_id_county
-                ON {tableName} (county_id, unique_id);";
+                -- TODO [ReferencedObjectIndexes]: temporary migration statement for issue #6, remove it
+                -- once every deployed database has run this DDL at least once. It is here rather than in
+                -- the CREATE TABLE because CREATE TABLE IF NOT EXISTS leaves an already-created table
+                -- with the index set it was created with, and a table created from this version of the
+                -- DDL never has idx_*_unique_id_county in the first place. What it drops duplicated
+                -- UNIQUE (county_id, unique_id), which PostgreSQL already backs with a unique index on
+                -- exactly those columns in that order; that one is auto-named
+                -- {tableName}_county_id_unique_id_key, so this statement cannot reach it.
+                DROP INDEX IF EXISTS idx_{tableName}_unique_id_county;
 
-            // The index above duplicates the UNIQUE (county_id, unique_id) constraint, which PostgreSQL
-            // already backs with an index on exactly those columns in that order, while reference - half
-            // of how a row is addressed, and what every read filters on - is not indexed at all. Tracked
-            // separately; changing it here needs a migration, because CREATE TABLE IF NOT EXISTS leaves
-            // deployed tables with whatever they were created with.
+                -- The primary access path of the table. Deliberately not unique: a building holds one
+                -- row per stored object, so several rows share a (county_id, reference). county_id
+                -- leads because it matches the partition key and is the sole filter of
+                -- GetReferencesAsync.
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
+                ON {tableName} (county_id, reference);";
 
             try
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync();
                 return true;
