@@ -4647,13 +4647,11 @@ A task that represents the asynchronous operation\. The task result is true if t
 
 ## Building2DPostgreSQLConverter\.RemoveAsync\(IEnumerable\<string\>, int, CancellationToken\) Method
 
-\[TEMPORARY\] Deletes the rows holding the given references under a single county row\.
+Deletes the rows holding the given references under a single county row\.
 
 A reference is unique only per `county_id`: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.
 
 Intended for repairing the parts a building was filed under by mistake. It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it, and make sure the building survives under the part it belongs to first.
-
-TODO [CountyPartAssignment]: this member exists only for the one-off county part repair of issue ZiolkowskiJakub/DiGi.GIS.PostgreSQL#1, and PostgreSQLBuilding2DCountyPartRepairTask is its only caller. Remove both once no county part holds a building whose footprint lies in a sibling part - imports have assigned by geometry since #1, so only an importer bypassing `Query.CountyId` could reintroduce that.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> RemoveAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
