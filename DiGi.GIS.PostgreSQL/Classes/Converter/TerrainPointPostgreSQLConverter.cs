@@ -457,10 +457,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point is null.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point or county identifiers are null.</returns>
+        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || point2D is null)
             {
@@ -468,17 +469,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             BoundingBox2D boundingBox2D = new(point2D, point2D);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a distance of the specified plan coordinate, automatically managing the connection.
         /// </summary>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point is null.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point or county identifiers are null.</returns>
+        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
@@ -492,7 +494,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, tolerance, cancellationToken);
+            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, countyIds, tolerance, cancellationToken);
         }
 
         /// <summary>
@@ -554,69 +556,43 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a <see cref="PointCloud3D"/> within the specified 2D bounding box across all intersecting counties, discovering the counties automatically.
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> within the specified 2D bounding box across the given counties.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
-        /// <param name="tolerance">The distance the search bounding box is expanded by, both when discovering counties and when selecting points. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across all matching county partitions, or null if the box meets no county or no points match.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if no county was given or no points match.</returns>
+        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null || boundingBox2D is null)
+            if (npgsqlConnection is null || boundingBox2D is null || countyIds is null)
             {
                 return null;
             }
 
-            HashSet<int>? countyIds = await CountyIdsAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
-            if (countyIds is null)
-            {
-                return null;
-            }
-
-            List<double> xValues = [];
-            List<double> yValues = [];
-            List<double> zValues = [];
-
+            List<PointCloud3D?> pointCloud3Ds = [];
             foreach (int countyId in countyIds)
             {
-                PointCloud3D? pointCloud3D = await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, cancellationToken);
-                if (pointCloud3D is null || pointCloud3D.Count == 0)
-                {
-                    continue;
-                }
-
-                double[]? x = pointCloud3D.GetX();
-                double[]? y = pointCloud3D.GetY();
-                double[]? z = pointCloud3D.GetZ();
-                if (x is null || y is null || z is null)
-                {
-                    continue;
-                }
-
-                xValues.AddRange(x);
-                yValues.AddRange(y);
-                zValues.AddRange(z);
+                pointCloud3Ds.Add(await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, cancellationToken));
             }
 
-            if (xValues.Count == 0)
-            {
-                return null;
-            }
-
-            return new PointCloud3D([.. xValues], [.. yValues], [.. zValues]);
+            // Concatenation is plain geometry, and the factory does it in one block copy per county.
+            // Gathering the axes here through GetX/GetY/GetZ copied each county three times over.
+            return DiGi.Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
         }
 
         /// <summary>
-        /// Asynchronously retrieves a <see cref="PointCloud3D"/> within the specified 2D bounding box across all intersecting counties, automatically managing the connection.
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> within the specified 2D bounding box across the given counties, automatically managing the connection.
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
-        /// <param name="tolerance">The distance the search bounding box is expanded by, both when discovering counties and when selecting points. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across all matching county partitions, or null if the box meets no county or no points match.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if no county was given or no points match.</returns>
+        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
-            if (boundingBox2D is null)
+            if (boundingBox2D is null || countyIds is null)
             {
                 return null;
             }
@@ -628,7 +604,116 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying inside the specified circle, for a specific county partition.
+        /// <para>The circle is evaluated by the database, not by filtering a cloud that was fetched as a square: the points outside it are never read, never transferred and never allocated. PostgreSQL's point operator class supports containment in a circle on the same GiST index the bounding box queries use, so this is a narrower filter rather than a slower one.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
+        /// <param name="countyId">The integer identifier of the county partition to query.</param>
+        /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
+        /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task containing the <see cref="PointCloud3D"/> inside the circle, or null if the circle is null or degenerate, or no points match.</returns>
+        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || circle2D is null || !IsQueryable(circle2D))
+            {
+                return null;
+            }
+
+            string commandText = $@"
+                SELECT x, y, z
+                FROM {Constants.TableName.TerrainPoint}
+                WHERE county_id = @countyId
+                  AND point(x, y) <@ circle(point(@centerX, @centerY), @radius)
+                  AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            AddCircle2DParameters(npgsqlCommand, circle2D, tolerance);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = (object?)subdivisionId ?? DBNull.Value });
+
+            return await ReadAsync_PointCloud3D(npgsqlCommand, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying inside the specified circle, for a specific county partition, automatically managing the connection.
+        /// </summary>
+        /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
+        /// <param name="countyId">The integer identifier of the county partition to query.</param>
+        /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
+        /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task containing the <see cref="PointCloud3D"/> inside the circle, or null if the circle is null or degenerate, or no points match.</returns>
+        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (circle2D is null || !IsQueryable(circle2D))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, subdivisionId, tolerance, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying inside the specified circle, across the given counties.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if the circle is null or degenerate, no county was given, or no points match.</returns>
+        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || circle2D is null || countyIds is null || !IsQueryable(circle2D))
+            {
+                return null;
+            }
+
+            List<PointCloud3D?> pointCloud3Ds = [];
+            foreach (int countyId in countyIds)
+            {
+                pointCloud3Ds.Add(await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, null, tolerance, cancellationToken));
+            }
+
+            return DiGi.Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying inside the specified circle, across the given counties, automatically managing the connection.
+        /// </summary>
+        /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if the circle is null or degenerate, no county was given, or no points match.</returns>
+        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        {
+            if (circle2D is null || countyIds is null || !IsQueryable(circle2D))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyIds, tolerance, cancellationToken);
         }
 
         /// <summary>
@@ -690,22 +775,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a list of <see cref="TerrainPoint"/> records within the specified 2D bounding box across all intersecting counties, discovering the counties automatically.
+        /// Asynchronously retrieves a list of <see cref="TerrainPoint"/> records within the specified 2D bounding box across the given counties.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
-        /// <param name="tolerance">The distance the search bounding box is expanded by, both when discovering counties and when selecting points. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across matching counties, or null if the box meets no county or no records match.</returns>
-        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across the given counties, or null if no county was given or no records match.</returns>
+        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null || boundingBox2D is null)
-            {
-                return null;
-            }
-
-            HashSet<int>? countyIds = await CountyIdsAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
-            if (countyIds is null)
+            if (npgsqlConnection is null || boundingBox2D is null || countyIds is null)
             {
                 return null;
             }
@@ -730,15 +810,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a list of <see cref="TerrainPoint"/> records within the specified 2D bounding box across all intersecting counties, automatically managing the connection.
+        /// Asynchronously retrieves a list of <see cref="TerrainPoint"/> records within the specified 2D bounding box across the given counties, automatically managing the connection.
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
-        /// <param name="tolerance">The distance the search bounding box is expanded by, both when discovering counties and when selecting points. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
+        /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across matching counties, or null if the box meets no county or no records match.</returns>
-        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across the given counties, or null if no county was given or no records match.</returns>
+        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
-            if (boundingBox2D is null)
+            if (boundingBox2D is null || countyIds is null)
             {
                 return null;
             }
@@ -750,7 +831,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, cancellationToken);
+            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
         }
 
         private static string TableName(int? countyId)
@@ -821,37 +902,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y + tolerance });
         }
 
-        private static async Task<HashSet<int>?> CountyIdsAsync(NpgsqlConnection npgsqlConnection, BoundingBox2D boundingBox2D, double tolerance, CancellationToken cancellationToken)
+        private static bool IsQueryable(Circle2D circle2D)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(
-                npgsqlConnection,
-                boundingBox2D,
-                AdministrativeArealType.County,
-                tolerance,
-                cancellationToken);
-
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (circle2D.Center is null)
             {
-                // No county meets the box, so no terrain point can either. Querying the parent unfiltered
-                // would visit every partition to prove the same thing, and would be the normal path on any
-                // database whose administrative table has not been populated yet.
-                return null;
+                return false;
             }
 
-            // A county row's own county_id is null - its identity is its id - so there is no second
-            // candidate to fall back on here.
-            HashSet<int> result = [];
-            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
-            {
-                result.Add(administrativeAreal2D.Id);
-            }
+            double radius = circle2D.Radius;
 
-            if (result.Count == 0)
-            {
-                return null;
-            }
+            return !double.IsNaN(radius) && !double.IsInfinity(radius) && radius > 0;
+        }
 
-            return result;
+        private static void AddCircle2DParameters(NpgsqlCommand npgsqlCommand, Circle2D circle2D, double tolerance)
+        {
+            // Center hands back a fresh Point2D on every read, so it is taken once rather than three times.
+            Point2D? center = circle2D.Center;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("centerX", NpgsqlDbType.Double) { Value = center!.X });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("centerY", NpgsqlDbType.Double) { Value = center.Y });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("radius", NpgsqlDbType.Double) { Value = circle2D.Radius + tolerance });
         }
 
         private static TerrainPoint Create_TerrainPoint(NpgsqlDataReader npgsqlDataReader)
