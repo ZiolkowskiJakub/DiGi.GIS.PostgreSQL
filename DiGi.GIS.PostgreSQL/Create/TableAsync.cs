@@ -1,4 +1,4 @@
-﻿// TODO [ReferencedObjectIndexes]: this file carries the one-off index migration for issue #6.
+// TODO [ReferencedObjectIndexes]: this file carries the one-off index migration for issue #6.
 // Two things in it are temporary and go away together, once every deployed database has run this
 // DDL at least once: the DROP INDEX statement in TableAsync_Building2DReferencedObject, and the
 // raised commandTimeout default on that method and on
@@ -29,6 +29,8 @@ namespace DiGi.GIS.PostgreSQL
 
             // Using timestamptz to ensure consistent time tracking across different time zones
             string commandText = $@"
+                CREATE EXTENSION IF NOT EXISTS unaccent;
+
                 CREATE TABLE IF NOT EXISTS {Constants.TableName.AdministrativeAreal2D} (
                     id SERIAL PRIMARY KEY,
                     reference TEXT NOT NULL UNIQUE,

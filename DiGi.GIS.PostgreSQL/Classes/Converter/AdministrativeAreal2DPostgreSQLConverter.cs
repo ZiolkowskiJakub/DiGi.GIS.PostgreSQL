@@ -213,12 +213,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Searches for administrative areas by name (case-insensitive) and returns a list of references.
+        /// Searches for administrative area reference paths by name (case-insensitive and diacritic-insensitive) and returns a list of reference paths.
         /// </summary>
         /// <param name="npgsqlConnection">Existing Npgsql connection.</param>
         /// <param name="text">The text to search for within the name column.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A list of AdministrativeAreal2DReference objects matching the search criteria.</returns>
+        /// <returns>A list of AdministrativeAreal2DReferencePath objects matching the search criteria.</returns>
         public static async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(NpgsqlConnection? npgsqlConnection, string text, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(text))
@@ -508,7 +508,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Searches for administrative areas by name (case-insensitive) and returns a list of references.
+        /// Searches for administrative areas by name (case-insensitive and diacritic-insensitive) and returns a list of references.
         /// </summary>
         /// <param name="npgsqlConnection">Existing Npgsql connection.</param>
         /// <param name="text">The text to search for within the name column.</param>
@@ -521,7 +521,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Using ILIKE for case-insensitive search and % placeholders for "contains" logic
+            // Using unaccent and ILIKE for diacritic-insensitive and case-insensitive search and % placeholders for "contains" logic
             const string commandText = $@"
                 SELECT
                     id,              -- index 0
@@ -534,8 +534,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     county_id,       -- index 7
                     municipality_id  -- index 8
                 FROM {TableName.AdministrativeAreal2D}
-                WHERE name ILIKE @text
-                ORDER BY name ASC;";
+                WHERE unaccent(name) ILIKE unaccent(@text)
+                ORDER BY name ASC, id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -1179,11 +1179,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Searches for administrative areas by name (case-insensitive) and returns a list of references.
+        /// Searches for administrative area reference paths by name (case-insensitive and diacritic-insensitive) and returns a list of reference paths.
         /// </summary>
         /// <param name="text">The text to search for within the name column.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A list of AdministrativeAreal2DReference objects matching the search criteria.</returns>
+        /// <returns>A list of AdministrativeAreal2DReferencePath objects matching the search criteria.</returns>
         public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(string text, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -1330,7 +1330,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a list of administrative areal 2D references that match the specified search text using the internal connection data.
+        /// Asynchronously retrieves a list of administrative areal 2D references that match the specified search text (case-insensitive and diacritic-insensitive) using the internal connection data.
         /// </summary>
         /// <param name="text">The search string used to filter administrative areal 2D references by their name.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>

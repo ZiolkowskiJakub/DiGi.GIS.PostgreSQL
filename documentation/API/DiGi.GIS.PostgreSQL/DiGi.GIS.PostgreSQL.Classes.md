@@ -675,7 +675,7 @@ A task that represents the asynchronous operation\. The task result contains a l
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencePathsByNameAsync\(NpgsqlConnection, string, CancellationToken\) Method
 
-Searches for administrative areas by name \(case\-insensitive\) and returns a list of references\.
+Searches for administrative area reference paths by name \(case\-insensitive and diacritic\-insensitive\) and returns a list of reference paths\.
 
 ```csharp
 public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string text, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -702,13 +702,13 @@ Cancellation token\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A list of AdministrativeAreal2DReference objects matching the search criteria\.
+A list of AdministrativeAreal2DReferencePath objects matching the search criteria\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(string,System.Threading.CancellationToken)'></a>
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencePathsByNameAsync\(string, CancellationToken\) Method
 
-Searches for administrative areas by name \(case\-insensitive\) and returns a list of references\.
+Searches for administrative area reference paths by name \(case\-insensitive and diacritic\-insensitive\) and returns a list of reference paths\.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(string text, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -729,7 +729,7 @@ Cancellation token\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A list of AdministrativeAreal2DReference objects matching the search criteria\.
+A list of AdministrativeAreal2DReferencePath objects matching the search criteria\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -1068,7 +1068,7 @@ A task that represents the asynchronous operation\. The task result contains a l
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByNameAsync\(NpgsqlConnection, string, CancellationToken\) Method
 
-Searches for administrative areas by name \(case\-insensitive\) and returns a list of references\.
+Searches for administrative areas by name \(case\-insensitive and diacritic\-insensitive\) and returns a list of references\.
 
 ```csharp
 public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string text, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -1101,7 +1101,7 @@ A list of AdministrativeAreal2DReference objects matching the search criteria\.
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByNameAsync\(string, CancellationToken\) Method
 
-Asynchronously retrieves a list of administrative areal 2D references that match the specified search text using the internal connection data\.
+Asynchronously retrieves a list of administrative areal 2D references that match the specified search text \(case\-insensitive and diacritic\-insensitive\) using the internal connection data\.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(string text, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
