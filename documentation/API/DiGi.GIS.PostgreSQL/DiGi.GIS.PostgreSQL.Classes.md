@@ -4785,7 +4785,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves a list of [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') objects associated with the specified references and an optional county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.Point2D>?> GetPoint2DsByReferences(Npgsql.NpgsqlConnection npgsqlConnection, System.Collections.Generic.IEnumerable<string> references, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.Point2D>?> GetPoint2DsByReferences(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -4824,7 +4824,7 @@ A task that represents the asynchronous operation\. The task result contains a [
 Asynchronously retrieves a list of [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') objects associated with the specified references and optional county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.Point2D>?> GetPoint2DsByReferences(System.Collections.Generic.IEnumerable<string> references, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.Point2D>?> GetPoint2DsByReferences(System.Collections.Generic.IEnumerable<string>? references, System.Nullable<int> countyId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 

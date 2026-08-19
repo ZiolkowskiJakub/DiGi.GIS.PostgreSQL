@@ -200,21 +200,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">An optional <see cref="int"/> representing the county identifier for filtering results.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="Point2D"/> objects if matches are found; otherwise, null.</returns>
-        public static async Task<List<Point2D>?> GetPoint2DsByReferences(NpgsqlConnection npgsqlConnection, IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
+        public static async Task<List<Point2D>?> GetPoint2DsByReferences(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null)
+            if (npgsqlConnection is null || references is null)
             {
                 return null;
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return [];
             }
 
             string commandText = $@"
                     SELECT min_x, min_y, max_x, max_y
                     FROM {Constants.TableName.Building2D}
-                    WHERE reference = ANY(@references) AND county_id = @countyId;";
+                    WHERE reference = ANY(@references){(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
@@ -1209,7 +1218,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">An optional <see cref="int"/> representing the unique identifier of the county used to filter the search.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="Point2D"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<Point2D>?> GetPoint2DsByReferences(IEnumerable<string> references, int? countyId, CancellationToken cancellationToken = default)
+        public async Task<List<Point2D>?> GetPoint2DsByReferences(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
