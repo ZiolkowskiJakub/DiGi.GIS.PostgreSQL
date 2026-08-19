@@ -340,88 +340,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously updates the specified collection of building 2D referenced objects.
-        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
-        /// </summary>
-        /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of <see cref="long"/> identifiers for the objects that were updated, or <c>null</c> if no updates occurred.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30)
-        {
-            if (building2DReferencedObjects is null)
-            {
-                return null;
-            }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync();
-
-            bool succeded = await npgsqlConnection.TableAsync_Building2DReferencedObject(TableName);
-            if (!succeded)
-            {
-                return null;
-            }
-
-            HashSet<long> result = [];
-            if (!building2DReferencedObjects.Any())
-            {
-                return result;
-            }
-
-            IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects.GroupBy(x => x.CountyId);
-
-            foreach (IGrouping<int?, TBuilding2DReferencedObject> grouping in groupings)
-            {
-                if (!grouping.Key.HasValue)
-                {
-                    continue;
-                }
-
-                await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, grouping.Key.Value);
-
-                string commandText = $@"
-                    INSERT INTO {TableName} (county_id, unique_id, reference, object)
-                    VALUES (@county_id, @unique_id, @reference, @object)
-                    ON CONFLICT (county_id, unique_id)
-                    DO UPDATE SET
-                        object = EXCLUDED.object,
-                        reference = EXCLUDED.reference
-                    RETURNING id;";
-
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                npgsqlCommand.CommandTimeout = commandTimeout;
-
-                // Define parameters once
-                NpgsqlParameter npgsqlParameter_UniqueId = npgsqlCommand.Parameters.Add("unique_id", NpgsqlDbType.Text);
-                NpgsqlParameter npgsqlParameter_CountyId = npgsqlCommand.Parameters.Add("county_id", NpgsqlDbType.Integer);
-                NpgsqlParameter npgsqlParameter_Reference = npgsqlCommand.Parameters.Add("reference", NpgsqlDbType.Text);
-                NpgsqlParameter npgsqlParameter_Object = npgsqlCommand.Parameters.Add("object", NpgsqlDbType.Jsonb);
-
-                foreach (TBuilding2DReferencedObject? countyReferencedObject in grouping)
-                {
-                    npgsqlParameter_UniqueId.Value = countyReferencedObject.UniqueId;
-                    npgsqlParameter_CountyId.Value = countyReferencedObject.CountyId;
-                    npgsqlParameter_Reference.Value = countyReferencedObject.Reference ?? (object)DBNull.Value;
-                    npgsqlParameter_Object.Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value;
-
-                    object? returnedId = await npgsqlCommand.ExecuteScalarAsync();
-                    if (returnedId is long id)
-                    {
-                        result.Add(id);
-                        countyReferencedObject.Id = id;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
         /// Asynchronously retrieves every reference held under a single county row.
         /// <para>The whole row is not read - only the reference column - so this stays usable on a county part holding tens of thousands of rows, which reading the objects would not be.</para>
         /// </summary>
@@ -502,6 +420,131 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string> result = [];
 
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetString(0));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Moves every row held for the given references under some other county row into <paramref name="countyId"/>, so that all of a building's data sits under the county part the building actually belongs to.
+        /// <para>This repairs data filed under the wrong part of a multi-part county. <c>building_2d</c> is the source of truth for the <c>(county_id, reference)</c> pair; rows in this table that disagree with it are unreachable, because every read here filters on <c>county_id</c> first and so returns nothing for the part the building is now known to belong to.</para>
+        /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
+        /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}, string, int, CancellationToken)"/> - rather than having it silently discarded here.</para>
+        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. It is one statement for the whole batch: call it once per county with all of that county's references, never once per reference.</para>
+        /// </summary>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection could not be created.</returns>
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            // Deduplicating here rather than in the statement keeps the array parameter as small as
+            // the caller's data allows; the server would otherwise carry the repeats through the scan.
+            HashSet<string> references_Unique = [];
+            foreach (string reference in references)
+            {
+                if (!string.IsNullOrWhiteSpace(reference))
+                {
+                    references_Unique.Add(reference);
+                }
+            }
+
+            HashSet<string> result = [];
+
+            if (references_Unique.Count == 0)
+            {
+                return result;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            // Nothing of this type has ever been stored, so there is nothing to move. Creating the
+            // table here instead would be worse than useless: TableAsync_Building2DReferencedObject
+            // carries the [ReferencedObjectIndexes] migration and can spend minutes building an index
+            // across every partition, which a refresh has no business triggering.
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName);
+            if (!exists)
+            {
+                return result;
+            }
+
+            // A row cannot move into a partition that does not exist - without this the update fails
+            // with 'no partition of relation found for row'. It is an idempotent catalog check once
+            // the partition is there.
+            await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, countyId);
+
+            // One statement for the whole batch, which makes it one transaction as well: an
+            // interrupted run leaves every row either under the county it came from or under
+            // countyId, never half-moved.
+            //
+            // MATERIALIZED pins the expensive part to a single evaluation. The CTE is the only place
+            // the table is read without a county_id to prune on, and inlining it would repeat that
+            // scan for the update.
+            //
+            // county_id <> @countyId is the whole of the filtering: rows already filed correctly are
+            // not touched, and a reference split across two counties is handled without a separate
+            // pass. Excluding references that merely have a row under countyId would skip exactly
+            // those split ones.
+            //
+            // NOT EXISTS is the collision guard for UNIQUE (county_id, unique_id). It is cheap
+            // despite the surrounding scan: county_id is fixed, so it prunes to the destination
+            // partition and probes the index that constraint is already backed by.
+            //
+            // ROW_NUMBER guards the other collision - two rows carrying one unique_id under two
+            // different wrong counties both pass NOT EXISTS and would then collide with each other on
+            // arrival. One moves, the rest stay. created_at alone does not settle which one, because
+            // a bulk write stamps every row of the batch identically; id is what decides.
+            //
+            // The update addresses the row by its primary key with the partition key present, so it
+            // is a pruned index lookup rather than a second scan. ctid would not do - it is unique
+            // only within a partition.
+            string commandText = $@"
+                WITH stray AS MATERIALIZED (
+                    SELECT t.id AS id,
+                           t.county_id AS county_id,
+                           ROW_NUMBER() OVER (PARTITION BY t.unique_id ORDER BY t.created_at DESC, t.id DESC) AS move_rank
+                    FROM {TableName} t
+                    WHERE t.reference = ANY(@references)
+                      AND t.county_id <> @countyId
+                      AND NOT EXISTS (
+                              SELECT 1
+                              FROM {TableName} t_Target
+                              WHERE t_Target.county_id = @countyId
+                                AND t_Target.unique_id = t.unique_id)
+                )
+                UPDATE {TableName} t
+                SET county_id = @countyId
+                FROM stray s
+                WHERE t.id = s.id
+                  AND t.county_id = s.county_id
+                  AND s.move_rank = 1
+                RETURNING t.reference;";
+
+            string[] references_Array = [.. references_Unique];
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+
+            // RETURNING yields one row per record moved, and several of them can belong to one
+            // building - the set collapses those without the server having to sort for DISTINCT.
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
             while (await npgsqlDataReader.ReadAsync(cancellationToken))
             {
@@ -675,7 +718,87 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
+        /// <summary>
+        /// Asynchronously updates the specified collection of building 2D referenced objects.
+        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
+        /// </summary>
+        /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of <see cref="long"/> identifiers for the objects that were updated, or <c>null</c> if no updates occurred.</returns>
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30)
+        {
+            if (building2DReferencedObjects is null)
+            {
+                return null;
+            }
 
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync();
+
+            bool succeded = await npgsqlConnection.TableAsync_Building2DReferencedObject(TableName);
+            if (!succeded)
+            {
+                return null;
+            }
+
+            HashSet<long> result = [];
+            if (!building2DReferencedObjects.Any())
+            {
+                return result;
+            }
+
+            IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects.GroupBy(x => x.CountyId);
+
+            foreach (IGrouping<int?, TBuilding2DReferencedObject> grouping in groupings)
+            {
+                if (!grouping.Key.HasValue)
+                {
+                    continue;
+                }
+
+                await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, grouping.Key.Value);
+
+                string commandText = $@"
+                    INSERT INTO {TableName} (county_id, unique_id, reference, object)
+                    VALUES (@county_id, @unique_id, @reference, @object)
+                    ON CONFLICT (county_id, unique_id)
+                    DO UPDATE SET
+                        object = EXCLUDED.object,
+                        reference = EXCLUDED.reference
+                    RETURNING id;";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+
+                // Define parameters once
+                NpgsqlParameter npgsqlParameter_UniqueId = npgsqlCommand.Parameters.Add("unique_id", NpgsqlDbType.Text);
+                NpgsqlParameter npgsqlParameter_CountyId = npgsqlCommand.Parameters.Add("county_id", NpgsqlDbType.Integer);
+                NpgsqlParameter npgsqlParameter_Reference = npgsqlCommand.Parameters.Add("reference", NpgsqlDbType.Text);
+                NpgsqlParameter npgsqlParameter_Object = npgsqlCommand.Parameters.Add("object", NpgsqlDbType.Jsonb);
+
+                foreach (TBuilding2DReferencedObject? countyReferencedObject in grouping)
+                {
+                    npgsqlParameter_UniqueId.Value = countyReferencedObject.UniqueId;
+                    npgsqlParameter_CountyId.Value = countyReferencedObject.CountyId;
+                    npgsqlParameter_Reference.Value = countyReferencedObject.Reference ?? (object)DBNull.Value;
+                    npgsqlParameter_Object.Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value;
+
+                    object? returnedId = await npgsqlCommand.ExecuteScalarAsync();
+                    if (returnedId is long id)
+                    {
+                        result.Add(id);
+                        countyReferencedObject.Id = id;
+                    }
+                }
+            }
+
+            return result;
+        }
         /// <summary>
         /// Creates a new instance of a building referenced object using the specified identification and metadata.
         /// </summary>
