@@ -422,8 +422,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search for. This value can be null.</param>
         /// <param name="tolerance">The <see cref="double"/> distance tolerance used to determine if a building is associated with the given point. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Building2D"/> found at the specified location, or null if no building is found within the tolerance or if the provided point is null.</returns>
-        public async Task<Building2D?> GetBuilding2DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<Building2D?> GetBuilding2DByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
@@ -436,50 +437,91 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // 1. Identify the administrative area (subdivision) for this specific point.
-            // We only need one area to get the county_id (partition key) and subdivision_id.
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, new BoundingBox2D(point2D, point2D), [AdministrativeArealType.Subdivision], tolerance);
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            BoundingBox2D boundingBox2D = new(point2D, point2D);
+
+            // 1. First attempt: search within matching subdivisions
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivision, tolerance, cancellationToken);
+
+            Building2D? building2D = await FindBuilding2DAsync(administrativeAreal2Ds);
+            if (building2D is not null)
             {
-                return null;
+                return building2D;
             }
 
-            // Represent the point as a tolerance-sized search box so the GiST index on
-            // box(point(min_x, min_y), point(max_x, max_y)) can serve the '&&' overlap operator.
-            double searchMinX = point2D.X - tolerance;
-            double searchMinY = point2D.Y - tolerance;
-            double searchMaxX = point2D.X + tolerance;
-            double searchMaxY = point2D.Y + tolerance;
+            // 2. Fallback attempt: search within matching county partitions if no subdivision matched or contained the building
+            administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.County, tolerance, cancellationToken);
 
-            const string commandText = $@"
+            return await FindBuilding2DAsync(administrativeAreal2Ds);
+
+            async Task<Building2D?> FindBuilding2DAsync(List<AdministrativeAreal2D>? administrativeAreal2Ds_Temp)
+            {
+                if (administrativeAreal2Ds_Temp is null || administrativeAreal2Ds_Temp.Count == 0)
+                {
+                    return null;
+                }
+
+                // Represent the point as a tolerance-sized search box so the GiST index on
+                // box(point(min_x, min_y), point(max_x, max_y)) can serve the '&&' overlap operator.
+                double searchMinX = point2D.X - tolerance;
+                double searchMinY = point2D.Y - tolerance;
+                double searchMaxX = point2D.X + tolerance;
+                double searchMaxY = point2D.Y + tolerance;
+
+                const string commandText = $@"
                     SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                     FROM {Constants.TableName.Building2D}
                     WHERE county_id = @countyId
-                        AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)
+                        AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId OR subdivision_id IS NULL)
                         AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
-                    LIMIT 1;";
+                    ORDER BY id ASC;";
 
-            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
-            {
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                npgsqlCommand.Parameters.AddWithValue("countyId", administrativeAreal2D.CountyId as object ?? DBNull.Value);
-                npgsqlCommand.Parameters.AddWithValue("subdivisionId", administrativeAreal2D.Id as object ?? DBNull.Value);
-                npgsqlCommand.Parameters.AddWithValue("searchMinX", searchMinX);
-                npgsqlCommand.Parameters.AddWithValue("searchMinY", searchMinY);
-                npgsqlCommand.Parameters.AddWithValue("searchMaxX", searchMaxX);
-                npgsqlCommand.Parameters.AddWithValue("searchMaxY", searchMaxY);
-
-                List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand);
-
-                if (results is not null && results.Count > 0)
+                foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds_Temp)
                 {
-                    return results[0];
-                }
-            }
+                    if (administrativeAreal2D is null)
+                    {
+                        continue;
+                    }
 
-            return null;
+                    int? countyId = administrativeAreal2D.AdministrativeArealType == AdministrativeArealType.County
+                        ? administrativeAreal2D.Id
+                        : administrativeAreal2D.CountyId;
+
+                    if (countyId is null)
+                    {
+                        continue;
+                    }
+
+                    int? subdivisionId = administrativeAreal2D.AdministrativeArealType == AdministrativeArealType.Subdivision
+                        ? administrativeAreal2D.Id
+                        : null;
+
+                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                    npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+                    npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId as object ?? DBNull.Value);
+                    npgsqlCommand.Parameters.AddWithValue("searchMinX", searchMinX);
+                    npgsqlCommand.Parameters.AddWithValue("searchMinY", searchMinY);
+                    npgsqlCommand.Parameters.AddWithValue("searchMaxX", searchMaxX);
+                    npgsqlCommand.Parameters.AddWithValue("searchMaxY", searchMaxY);
+
+                    List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+                    if (results is null || results.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (Building2D building2D_Candidate in results)
+                    {
+                        if (building2D_Candidate.ToDiGi()?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, tolerance))
+                        {
+                            return building2D_Candidate;
+                        }
+                    }
+                }
+
+                return null;
+            }
         }
 
         /// <summary>

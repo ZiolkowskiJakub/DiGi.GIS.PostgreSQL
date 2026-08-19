@@ -4036,28 +4036,34 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') instance if found; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetBuilding2DByPoint2DAsync\(Point2D, double\) Method
+## Building2DPostgreSQLConverter\.GetBuilding2DByPoint2DAsync\(Point2D, double, CancellationToken\) Method
 
 Asynchronously retrieves a [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') located at or near the specified 2D point within a given tolerance\.
 
 ```csharp
-public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2D?> GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001);
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2D?> GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double).point2D'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).point2D'></a>
 
 `point2D` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
 
 The [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') coordinate to search for\. This value can be null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double).tolerance'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double') distance tolerance used to determine if a building is associated with the given point\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
