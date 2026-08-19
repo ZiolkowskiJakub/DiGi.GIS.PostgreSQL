@@ -61,7 +61,15 @@ namespace DiGi.GIS.PostgreSQL
                 -- 3. Composite indices for hierarchical administrative lookups
                 -- These speed up filtering by voivodeship, county, etc.
                 CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_hierarchy
-                ON {Constants.TableName.AdministrativeAreal2D} (voivodeship_id, county_id, municipality_id);";
+                ON {Constants.TableName.AdministrativeAreal2D} (voivodeship_id, county_id, municipality_id);
+
+                -- 4. Composite index for type and code lookups
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_type_code
+                ON {Constants.TableName.AdministrativeAreal2D} (type_id, code);
+
+                -- 5. Index for child queries filtering by county_id
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.AdministrativeAreal2D}_county_id
+                ON {Constants.TableName.AdministrativeAreal2D} (county_id);";
 
             try
             {
