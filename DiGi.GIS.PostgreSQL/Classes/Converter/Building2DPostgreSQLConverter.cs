@@ -1803,9 +1803,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the query.</param>
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of <see cref="Building2DReferenceDuplicate"/> instances if any duplicates exist; otherwise, null.</returns>
-        public static async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(NpgsqlConnection? npgsqlConnection, int limit = 100, CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(NpgsqlConnection? npgsqlConnection, int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -1821,6 +1822,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 LIMIT @limit;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.AddWithValue("limit", limit);
 
             List<Building2DReferenceDuplicate> result = [];
@@ -1842,9 +1844,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending.
         /// </summary>
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of <see cref="Building2DReferenceDuplicate"/> instances if any duplicates exist; otherwise, null.</returns>
-        public async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit = 100, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1854,16 +1857,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetDuplicateReferencesAsync(npgsqlConnection, limit, cancellationToken);
+            return await GetDuplicateReferencesAsync(npgsqlConnection, limit, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the query.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a <see cref="Building2DReferenceUniquenessSummary"/> object containing total, distinct, and duplicate metrics; or null if the connection is null.</returns>
-        public static async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        public static async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -1877,6 +1881,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 FROM {Constants.TableName.Building2D};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
             if (await npgsqlDataReader.ReadAsync(cancellationToken))
@@ -1895,9 +1900,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a <see cref="Building2DReferenceUniquenessSummary"/> object containing total, distinct, and duplicate metrics; or null if connection fails.</returns>
-        public async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(CancellationToken cancellationToken = default)
+        public async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1907,7 +1913,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetReferenceUniquenessSummaryAsync(npgsqlConnection, cancellationToken);
+            return await GetReferenceUniquenessSummaryAsync(npgsqlConnection, commandTimeout, cancellationToken);
         }
     }
 }

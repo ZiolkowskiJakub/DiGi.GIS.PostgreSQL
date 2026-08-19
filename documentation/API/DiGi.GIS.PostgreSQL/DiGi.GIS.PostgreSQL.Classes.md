@@ -4556,24 +4556,30 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total row count as a long\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(int, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(int, int, CancellationToken\) Method
 
 Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit=100, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit=100, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken).limit'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).limit'></a>
 
 `limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of duplicate references to return\. Defaults to 100\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -4583,30 +4589,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') instances if any duplicates exist; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(NpgsqlConnection, int, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(NpgsqlConnection, int, int, CancellationToken\) Method
 
 Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int limit=100, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int limit=100, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).limit'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).limit'></a>
 
 `limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of duplicate references to return\. Defaults to 100\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -4832,45 +4844,24 @@ A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotne
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') objects if matches are found; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(NpgsqlConnection, CancellationToken\) Method
-
-Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
-
-```csharp
-public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
-```
-#### Parameters
-
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken).npgsqlConnection'></a>
-
-`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
-
-The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
-
-#### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if the connection is null\.
-
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken)'></a>
-
-## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(int, CancellationToken\) Method
 
 Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
 
 ```csharp
-public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -4879,6 +4870,39 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if connection fails\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if the connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions,System.IProgress_long_,System.Threading.CancellationToken)'></a>
 
