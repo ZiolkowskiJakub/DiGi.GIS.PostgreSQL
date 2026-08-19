@@ -77,7 +77,6 @@ Derived
 ↳ [PostgreSQLBuilding2DCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCreateTableTask')  
 ↳ [PostgreSQLBuilding2DRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshTask')  
 ↳ [PostgreSQLBuildingDataUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask')  
-↳ [PostgreSQLBuildingModelUniqueIdMigrationTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingModelUniqueIdMigrationTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingModelUniqueIdMigrationTask')  
 ↳ [PostgreSQLOrtoDatasCreateDatabaseTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasCreateDatabaseTask')  
 ↳ [PostgreSQLOrtoDatasRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasRefreshTask')  
 ↳ [PostgreSQLTerrainPointCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointCreateTableTask')  
@@ -113,7 +112,6 @@ Derived
 ↳ [TableSerializableObject&lt;TSerializableObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.TableSerializableObject\<TSerializableObject\>')  
 ↳ [TerrainPoint](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPoint 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPoint')  
 ↳ [TerrainPointUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointUpdateResult')  
-↳ [UniqueIdMigrationResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UniqueIdMigrationResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UniqueIdMigrationResult')  
 ↳ [ITableSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.ITableSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableSerializableObject')  
 ↳ [ITableSerializableObject&lt;TSerializableObject&gt;](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.ITableSerializableObject_TSerializableObject_ 'DiGi\.GIS\.PostgreSQL\.Interfaces\.ITableSerializableObject\<TSerializableObject\>')
 
