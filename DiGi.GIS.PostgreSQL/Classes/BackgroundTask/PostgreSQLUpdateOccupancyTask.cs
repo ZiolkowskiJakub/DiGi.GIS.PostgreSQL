@@ -175,7 +175,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivision, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
                 if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
                 {
                     return true;

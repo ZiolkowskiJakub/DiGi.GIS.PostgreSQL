@@ -20,7 +20,7 @@ namespace DiGi.GIS.PostgreSQL
                 Enums.AdministrativeArealType.Voivodeship => "voivodeship_id",
                 Enums.AdministrativeArealType.County => "county_id",
                 Enums.AdministrativeArealType.Municipality => "municipality_id",
-                Enums.AdministrativeArealType.Subdivison => null,
+                Enums.AdministrativeArealType.Subdivision => null,
                 _ => null,
             };
         }

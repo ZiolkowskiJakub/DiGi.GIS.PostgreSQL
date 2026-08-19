@@ -311,7 +311,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return -1;
             }
 
-            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivison, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
+            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivision, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
 
             administrativeAreal2DReferences ??= [];
 
@@ -319,7 +319,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivision, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
                     if (administrativeAreal2DReferences_Temp is not null)
                     {
                         administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
@@ -440,7 +440,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // 1. Identify the administrative area (subdivision) for this specific point.
             // We only need one area to get the county_id (partition key) and subdivision_id.
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, new BoundingBox2D(point2D, point2D), [AdministrativeArealType.Subdivison], tolerance);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, new BoundingBox2D(point2D, point2D), [AdministrativeArealType.Subdivision], tolerance);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;
@@ -693,7 +693,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers.
-        /// <para>Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its <see cref="AdministrativeArealType.Subdivison"/> descendants and the buildings are then fetched per <c>county_id</c> plus <c>subdivision_id</c>. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with <c>GetBuilding2DReferencesByCountyIdAsync</c> before concluding anything about coverage.</para>
+        /// <para>Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its <see cref="AdministrativeArealType.Subdivision"/> descendants and the buildings are then fetched per <c>county_id</c> plus <c>subdivision_id</c>. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with <c>GetBuilding2DReferencesByCountyIdAsync</c> before concluding anything about coverage.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to filter by.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
@@ -714,7 +714,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivison, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
+            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivision, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
 
             administrativeAreal2DReferences ??= [];
 
@@ -722,7 +722,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivison, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
+                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivision, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
                     if (administrativeAreal2DReferences_Temp is not null)
                     {
                         administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
@@ -916,7 +916,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             // 1. Get administrative areas to identify which partitions (counties) to hit
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivison, tolerance, cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivision, tolerance, cancellationToken);
 
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
@@ -1583,7 +1583,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, polygonalFace2D.GetBoundingBox(), [AdministrativeArealType.Subdivison], tolerance);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, polygonalFace2D.GetBoundingBox(), [AdministrativeArealType.Subdivision], tolerance);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;

@@ -180,7 +180,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         await npgsqlConnection.OpenAsync(cancellationToken);
 
-                        administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivison, countyId, cancellationToken);
+                        administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivision, countyId, cancellationToken);
                     }
 
                     if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)

@@ -18,7 +18,7 @@ namespace DiGi.GIS.PostgreSQL
 
             if (administrativeAreal2D is GIS.Classes.AdministrativeSubdivision)
             {
-                return Enums.AdministrativeArealType.Subdivison;
+                return Enums.AdministrativeArealType.Subdivision;
             }
 
             if (administrativeAreal2D is GIS.Classes.AdministrativeDivision administrativeDivision)
@@ -41,8 +41,8 @@ namespace DiGi.GIS.PostgreSQL
                 GIS.Enums.AdministrativeDivisionType.country => Enums.AdministrativeArealType.Country,
                 GIS.Enums.AdministrativeDivisionType.voivodeship => Enums.AdministrativeArealType.Voivodeship,
                 GIS.Enums.AdministrativeDivisionType.municipality => Enums.AdministrativeArealType.Municipality,
-                GIS.Enums.AdministrativeDivisionType.district_or_delegation => Enums.AdministrativeArealType.Subdivison,
-                GIS.Enums.AdministrativeDivisionType.town_in_urban_rural_municipality => Enums.AdministrativeArealType.Subdivison,
+                GIS.Enums.AdministrativeDivisionType.district_or_delegation => Enums.AdministrativeArealType.Subdivision,
+                GIS.Enums.AdministrativeDivisionType.town_in_urban_rural_municipality => Enums.AdministrativeArealType.Subdivision,
                 GIS.Enums.AdministrativeDivisionType.county => Enums.AdministrativeArealType.County,
                 _ => Enums.AdministrativeArealType.Undefined,
             };

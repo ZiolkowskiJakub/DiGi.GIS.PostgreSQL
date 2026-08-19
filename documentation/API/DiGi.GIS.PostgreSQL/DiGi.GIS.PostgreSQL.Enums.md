@@ -46,13 +46,13 @@ County \(powiat\) level administrative area\.
 
 Municipality \(gmina\) level administrative area\.
 
-<a name='DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivison'></a>
+<a name='DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision'></a>
 
-`Subdivison` 4
+`Subdivision` 4
 
 Subdivision level administrative area\.
 
-The member name is misspelled (`Subdivison`, missing the second `i`) and the misspelling reaches the wire: a request carrying the correctly spelled `Subdivision` is rejected with HTTP 400. Pass the integer `4`, or the exact misspelling. Renaming this member is a breaking API change.
+Renamed from the misspelled `Subdivison` (missing the second `i`), which was the accepted wire token until this build. `Subdivison` is now <b>rejected</b> with HTTP 400 - send `Subdivision` or the integer `4`. The value is unchanged, so nothing stored under `type_id` is affected.
 
 <a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType'></a>
 

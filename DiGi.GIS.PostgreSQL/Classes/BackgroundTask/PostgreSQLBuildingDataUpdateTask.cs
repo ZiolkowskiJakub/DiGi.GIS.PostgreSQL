@@ -74,7 +74,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Bulk reads/writes over hundreds of thousands of records exceed the 30s default; allow up to 10 minutes per statement.
             const int commandTimeout = 600;
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivison, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivision, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return false;
@@ -96,7 +96,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                // The references were queried by AdministrativeArealType.Subdivison, so Id is the subdivision id.
+                // The references were queried by AdministrativeArealType.Subdivision, so Id is the subdivision id.
                 int subdivisionId = administrativeAreal2DReference.Id;
 
                 List<Building2D>? building2Ds = null;

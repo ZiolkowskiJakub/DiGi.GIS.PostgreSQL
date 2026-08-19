@@ -17,7 +17,7 @@ namespace DiGi.GIS.PostgreSQL
                 Enums.AdministrativeArealType.Voivodeship => Enums.AdministrativeArealType.Country,
                 Enums.AdministrativeArealType.County => Enums.AdministrativeArealType.Voivodeship,
                 Enums.AdministrativeArealType.Municipality => Enums.AdministrativeArealType.County,
-                Enums.AdministrativeArealType.Subdivison => Enums.AdministrativeArealType.Municipality,
+                Enums.AdministrativeArealType.Subdivision => Enums.AdministrativeArealType.Municipality,
                 _ => null,
             };
         }

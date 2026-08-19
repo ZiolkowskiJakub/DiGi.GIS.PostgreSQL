@@ -35,8 +35,8 @@ namespace DiGi.GIS.PostgreSQL.Enums
 
         /// <summary>
         /// Subdivision level administrative area.
-        /// <para>The member name is misspelled (<c>Subdivison</c>, missing the second <c>i</c>) and the misspelling reaches the wire: a request carrying the correctly spelled <c>Subdivision</c> is rejected with HTTP 400. Pass the integer <c>4</c>, or the exact misspelling. Renaming this member is a breaking API change.</para>
+        /// <para>Renamed from the misspelled <c>Subdivison</c> (missing the second <c>i</c>), which was the accepted wire token until this build. <c>Subdivison</c> is now <b>rejected</b> with HTTP 400 - send <c>Subdivision</c> or the integer <c>4</c>. The value is unchanged, so nothing stored under <c>type_id</c> is affected.</para>
         /// </summary>
-        [Description("Subdivision")] Subdivison = 4,
+        [Description("Subdivision")] Subdivision = 4,
     }
 }

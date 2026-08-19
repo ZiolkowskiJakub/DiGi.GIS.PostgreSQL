@@ -4028,7 +4028,7 @@ A list of populated Building2DReference objects found in the database\.
 
 Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers\.
 
-Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its [Subdivison](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivison 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivison') descendants and the buildings are then fetched per `county_id` plus `subdivision_id`. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with `GetBuilding2DReferencesByCountyIdAsync` before concluding anything about coverage.
+Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') descendants and the buildings are then fetched per `county_id` plus `subdivision_id`. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with `GetBuilding2DReferencesByCountyIdAsync` before concluding anything about coverage.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
