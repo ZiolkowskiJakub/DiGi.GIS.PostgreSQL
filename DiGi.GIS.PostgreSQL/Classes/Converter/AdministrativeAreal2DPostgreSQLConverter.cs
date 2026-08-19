@@ -1044,6 +1044,59 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database, excluding the exact code match.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="code">The parent code or prefix used to filter and identify the associated sub-codes.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the matching sub-codes, or <c>null</c> if the connection is null.</returns>
+        public static async Task<HashSet<string>?> GetSubCodesAsync(NpgsqlConnection? npgsqlConnection, string? code, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return [];
+            }
+
+            HashSet<string> results = [];
+
+            string query = $@"
+                SELECT code
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE code LIKE @prefix
+                  AND code <> @code;";
+
+            await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("prefix", NpgsqlDbType.Text)
+            {
+                Value = $"{code}%"
+            });
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("code", NpgsqlDbType.Text)
+            {
+                Value = code
+            });
+
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (!await reader.IsDBNullAsync(0, cancellationToken))
+                {
+                    string code_Temp = reader.GetString(0);
+                    results.Add(code_Temp);
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
         /// Asynchronously clears all data from the administrative areal 2D table in the PostgreSQL database.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token to propagate notification that the operation should be canceled.</param>
@@ -2022,13 +2075,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
         }
         /// <summary>
-        /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database.
+        /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database, excluding the exact code match.
         /// </summary>
         /// <param name="code">The parent code or prefix used to filter and identify the associated sub-codes.</param>
-        /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the matching codes, or <c>null</c> if the database connection could not be established.</returns>
-        public async Task<HashSet<string>?> GetSubCodesAsync(string code)
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the matching sub-codes, or <c>null</c> if the database connection could not be established.</returns>
+        public async Task<HashSet<string>?> GetSubCodesAsync(string? code, CancellationToken cancellationToken = default)
         {
-            // Basic validation of the input
             if (string.IsNullOrWhiteSpace(code))
             {
                 return [];
@@ -2040,32 +2093,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            HashSet<string> result = [];
-
-            // SQL with LIKE operator. The '%' sign is a wildcard for any character sequence.
-            // We use a parameterized query to prevent SQL Injection.
-            string query = $"SELECT code FROM {TableName.AdministrativeAreal2D} WHERE code LIKE @code;";
-
-            await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
-
-            // We append the wildcard '%' to the prefix in C# to look for strings starting with it
-            npgsqlCommand.Parameters.AddWithValue("code", $"{code}%");
-
-            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                // Handling potential NULL in the database, even if column is usually populated
-                if (!reader.IsDBNull(0))
-                {
-                    string code_Temp = reader.GetString(0);
-                    result.Add(code_Temp);
-                }
-            }
-
-            return result;
+            return await GetSubCodesAsync(npgsqlConnection, code, cancellationToken);
         }
 
         /// <summary>
