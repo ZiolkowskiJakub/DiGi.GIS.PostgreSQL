@@ -266,12 +266,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                HashSet<int> parentIds_AdministrativeArealType = [];
-                foreach (AdministrativeAreal2DReference administrativeAreal2DReference in grouping)
-                {
-                    parentIds_AdministrativeArealType.Add(administrativeAreal2DReference.Id);
-                }
-
                 string? columnName = administrativeArealType_Parent switch
                 {
                     AdministrativeArealType.Country => "country_id",
@@ -284,6 +278,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 if (columnName is null)
                 {
                     continue;
+                }
+
+                HashSet<int> parentIds_AdministrativeArealType = [];
+                foreach (AdministrativeAreal2DReference administrativeAreal2DReference in grouping)
+                {
+                    if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
+                    {
+                        HashSet<int>? siblingIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
+                        if (siblingIds is not null && siblingIds.Count > 0)
+                        {
+                            parentIds_AdministrativeArealType.UnionWith(siblingIds);
+                            continue;
+                        }
+                    }
+
+                    parentIds_AdministrativeArealType.Add(administrativeAreal2DReference.Id);
                 }
 
                 string distinctClause = uniqueCode ? "DISTINCT ON (code)" : string.Empty;
@@ -337,6 +347,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string additionalCondition = string.Empty;
+            HashSet<int>? parentIds = null;
 
             if (parentId.HasValue)
             {
@@ -364,7 +375,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (columnName is not null)
                 {
-                    additionalCondition = $"AND {columnName} = @parentId";
+                    if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
+                    {
+                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
+                    }
+
+                    if (parentIds is null || parentIds.Count == 0)
+                    {
+                        parentIds = [parentId.Value];
+                    }
+
+                    additionalCondition = $"AND {columnName} = ANY(@parentIds)";
                 }
             }
 
@@ -391,9 +412,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            if (!string.IsNullOrEmpty(additionalCondition))
+            if (!string.IsNullOrEmpty(additionalCondition) && parentIds is not null)
             {
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentId", NpgsqlDbType.Integer) { Value = parentId!.Value });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds.ToArray() });
             }
 
             return await ReadAsync_AdministrativeAreal2DReference(npgsqlCommand, cancellationToken);
@@ -572,6 +593,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             string additionalCondition = string.Empty;
+            HashSet<int>? parentIds = null;
 
             if (parentId.HasValue)
             {
@@ -600,7 +622,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (columnName is not null)
                 {
-                    additionalCondition = $"AND {columnName} = @parentId";
+                    if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
+                    {
+                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
+                    }
+
+                    if (parentIds is null || parentIds.Count == 0)
+                    {
+                        parentIds = [parentId.Value];
+                    }
+
+                    additionalCondition = $"AND {columnName} = ANY(@parentIds)";
                 }
             }
 
@@ -616,9 +648,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Explicit typing for parameters
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            if (!string.IsNullOrEmpty(additionalCondition))
+            if (!string.IsNullOrEmpty(additionalCondition) && parentIds is not null)
             {
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentId", NpgsqlDbType.Integer) { Value = parentId!.Value });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds.ToArray() });
             }
 
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
