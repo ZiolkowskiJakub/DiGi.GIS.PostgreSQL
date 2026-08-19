@@ -4406,6 +4406,66 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total row count as a long\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(int, CancellationToken\) Method
+
+Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit=100, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of duplicate references to return\. Defaults to 100\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a list of [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') instances if any duplicates exist; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int limit=100, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of duplicate references to return\. Defaults to 100\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a list of [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') instances if any duplicates exist; otherwise, null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
@@ -4621,6 +4681,54 @@ A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotne
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D') objects if matches are found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(NpgsqlConnection, CancellationToken\) Method
+
+Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(Npgsql.NpgsqlConnection,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetReferenceUniquenessSummaryAsync\(CancellationToken\) Method
+
+Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if connection fails\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions,System.IProgress_long_,System.Threading.CancellationToken)'></a>
 
@@ -5842,6 +5950,261 @@ The timeout in seconds for the execution of the command\. A value of 0 disables 
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.HashSet&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1') of [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64') identifiers for the objects that were updated, or `null` if no updates occurred\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate'></a>
+
+## Building2DReferenceDuplicate Class
+
+Represents duplicate building reference collisions across counties\.
+
+```csharp
+public class Building2DReferenceDuplicate : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DReferenceDuplicate
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate)'></a>
+
+## Building2DReferenceDuplicate\(Building2DReferenceDuplicate\) Constructor
+
+Initializes a new instance of the [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') class by copying an existing one\.
+
+```csharp
+public Building2DReferenceDuplicate(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate? building2DReferenceDuplicate);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate).building2DReferenceDuplicate'></a>
+
+`building2DReferenceDuplicate` [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')
+
+The [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') instance to copy\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(string,long,System.Collections.Generic.IEnumerable_int_)'></a>
+
+## Building2DReferenceDuplicate\(string, long, IEnumerable\<int\>\) Constructor
+
+Initializes a new instance of the [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') class\.
+
+```csharp
+public Building2DReferenceDuplicate(string? reference, long count, System.Collections.Generic.IEnumerable<int>? countyIds);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(string,long,System.Collections.Generic.IEnumerable_int_).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The duplicated reference identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(string,long,System.Collections.Generic.IEnumerable_int_).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The total number of occurrences across counties\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(string,long,System.Collections.Generic.IEnumerable_int_).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of county identifiers where this reference appears\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DReferenceDuplicate\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DReferenceDuplicate(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Building2DReferenceDuplicate(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Count'></a>
+
+## Building2DReferenceDuplicate\.Count Property
+
+Gets the total number of occurrences across counties\.
+
+```csharp
+public long Count { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.CountyIds'></a>
+
+## Building2DReferenceDuplicate\.CountyIds Property
+
+Gets the collection of county identifiers where this reference appears\.
+
+```csharp
+public System.Collections.Generic.List<int>? CountyIds { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate.Reference'></a>
+
+## Building2DReferenceDuplicate\.Reference Property
+
+Gets the duplicated reference identifier\.
+
+```csharp
+public string? Reference { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary'></a>
+
+## Building2DReferenceUniquenessSummary Class
+
+Represents overall building reference uniqueness metrics across all partitions\.
+
+```csharp
+public class Building2DReferenceUniquenessSummary : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DReferenceUniquenessSummary
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary)'></a>
+
+## Building2DReferenceUniquenessSummary\(Building2DReferenceUniquenessSummary\) Constructor
+
+Initializes a new instance of the [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') class by copying an existing one\.
+
+```csharp
+public Building2DReferenceUniquenessSummary(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary? building2DReferenceUniquenessSummary);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary).building2DReferenceUniquenessSummary'></a>
+
+`building2DReferenceUniquenessSummary` [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')
+
+The [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') instance to copy\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(long,long,long,bool)'></a>
+
+## Building2DReferenceUniquenessSummary\(long, long, long, bool\) Constructor
+
+Initializes a new instance of the [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') class\.
+
+```csharp
+public Building2DReferenceUniquenessSummary(long totalCount, long distinctReferenceCount, long duplicateReferenceCount, bool isUnique);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(long,long,long,bool).totalCount'></a>
+
+`totalCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The total number of building rows\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(long,long,long,bool).distinctReferenceCount'></a>
+
+`distinctReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of distinct reference identifiers\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(long,long,long,bool).duplicateReferenceCount'></a>
+
+`duplicateReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of duplicate building rows across all counties\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(long,long,long,bool).isUnique'></a>
+
+`isUnique` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean value indicating whether all building references are globally unique\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DReferenceUniquenessSummary\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DReferenceUniquenessSummary(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.Building2DReferenceUniquenessSummary(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.DistinctReferenceCount'></a>
+
+## Building2DReferenceUniquenessSummary\.DistinctReferenceCount Property
+
+Gets the number of distinct reference identifiers\.
+
+```csharp
+public long DistinctReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.DuplicateReferenceCount'></a>
+
+## Building2DReferenceUniquenessSummary\.DuplicateReferenceCount Property
+
+Gets the number of duplicate building rows across all counties\.
+
+```csharp
+public long DuplicateReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.IsUnique'></a>
+
+## Building2DReferenceUniquenessSummary\.IsUnique Property
+
+Gets a value indicating whether all building references are globally unique\.
+
+```csharp
+public bool IsUnique { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary.TotalCount'></a>
+
+## Building2DReferenceUniquenessSummary\.TotalCount Property
+
+Gets the total number of building rows\.
+
+```csharp
+public long TotalCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter'></a>
 
 ## BuildingDataPostgreSQLConverter Class
@@ -5904,42 +6267,42 @@ public override string TableName { get; }
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 ### Methods
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
 
-## BuildingDataPostgreSQLConverter\.GetAggregateSummaryAsync\(string, MultivalueAggregateFunction, int, string, FilterGroup\) Method
+## BuildingDataPostgreSQLConverter\.GetAggregateSummaryAsync\(string, MultivalueAggregateFunction, Nullable\<int\>, string, FilterGroup\) Method
 
-Asynchronously computes multi\-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters\.
+Asynchronously computes multi\-value aggregate statistics on a specific building data column inside a county partition or across all partitions, applying optional dynamic filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction multivalueAggregateFunction, int countyId, string? separator=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
+public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction multivalueAggregateFunction, System.Nullable<int> countyId=null, string? separator=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
 
 `columnUniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier of the column to aggregate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).multivalueAggregateFunction'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).multivalueAggregateFunction'></a>
 
 `multivalueAggregateFunction` [DiGi\.PostgreSQL\.Table\.Enums\.MultivalueAggregateFunction](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.multivalueaggregatefunction 'DiGi\.PostgreSQL\.Table\.Enums\.MultivalueAggregateFunction')
 
 The multi\-value aggregate calculation function\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The partition county identifier\.
+The optional partition county identifier\. If null, aggregation is performed across all partitions\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).separator'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).separator'></a>
 
 `separator` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The optional custom string delimiter; if null, it is automatically detected\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,int,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.MultivalueAggregateFunction,System.Nullable_int_,string,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
 
 `filterGroup` [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
 
@@ -5949,36 +6312,36 @@ The optional dynamic hierarchical filters to apply prior to aggregation\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the async operation, returning the aggregate result as a [System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,int,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
 
-## BuildingDataPostgreSQLConverter\.GetAggregateSummaryAsync\(string, SinglevalueAggregateFunction, int, FilterGroup\) Method
+## BuildingDataPostgreSQLConverter\.GetAggregateSummaryAsync\(string, SinglevalueAggregateFunction, Nullable\<int\>, FilterGroup\) Method
 
-Asynchronously computes single\-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters\.
+Asynchronously computes single\-value aggregate statistics on a specific building data column inside a county partition or across all partitions, applying optional dynamic filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction singlevalueAggregateFunction, int countyId, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
+public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction singlevalueAggregateFunction, System.Nullable<int> countyId=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
 
 `columnUniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier of the column to aggregate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).singlevalueAggregateFunction'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).singlevalueAggregateFunction'></a>
 
 `singlevalueAggregateFunction` [DiGi\.PostgreSQL\.Table\.Enums\.SinglevalueAggregateFunction](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.singlevalueaggregatefunction 'DiGi\.PostgreSQL\.Table\.Enums\.SinglevalueAggregateFunction')
 
 The single\-value aggregate calculation function\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The partition county identifier\.
+The optional partition county identifier\. If null, aggregation is performed across all partitions\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetAggregateSummaryAsync(string,DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
 
 `filterGroup` [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
 
@@ -5988,36 +6351,36 @@ The optional dynamic hierarchical filters to apply prior to aggregation\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the async operation, returning the aggregate result as a [System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,int,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup)'></a>
 
-## BuildingDataPostgreSQLConverter\.GetHistogramSummaryAsync\(string, int, int, FilterGroup\) Method
+## BuildingDataPostgreSQLConverter\.GetHistogramSummaryAsync\(string, int, Nullable\<int\>, FilterGroup\) Method
 
-Asynchronously generates a value distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters\.
+Asynchronously generates a value distribution histogram for a specific building data column inside a county partition or across all partitions, applying optional dynamic filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int countyId, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
+public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, System.Nullable<int> countyId=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).columnUniqueId'></a>
 
 `columnUniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier of the column to aggregate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).bucketCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).bucketCount'></a>
 
 `bucketCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The total number of buckets to segment the value range into\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).countyId'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The partition county identifier\.
+The optional partition county identifier\. If null, histogram is generated across all partitions\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,int,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup).filterGroup'></a>
 
 `filterGroup` [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
 

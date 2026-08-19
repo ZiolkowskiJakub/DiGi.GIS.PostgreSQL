@@ -349,14 +349,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters.
+        /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition or across all partitions, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="singlevalueAggregateFunction">The single-value aggregate calculation function.</param>
-        /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="countyId">The optional partition county identifier. If null, aggregation is performed across all partitions.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, SinglevalueAggregateFunction singlevalueAggregateFunction, int countyId, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, SinglevalueAggregateFunction singlevalueAggregateFunction, int? countyId = null, FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -365,24 +365,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             await npgsqlConnection_Db.OpenAsync();
 
-            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(
-                npgsqlConnection_Db,
-                columnUniqueId,
-                singlevalueAggregateFunction,
-                countyId,
-                filterGroup);
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, singlevalueAggregateFunction, countyId, filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously computes multi-value aggregate statistics on a specific building data column inside a county partition, applying optional dynamic filters.
+        /// Asynchronously computes multi-value aggregate statistics on a specific building data column inside a county partition or across all partitions, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="multivalueAggregateFunction">The multi-value aggregate calculation function.</param>
-        /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="countyId">The optional partition county identifier. If null, aggregation is performed across all partitions.</param>
         /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, MultivalueAggregateFunction multivalueAggregateFunction, int countyId, string? separator = null, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, MultivalueAggregateFunction multivalueAggregateFunction, int? countyId = null, string? separator = null, FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -391,24 +386,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             await npgsqlConnection_Db.OpenAsync();
 
-            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(
-                npgsqlConnection_Db,
-                columnUniqueId,
-                multivalueAggregateFunction,
-                countyId,
-                separator,
-                filterGroup);
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, multivalueAggregateFunction, countyId, separator, filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters.
+        /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition or across all partitions, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
         /// <param name="bucketCount">The total number of buckets to segment the value range into.</param>
-        /// <param name="countyId">The partition county identifier.</param>
+        /// <param name="countyId">The optional partition county identifier. If null, histogram is generated across all partitions.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to generating the histogram.</param>
         /// <returns>A task representing the async operation, returning the histogram aggregate result as a <see cref="System.Text.Json.Nodes.JsonArray"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int countyId, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int? countyId = null, FilterGroup? filterGroup = null)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -417,12 +406,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             await npgsqlConnection_Db.OpenAsync();
 
-            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(
-                npgsqlConnection_Db,
-                columnUniqueId,
-                bucketCount,
-                countyId,
-                filterGroup);
+            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, bucketCount, countyId, filterGroup);
         }
     }
 }

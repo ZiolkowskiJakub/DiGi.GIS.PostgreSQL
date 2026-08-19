@@ -1,4 +1,4 @@
-﻿using DiGi.Core;
+using DiGi.Core;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
@@ -1796,6 +1796,118 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the query.</param>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a list of <see cref="Building2DReferenceDuplicate"/> instances if any duplicates exist; otherwise, null.</returns>
+        public static async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(NpgsqlConnection? npgsqlConnection, int limit = 100, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandText = $@"
+                SELECT reference, COUNT(*) AS count, ARRAY_AGG(county_id ORDER BY county_id) AS county_ids
+                FROM {Constants.TableName.Building2D}
+                GROUP BY reference
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC
+                LIMIT @limit;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("limit", limit);
+
+            List<Building2DReferenceDuplicate> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                string? reference = npgsqlDataReader.IsDBNull(0) ? null : npgsqlDataReader.GetString(0);
+                long count = npgsqlDataReader.IsDBNull(1) ? 0 : npgsqlDataReader.GetInt64(1);
+                int[]? countyIds = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetFieldValue<int[]>(2);
+
+                result.Add(new Building2DReferenceDuplicate(reference, count, countyIds));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending.
+        /// </summary>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a list of <see cref="Building2DReferenceDuplicate"/> instances if any duplicates exist; otherwise, null.</returns>
+        public async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit = 100, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetDuplicateReferencesAsync(npgsqlConnection, limit, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the query.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a <see cref="Building2DReferenceUniquenessSummary"/> object containing total, distinct, and duplicate metrics; or null if the connection is null.</returns>
+        public static async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandText = $@"
+                SELECT
+                    COUNT(*) AS total_count,
+                    COUNT(DISTINCT reference) AS distinct_count
+                FROM {Constants.TableName.Building2D};";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            if (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                long totalCount = npgsqlDataReader.IsDBNull(0) ? 0 : npgsqlDataReader.GetInt64(0);
+                long distinctReferenceCount = npgsqlDataReader.IsDBNull(1) ? 0 : npgsqlDataReader.GetInt64(1);
+                long duplicateReferenceCount = totalCount - distinctReferenceCount;
+                bool isUnique = duplicateReferenceCount == 0;
+
+                return new Building2DReferenceUniquenessSummary(totalCount, distinctReferenceCount, duplicateReferenceCount, isUnique);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
+        /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a <see cref="Building2DReferenceUniquenessSummary"/> object containing total, distinct, and duplicate metrics; or null if connection fails.</returns>
+        public async Task<Building2DReferenceUniquenessSummary?> GetReferenceUniquenessSummaryAsync(CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetReferenceUniquenessSummaryAsync(npgsqlConnection, cancellationToken);
         }
     }
 }

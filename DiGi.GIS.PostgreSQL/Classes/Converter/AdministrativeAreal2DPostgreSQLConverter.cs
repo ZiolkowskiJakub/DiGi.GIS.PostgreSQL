@@ -497,7 +497,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     county_id,       -- index 7
                     municipality_id  -- index 8
                 FROM {TableName.AdministrativeAreal2D}
-                WHERE id = ANY(@ids)";
+                WHERE id = ANY(@ids)
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -598,7 +599,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
-                WHERE type_id = @typeId {additionalCondition};";
+                WHERE type_id = @typeId {additionalCondition}
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -818,7 +820,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
-                WHERE id = ANY(@ids);";
+                WHERE id = ANY(@ids)
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -1440,7 +1443,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
-                WHERE type_id = @typeId;";
+                WHERE type_id = @typeId
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -1607,7 +1611,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
-                {(noFilter ? "" : "WHERE code = ANY(@codes)")};";
+                {(noFilter ? "" : "WHERE code = ANY(@codes)")}
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
@@ -1647,7 +1652,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string commandText = $@"
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
-                {(noFilter ? "" : "WHERE id = ANY(@ids)")};";
+                {(noFilter ? "" : "WHERE id = ANY(@ids)")}
+                ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
