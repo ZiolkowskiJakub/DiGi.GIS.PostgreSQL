@@ -193,6 +193,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<AdministrativeAreal2DReferencePath> result = [];
             foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences)
             {
+                if (administrativeAreal2DReference is null)
+                {
+                    continue;
+                }
+
                 List<int> ids = administrativeAreal2DReference.GetIds();
                 if (ids is null)
                 {
@@ -203,7 +208,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 foreach (int id in ids)
                 {
-                    administrativeAreal2DReferences_Temp.Add(dictionary[id] ?? new AdministrativeAreal2DReference());
+                    if (dictionary.TryGetValue(id, out AdministrativeAreal2DReference? administrativeAreal2DReference_Temp) && administrativeAreal2DReference_Temp is not null)
+                    {
+                        administrativeAreal2DReferences_Temp.Add(administrativeAreal2DReference_Temp);
+                    }
                 }
 
                 result.Add(new AdministrativeAreal2DReferencePath(administrativeAreal2DReferences_Temp));
@@ -1305,6 +1313,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, id, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of reference paths for the specified collection of administrative areal 2D references.
+        /// </summary>
+        /// <param name="administrativeAreal2DReferences">The collection of <see cref="AdministrativeAreal2DReference"/> objects for which paths are retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReferencePath"/> objects if successful; otherwise, null.</returns>
+        public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsAsync(IEnumerable<AdministrativeAreal2DReference> administrativeAreal2DReferences, CancellationToken cancellationToken = default)
+        {
+            if (administrativeAreal2DReferences is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
         }
 
         /// <summary>
