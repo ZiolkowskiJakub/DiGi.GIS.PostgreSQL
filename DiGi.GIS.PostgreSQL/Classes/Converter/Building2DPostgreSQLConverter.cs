@@ -1491,7 +1491,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         min_y = EXCLUDED.min_y,
                         max_x = EXCLUDED.max_x,
                         max_y = EXCLUDED.max_y,
-                        subdivision_id = EXCLUDED.subdivision_id,
+                        subdivision_id = COALESCE(EXCLUDED.subdivision_id, {Constants.TableName.Building2D}.subdivision_id),
                         object = EXCLUDED.object
                     RETURNING id;");
 
