@@ -1188,13 +1188,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves an administrative areal 2D based on the specified code.
+        /// Asynchronously retrieves an administrative areal 2D based on the specified code and optional type.
         /// </summary>
         /// <param name="code">The unique string code of the administrative areal 2D.</param>
+        /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the search results.</param>
+        /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2D"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code)
+        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByCodesAsync([code]);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, cancellationToken);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;
