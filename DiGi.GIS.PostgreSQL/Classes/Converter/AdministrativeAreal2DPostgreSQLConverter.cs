@@ -437,7 +437,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
             if (ids is null)
             {
                 return null;
@@ -448,27 +448,36 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
-            if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of administrative areal 2D references belonging to a parent identified by the specified parent code, filtered by the target administrative areal type.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="parentCode">The identification code of the parent administrative areal.</param>
+        /// <param name="administrativeArealType">The target child <see cref="AdministrativeArealType"/> to filter the results by.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if found; otherwise, null or an empty list.</returns>
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(NpgsqlConnection? npgsqlConnection, string parentCode, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(parentCode) || npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<int>? parentIds = await GetIdsByCodeAsync(npgsqlConnection, parentCode, null, null, cancellationToken);
+            if (parentIds is null)
+            {
+                return null;
+            }
+
+            if (parentIds.Count == 0)
             {
                 return [];
             }
 
-            List<AdministrativeAreal2DReference> result = [];
-
-            IEnumerable<IGrouping<AdministrativeArealType, AdministrativeAreal2DReference>> groupings = administrativeAreal2DReferences.GroupBy(x => x.AdministrativeArealType);
-            foreach (IGrouping<AdministrativeArealType, AdministrativeAreal2DReference> grouping in groupings)
-            {
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, grouping.ToList().ConvertAll(x => x.Id), false, cancellationToken);
-                if (administrativeAreal2DReferences_Temp is null)
-                {
-                    continue;
-                }
-
-                result.AddRange(administrativeAreal2DReferences_Temp);
-            }
-
-            return result;
+            return await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, parentIds, false, cancellationToken);
         }
 
         /// <summary>
@@ -1386,6 +1395,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetAdministrativeAreal2DReferencesByCodeAsync(npgsqlConnection, code, administrativeArealType, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of administrative areal 2D references belonging to a parent identified by the specified parent code, filtered by the target administrative areal type.
+        /// </summary>
+        /// <param name="parentCode">The identification code of the parent administrative areal.</param>
+        /// <param name="administrativeArealType">The target child <see cref="AdministrativeArealType"/> to filter the results by.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if matches are found; otherwise, null or an empty list.</returns>
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(string parentCode, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(parentCode))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return [];
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetAdministrativeAreal2DReferencesByParentCodeAsync(npgsqlConnection, parentCode, administrativeArealType, cancellationToken);
         }
 
         /// <summary>
