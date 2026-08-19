@@ -1650,7 +1650,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (tuples_Area.Count != 0)
                 {
-                    tuples_Area.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+                    tuples_Area.Sort((x, y) =>
+                    {
+                        int result = y.Item2.CompareTo(x.Item2);
+                        return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
+                    });
 
                     return tuples_Area[0].Item1.Id;
                 }
@@ -1689,7 +1693,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (tuples_Area.Count != 0)
             {
-                tuples_Area.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+                tuples_Area.Sort((x, y) =>
+                {
+                    int result = y.Item2.CompareTo(x.Item2);
+                    return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
+                });
 
                 return tuples_Area[0].Item1.Id;
             }
