@@ -655,6 +655,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets AdministrativeAreal2D for given AdministrativeArealTypes (Iterative way). It will iterate in order through Country, Voivodeship, County, Municipality to reduce number of objects. BoundingBox2D in range Country check, then Voivodeship in this specific Country etc..
+        /// <para><b>An empty level does not end the search.</b> The levels below it are searched against the last level that did answer, because a level can be missing from the source data rather than from the area: m. Poznan (<c>3064</c>) holds no <c>gmina</c> feature in BDOT10k at all, so its 113 subdivisions hang off the county. Stopping at the first empty level returned nothing whatsoever - not even a subdivision - for every query inside a city of 82 075 buildings, which is also how <see cref="Building2DPostgreSQLConverter"/> came back empty there. See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/15.</para>
+        /// <para>The narrowing still assumes a unit sits inside its ancestor, which holds for this data with rare exceptions: the settlement layer (<c>OT_ADMS_A</c>) and the division layer (<c>OT_ADJA_A</c>) are digitised independently, so a handful of settlements fall marginally outside their own municipality.</para>
         /// </summary>
         /// <param name="npgsqlConnection">NpgsqlConnection</param>
         /// <param name="boundingBox2D">BoundingBox2D</param>
@@ -682,6 +684,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<int> excludedIds = [];
             HashSet<int> parentIds = [];
+
+            // The level parentIds were read from, which is not always the level directly above the one
+            // being searched. m. Poznan (3064) holds no gmina feature in BDOT10k at all, so a search
+            // inside the city finds nothing at Municipality and its subdivisions have to be reached from
+            // the county instead. Stopping at the first empty level answered nothing at all for every
+            // query inside a city of 82 075 buildings.
+            // See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/15.
+            AdministrativeArealType administrativeArealType_Parent = AdministrativeArealType.Undefined;
+
             foreach (AdministrativeArealType administrativeArealType in AdministrativeAreal2DPostgreSQLConverter.administrativeArealTypes)
             {
                 if ((int)administrativeArealType > maxIndex)
@@ -689,11 +700,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     break;
                 }
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(npgsqlConnection, searchMinX, searchMinY, searchMaxX, searchMaxY, administrativeArealType, parentIds, excludedIds, cancellationToken);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(
+                    npgsqlConnection,
+                    searchMinX,
+                    searchMinY,
+                    searchMaxX,
+                    searchMaxY,
+                    administrativeArealType,
+                    administrativeArealType_Parent,
+                    parentIds,
+                    excludedIds,
+                    cancellationToken);
+
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
-                    break;
+                    // An empty level is a gap in the source data, not the end of the search, so the levels
+                    // below it are still searched against the last level that did answer. Country is the
+                    // exception: with nothing found there, there is no ancestor to search against at all.
+                    if (administrativeArealType == AdministrativeArealType.Country)
+                    {
+                        break;
+                    }
+
+                    continue;
                 }
+
+                administrativeArealType_Parent = administrativeArealType;
 
                 parentIds.Clear();
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
@@ -1666,6 +1698,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a list of administrative areas that contain or are near the specified 2D point, filtered by the provided administrative area types and within the given tolerance.
+        /// <para>Levels are searched from Country downwards, each narrowed to the children of the last level that answered. <b>An empty level does not end the search</b> - see <see cref="GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection, Geometry.Planar.Classes.BoundingBox2D, System.Collections.Generic.IEnumerable{AdministrativeArealType}, double, CancellationToken)"/> for why m. Poznan makes that necessary.</para>
         /// </summary>
         /// <param name="point2D">The 2D point used to search for administrative areas. If this value is null, the method returns null.</param>
         /// <param name="administrativeArealTypes">An optional collection of administrative area types to filter the results.</param>
@@ -1699,6 +1732,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<int> excludedIds = [];
             HashSet<int> parentIds = [];
+
+            // The level parentIds were read from - see the note on the bounding box search above, which
+            // steps over an empty level the same way and for the same reason.
+            AdministrativeArealType administrativeArealType_Parent = AdministrativeArealType.Undefined;
+
             foreach (AdministrativeArealType administrativeArealType in AdministrativeAreal2DPostgreSQLConverter.administrativeArealTypes)
             {
                 if ((int)administrativeArealType > maxIndex)
@@ -1706,11 +1744,28 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     break;
                 }
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(npgsqlConnection, searchMinX, searchMinY, searchMaxX, searchMaxY, administrativeArealType, parentIds, excludedIds);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(
+                    npgsqlConnection,
+                    searchMinX,
+                    searchMinY,
+                    searchMaxX,
+                    searchMaxY,
+                    administrativeArealType,
+                    administrativeArealType_Parent,
+                    parentIds,
+                    excludedIds);
+
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
-                    break;
+                    if (administrativeArealType == AdministrativeArealType.Country)
+                    {
+                        break;
+                    }
+
+                    continue;
                 }
+
+                administrativeArealType_Parent = administrativeArealType;
 
                 parentIds.Clear();
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
@@ -2009,6 +2064,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously refreshes the administrative areal 2D data within the PostgreSQL database.
+        /// <para>Every row's parent chain (<c>country_id</c> / <c>voivodeship_id</c> / <c>county_id</c> / <c>municipality_id</c>) is cleared and rebuilt, so a re-run repairs whatever the previous one got wrong. Parents are searched one administrative level at a time, nearest level first, and the walk stops at the first level that yields a match - a row whose own level directly above holds no parent is filed under the nearest ancestor that does. Matching within a level, including its majority-overlap fallback, is <see cref="Modify.UpdateIds(AdministrativeAreal2D, System.Collections.Generic.IEnumerable{AdministrativeAreal2D}, double)"/>.</para>
+        /// <para>At each level the candidates are first narrowed to the rows the row's own <c>code</c> names (<see cref="Query.AdministrativeCodeKey(string, AdministrativeArealType)"/>), and geometry only chooses between those - a code names several rows when a unit's territory is disconnected. Geometry alone is not enough: it silently files a row under whichever neighbour's bounding box happens to be the only one holding the sample point.</para>
+        /// <para>Real BDOT10k data needs all three. Poznan (<c>3064</c>) has no <c>gmina</c> feature at all, so its subdivisions have no Municipality to match; a handful of settlements sit in a gap between municipality polygons; and before this every one of Poznan's 113 subdivisions was wrong - 87 with a null chain (https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/14) and 26 filed under county <c>3021</c>, along with 10 more rows elsewhere in the country (https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/15).</para>
         /// </summary>
         /// <param name="postgreSQLAdministrativeAreal2DRefreshOptions">The options used to configure the refresh process. If null, a new instance of <see cref="PostgreSQLAdministrativeAreal2DRefreshOptions"/> is initialized.</param>
         /// <param name="progress">The provider for reporting the progress of the refresh operation as a long value.</param>
@@ -2019,6 +2077,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             postgreSQLAdministrativeAreal2DRefreshOptions ??= new PostgreSQLAdministrativeAreal2DRefreshOptions();
 
             Dictionary<AdministrativeArealType, List<AdministrativeAreal2D>?> dictionary = [];
+
+            // Each loaded level is also indexed by the code slice naming it, so a row searching for a
+            // parent looks up the handful of rows its own code names instead of scanning the level.
+            Dictionary<AdministrativeArealType, Dictionary<string, List<AdministrativeAreal2D>>> dictionary_Code = [];
 
             List<AdministrativeArealType> administrativeArealTypes = [.. Enum.GetValues<AdministrativeArealType>().Cast<AdministrativeArealType>()];
             administrativeArealTypes.Remove(AdministrativeArealType.Undefined);
@@ -2044,106 +2106,89 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (i != 0)
                     {
-                        AdministrativeArealType administrativeArealType_Previous = (AdministrativeArealType)(i - 1);
-
-                        List<AdministrativeAreal2D>? administrativeAreal2Ds_Previous = dictionary[administrativeArealType_Previous];
-                        if (administrativeAreal2Ds_Previous != null && administrativeAreal2Ds_Previous.Count != 0)
+                        foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
                         {
-                            foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
+                            if (cancellationToken.IsCancellationRequested)
                             {
-                                if (cancellationToken.IsCancellationRequested)
+                                break;
+                            }
+
+                            totalUpdated++;
+                            progress?.Report(totalUpdated);
+
+                            // Levels are searched nearest-first and the walk stops at the first one that
+                            // yields a parent. Searching only the level directly above is not enough:
+                            // Poznan (3064) has no gmina feature in BDOT10k at all, so its subdivisions
+                            // have no Municipality to match and would keep every parent id null.
+                            // See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/14.
+                            for (int j = i - 1; j >= 0; j--)
+                            {
+                                AdministrativeArealType administrativeArealType_Parent = administrativeArealTypes[j];
+
+                                List<AdministrativeAreal2D>? administrativeAreal2Ds_Parent;
+
+                                if (Query.AdministrativeCodeKey(administrativeAreal2D_Current.Code, administrativeArealType_Parent) is string key)
+                                {
+                                    // The row's own code names its ancestor at this level, so only the rows
+                                    // that code names are eligible - geometry still chooses between them
+                                    // when the code names several polygon parts. Without this a row can be
+                                    // filed under a neighbour whose bounding box happens to be the only one
+                                    // holding the sample point, which is how every one of Poznan's 113
+                                    // subdivisions ended up either unparented or under county 3021.
+                                    // See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/15.
+                                    if (!dictionary_Code[administrativeArealType_Parent].TryGetValue(key, out administrativeAreal2Ds_Parent))
+                                    {
+                                        // The code names no row at this level - a city with no gmina feature
+                                        // of its own - so the answer is at the level above, not here.
+                                        continue;
+                                    }
+                                }
+                                else
+                                {
+                                    // Country carries no code relation, so it stays a plain geometric search.
+                                    administrativeAreal2Ds_Parent = dictionary[administrativeArealType_Parent];
+                                }
+
+                                if (administrativeAreal2Ds_Parent is null || administrativeAreal2Ds_Parent.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                if (Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Parent, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance))
                                 {
                                     break;
                                 }
-
-                                totalUpdated++;
-                                progress?.Report(totalUpdated);
-
-                                if (administrativeAreal2D_Current.BoundingBox2D?.GetCentroid() is not Point2D point2D)
-                                {
-                                    continue;
-                                }
-
-                                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D_GIS_Current = null;
-
-                                List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                                if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
-                                {
-                                    administrativeAreal2D_GIS_Current = administrativeAreal2D_Current.ToDiGi();
-                                    if (administrativeAreal2D_GIS_Current is null)
-                                    {
-                                        continue;
-                                    }
-
-                                    point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
-
-                                    administrativeAreal2Ds_Filtered = administrativeAreal2Ds_Previous.FindAll(x => x.BoundingBox2D!.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                                }
-
-                                if (administrativeAreal2Ds_Filtered is null || administrativeAreal2Ds_Filtered.Count == 0)
-                                {
-                                    continue;
-                                }
-
-                                if (administrativeAreal2Ds_Filtered.Count == 1)
-                                {
-                                    Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered[0]);
-                                    continue;
-                                }
-
-                                if (administrativeAreal2D_Current.BoundingBox2D?.GetPoints() is not List<Point2D> point2Ds || point2Ds.Count == 0)
-                                {
-                                    continue;
-                                }
-
-                                List<AdministrativeAreal2D>? administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered.FindAll(x => point2Ds.TrueForAll(y => x.BoundingBox2D!.InRange(y, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance)));
-                                if (administrativeAreal2Ds_Filtered_Temp is not null)
-                                {
-                                    if (administrativeAreal2Ds_Filtered_Temp.Count == 1)
-                                    {
-                                        Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp[0]);
-                                        continue;
-                                    }
-
-                                    administrativeAreal2Ds_Filtered_Temp = administrativeAreal2Ds_Filtered;
-                                }
-
-                                if (administrativeAreal2D_GIS_Current is null)
-                                {
-                                    administrativeAreal2D_GIS_Current = administrativeAreal2D_Current.ToDiGi();
-                                    if (administrativeAreal2D_GIS_Current is null)
-                                    {
-                                        continue;
-                                    }
-                                }
-
-                                point2D = administrativeAreal2D_GIS_Current?.PolygonalFace2D?.GetInternalPoint() ?? point2D;
-
-                                List<GIS.Classes.AdministrativeAreal2D?> administrativeAreal2Ds_GIS_Filtered = administrativeAreal2Ds_Filtered_Temp!.ConvertAll(x => x.ToDiGi());
-
-                                List<GIS.Classes.AdministrativeAreal2D?>? administrativeAreal2Ds_GIS_Filtered_Temp = administrativeAreal2Ds_GIS_Filtered.FindAll(x => x?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, postgreSQLAdministrativeAreal2DRefreshOptions.Tolerance));
-                                administrativeAreal2Ds_GIS_Filtered_Temp?.RemoveAll(x => x?.PolygonalFace2D is null);
-
-                                if (administrativeAreal2Ds_GIS_Filtered_Temp is null || administrativeAreal2Ds_GIS_Filtered_Temp.Count == 0)
-                                {
-                                    continue;
-                                }
-
-                                if (administrativeAreal2Ds_GIS_Filtered_Temp.Count == 1)
-                                {
-                                    Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
-                                    continue;
-                                }
-
-                                administrativeAreal2Ds_GIS_Filtered_Temp.Sort((x, y) => x!.PolygonalFace2D!.GetArea().CompareTo(y!.PolygonalFace2D!.GetArea()));
-
-                                Modify.UpdateIds(administrativeAreal2D_Current, administrativeAreal2Ds_Filtered_Temp.Find(x => x.Reference == administrativeAreal2Ds_GIS_Filtered_Temp[0]?.Reference));
                             }
                         }
                     }
                 }
 
                 dictionary[administrativeArealType] = administrativeAreal2Ds_Current;
+
+                // Indexed by the slice of the row's own code that names this level, which is exactly the
+                // slice a row one level down computes from its own code - Query.AdministrativeCodeKey is
+                // both sides of the join.
+                Dictionary<string, List<AdministrativeAreal2D>> dictionary_Code_Current = [];
+                if (administrativeAreal2Ds_Current is not null)
+                {
+                    foreach (AdministrativeAreal2D administrativeAreal2D_Current in administrativeAreal2Ds_Current)
+                    {
+                        if (Query.AdministrativeCodeKey(administrativeAreal2D_Current.Code, administrativeArealType) is not string key)
+                        {
+                            continue;
+                        }
+
+                        if (!dictionary_Code_Current.TryGetValue(key, out List<AdministrativeAreal2D>? administrativeAreal2Ds_Key))
+                        {
+                            administrativeAreal2Ds_Key = [];
+                            dictionary_Code_Current[key] = administrativeAreal2Ds_Key;
+                        }
+
+                        administrativeAreal2Ds_Key.Add(administrativeAreal2D_Current);
+                    }
+                }
+
+                dictionary_Code[administrativeArealType] = dictionary_Code_Current;
             }
 
             List<AdministrativeAreal2D> administrativeAreal2Ds = [];
@@ -2380,7 +2425,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             };
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(NpgsqlConnection? npgsqlConnection, double searchMinX, double searchMinY, double searchMaxX, double searchMaxY, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, CancellationToken cancellationToken = default)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2D_NoObjectAsync(
+            NpgsqlConnection? npgsqlConnection,
+            double searchMinX,
+            double searchMinY,
+            double searchMaxX,
+            double searchMaxY,
+            AdministrativeArealType administrativeArealType,
+            AdministrativeArealType administrativeArealType_Parent,
+            HashSet<int> parentIds,
+            HashSet<int> excludedIds,
+            CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -2421,7 +2476,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            string? parentIdColumnName = Query.ParentIdColumnName(administrativeArealType);
+            // Filtered against whichever ancestor the caller actually matched, which is not the level
+            // directly above wherever a level is missing from the source data.
+            string? parentIdColumnName = Query.IdColumnName(administrativeArealType_Parent);
             if (string.IsNullOrWhiteSpace(parentIdColumnName))
             {
                 return [];
@@ -2526,7 +2583,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(NpgsqlConnection? npgsqlConnection, double searchMinX, double searchMinY, double searchMaxX, double searchMaxY, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, CancellationToken cancellationToken = default)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2D_NoObjectAsync(
+            NpgsqlConnection? npgsqlConnection,
+            double searchMinX,
+            double searchMinY,
+            double searchMaxX,
+            double searchMaxY,
+            AdministrativeArealType administrativeArealType,
+            AdministrativeArealType administrativeArealType_Parent,
+            HashSet<int> parentIds,
+            HashSet<int> excludedIds,
+            CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -2567,7 +2634,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            string? parentIdColumnName = Query.ParentIdColumnName(administrativeArealType);
+            // Filtered against whichever ancestor the caller actually matched, which is not the level
+            // directly above wherever a level is missing from the source data.
+            string? parentIdColumnName = Query.IdColumnName(administrativeArealType_Parent);
             if (string.IsNullOrWhiteSpace(parentIdColumnName))
             {
                 return [];

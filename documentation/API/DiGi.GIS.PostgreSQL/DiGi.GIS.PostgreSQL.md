@@ -848,6 +848,43 @@ The source AdministrativeAreal2D object containing the new identification values
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 True if the IDs were successfully updated; otherwise, false if either the destination or source object is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateIds(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double)'></a>
+
+## Modify\.UpdateIds\(this AdministrativeAreal2D, IEnumerable\<AdministrativeAreal2D\>, double\) Method
+
+Finds the parent of the destination administrative areal object among the given sources by geometry, and updates its identification properties from that parent\.
+
+The sources are expected to be one administrative level, and all of it - the search is by geometry, not by an existing identifier. A source is chosen by containment of a sample point taken from the destination (its bounding box centroid, falling back to an internal point of its polygon); where several sources contain that point, the smallest of them wins as the most specific.
+
+When no source contains the point, the destination is assigned to the source covering the <b>majority of its own area</b> instead. The BDOT10k settlement layer (`OT_ADMS_A`) and the administrative-division layer (`OT_ADJA_A`) are digitised independently, so a handful of settlements sit just outside every municipality polygon and their sample point lands in a gap. Requiring a majority - rather than any overlap - leaves a destination whose level genuinely holds no parent unassigned, so the caller can search the next level up instead of filing it under a neighbour it merely shares a border with. Full account: https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/14.
+
+```csharp
+public static bool UpdateIds(this DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D? administrativeAreal2D_Destination, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds_Source, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateIds(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double).administrativeAreal2D_Destination'></a>
+
+`administrativeAreal2D_Destination` [AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')
+
+The destination AdministrativeAreal2D object to be updated\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateIds(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double).administrativeAreal2Ds_Source'></a>
+
+`administrativeAreal2Ds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The candidate source AdministrativeAreal2D objects, one administrative level, to be searched for a parent\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateIds(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance used by the containment checks\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True if a parent was found and the IDs were updated; otherwise, false\.
+
 <a name='DiGi.GIS.PostgreSQL.Modify.Update_Id(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_)'></a>
 
 ## Modify\.Update\_Id\(this Table, IEnumerable\<Building2DReference\>\) Method
@@ -946,6 +983,39 @@ The GIS administrative division type\.
 #### Returns
 [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')  
 The corresponding [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.AdministrativeCodeKey(string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
+
+## Query\.AdministrativeCodeKey\(string, AdministrativeArealType\) Method
+
+Gets the leading slice of an administrative code that names its ancestor at the given administrative areal type\.
+
+A code carries the whole chain above it: the first 2 characters name the voivodeship, the first 4 the county, and the first 6 the municipality. The 7th character of a municipality code is the gmina <i>type</i> digit - a town and the rural area of one urban-rural gmina carry `4` and `5` against the gmina's own `3` - so the municipality slice is 6 characters, not the whole code. Verified against the stored table: every one of the 100 354 subdivision rows carries a 7-character code whose 4-character prefix is an existing county code, and 99.72% of the rows that already resolved agree with their municipality at 6 characters.
+
+Returns [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') for [Country](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Country 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country'), which has no such relation - every country row's code is `10`, which is also the voivodeship code of łódzkie, so slicing 2 characters there would match one voivodeship's chain rather than the country. A caller that gets [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') has no code constraint to apply and must fall back to searching the whole level.
+
+<b>A code is not a key.</b> 18 county codes and 64 municipality codes name several rows, one per polygon part, so a slice identifies a <i>set</i> of candidate rows and geometry still has to choose between them. See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/1.
+
+```csharp
+public static string? AdministrativeCodeKey(string? code, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.AdministrativeCodeKey(string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The administrative code to slice\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.AdministrativeCodeKey(string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).administrativeArealType'></a>
+
+`administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+
+The administrative areal type of the ancestor being named\.
+
+#### Returns
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
+The leading slice of [code](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.AdministrativeCodeKey(string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).code 'DiGi\.GIS\.PostgreSQL\.Query\.AdministrativeCodeKey\(string, DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\)\.code') naming the ancestor, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the type has no code relation or the code is too short to reach it\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.Building(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,DiGi.Geometry.Spatial.Classes.Point3D,double)'></a>
 
@@ -1077,6 +1147,29 @@ The distance tolerance used for the containment and overlap tests\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
 The identifier of the county row the building belongs to, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it cannot be decided\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.IdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
+
+## Query\.IdColumnName\(this AdministrativeArealType\) Method
+
+Gets the name of the database column that stores the identifier of an administrative area of the given type\.
+
+This is the column to filter on when the ancestor being matched is known outright, which is not always the level directly above the rows being read - see [ParentIdColumnName\(this AdministrativeArealType\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ParentIdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType) 'DiGi\.GIS\.PostgreSQL\.Query\.ParentIdColumnName\(this DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\)') for the relative form.
+
+```csharp
+public static string? IdColumnName(this DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.IdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).administrativeArealType'></a>
+
+`administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+
+The type of the administrative area whose identifier is stored\.
+
+#### Returns
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
+The name of the column holding an identifier of that type, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when no column stores one \- nothing references a Subdivision\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.IdsByPoint2Ds(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,System.Collections.Generic.IReadOnlyList_DiGi.Geometry.Planar.Classes.Point2D_,double)'></a>
 
 ## Query\.IdsByPoint2Ds\(this IDictionary\<int,PolygonalFace2D\>, IReadOnlyList\<Point2D\>, double\) Method
@@ -1185,6 +1278,8 @@ The parent administrative areal type, or `null` if no parent exists \(e\.g\., fo
 ## Query\.ParentIdColumnName\(this AdministrativeArealType\) Method
 
 Gets the name of the database column that stores the identifier of the parent administrative area for a given administrative areal type\.
+
+This is the column of the level <b>directly above</b>. A search that has to step over an empty level - m. Poznan holds no `gmina` feature, so its subdivisions hang off the county - knows which ancestor it matched and should use [IdColumnName\(this AdministrativeArealType\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.IdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType) 'DiGi\.GIS\.PostgreSQL\.Query\.IdColumnName\(this DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\)') with that type instead.
 
 ```csharp
 public static string? ParentIdColumnName(this DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType);
