@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
 using System.Threading;
@@ -20,7 +20,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Gets the configuration for the PostgreSQL operation.
         /// These options will be used when RunAsync is triggered.
         /// </summary>
-        public PostgreSQLBuilding2DRefreshOptions PostgreSQLBuilding2DRefreshOptions { get; set; } = new PostgreSQLBuilding2DRefreshOptions() { OverrideExistingSubdivisionIds = false };
+        public PostgreSQLBuilding2DRefreshOptions PostgreSQLBuilding2DRefreshOptions { get; set; } = new PostgreSQLBuilding2DRefreshOptions() { OverrideExistingSubdivisionIds = true };
 
         /// <summary>
         /// Constructor with Dependency Injection.
