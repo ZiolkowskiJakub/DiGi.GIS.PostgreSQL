@@ -1118,7 +1118,9 @@ Picks which of the candidate county rows a 2D building belongs to, by geometry\.
 
 A county code names one row per polygon part, so a code can only narrow the field - this is what decides. Candidates are tried in three steps: the parts whose polygon the footprint lies in, else the nearest part, and where several parts contain it the one it overlaps most.
 
-Every comparison breaks ties on the row identifier, so two runs over the same building cannot disagree. Returns [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when nothing can be decided - the caller is expected to leave such a building unwritten rather than file it under a guess.
+Where several parts cover the footprint <b>whole</b>, the smallest of them wins. Overlap cannot separate candidates that each hold every square metre of the building, so without this the answer would fall to the lowest identifier - a property of import order rather than of geography. The smallest is the most specific area containing it.
+
+Every remaining comparison breaks ties on the row identifier, so two runs over the same building cannot disagree. Returns [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when nothing can be decided - the caller is expected to leave such a building unwritten rather than file it under a guess.
 
 ```csharp
 public static System.Nullable<int> CountyId(this System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds, DiGi.Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D, double tolerance=0.001);

@@ -473,11 +473,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
         
         /// <summary>
         /// Asynchronously updates a collection of <see cref="Building"/> records in the PostgreSQL database.
+        /// <para>A building that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{Building}, IEnumerable{int}, double)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
         /// </summary>
         /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
         /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
         public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        {
+            return await UpdateAsync(buildings, (IEnumerable<int>?)null, tolerance);
+        }
+
+        /// <summary>
+        /// Asynchronously updates a collection of <see cref="Building"/> records in the PostgreSQL database, resolving the county of a building that names none from the given candidate rows.
+        /// <para>County assignment runs in three tiers, in descending reliability:</para>
+        /// <para>1. the building's own county identifier - already names the row, nothing to infer.</para>
+        /// <para>2. <paramref name="countyIds"/> - a county code names one row per polygon part, so the caller can state the county without stating the part. A single candidate resolves outright; several only narrow the field and are handed to tier 3.</para>
+        /// <para>3. geometry - <see cref="Query.CountyId(IDictionary{int, Geometry.Planar.Interfaces.IPolygonal2D}, Geometry.Planar.Interfaces.IPolygonal2D, double)"/> decides which candidate the building lies in, is nearest to, or overlaps most. With no candidates the field is every county its bounding box overlaps, which is both slower and wider than narrowing first.</para>
+        /// <para>The building is tested as the rectangle of its <see cref="Building.BoundingBox3D"/> in X and Y: a <see cref="CityGML.Classes.Building"/> carries no footprint, and county parts lie kilometres apart, so the rectangle and a true footprint can only disagree for a building sitting on a part boundary.</para>
+        /// </summary>
+        /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
+        /// <param name="countyIds">The candidate county rows a building with no county of its own may be filed under. Null or empty searches every county overlapping the building instead.</param>
+        /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
         {
             if (buildings is null)
             {
@@ -506,6 +524,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return new PostgreSQLUpdateResult(ids, rejections);
             }
 
+            List<int> countyIds_Candidate = countyIds is null ? [] : [.. new HashSet<int>(countyIds)];
+
+            // Derived once for the whole batch: a part's polygon is the same for every building tested
+            // against it, and deriving one deserializes a county-sized geometry. Left null while there is
+            // nothing to choose between, so a single candidate costs no polygon at all.
+            Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_ByCountyId = null;
+            if (countyIds_Candidate.Count > 1)
+            {
+                polygonal2Ds_ByCountyId = (await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Candidate)).Polygonal2DsByCountyId();
+            }
+
             Dictionary<int, List<Building>> dictionary_Buildings = [];
 
             foreach (Building building_Temp in buildings)
@@ -522,99 +551,40 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (countyId is null || !countyId.HasValue)
                 {
-                    BoundingBox3D? boundingBox3D = building_Temp.BoundingBox3D;
-                    if (boundingBox3D is null)
+                    if (countyIds_Candidate.Count == 1)
                     {
-                        // No county was named and there is no geometry to infer one from, so resolution
-                        // never even starts. A defect in the posted payload, unlike the tiers below.
-                        rejections.Add(new Rejection(building_Temp.Reference, Enums.UpdateRejectionReason.MissingGeometry));
-                        continue;
+                        countyId = countyIds_Candidate[0];
                     }
-
-                    BoundingBox2D? boundingBox2D = new(
-                        new Point2D(boundingBox3D.MinX, boundingBox3D.MinY),
-                        new Point2D(boundingBox3D.MaxX, boundingBox3D.MaxY));
-
-                    List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
-                    if (administrativeAreal2Ds != null)
+                    else
                     {
-                        int count = administrativeAreal2Ds.Count;
-                        if (count == 1)
+                        BoundingBox3D? boundingBox3D = building_Temp.BoundingBox3D;
+                        if (boundingBox3D is null)
                         {
-                            countyId = administrativeAreal2Ds[0].Id;
+                            // No county was named and there is no geometry to infer one from, so resolution
+                            // never even starts. A defect in the posted payload, unlike the tiers below.
+                            rejections.Add(new Rejection(building_Temp.Reference, Enums.UpdateRejectionReason.MissingGeometry));
+                            continue;
                         }
-                        else if (count > 1)
+
+                        BoundingBox2D boundingBox2D = new(new Point2D(boundingBox3D.MinX, boundingBox3D.MinY), new Point2D(boundingBox3D.MaxX, boundingBox3D.MaxY));
+
+                        Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D = (Polygon2D?)boundingBox2D;
+
+                        if (polygonal2Ds_ByCountyId is not null)
                         {
-                            List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2D = administrativeAreal2Ds.ConvertAll(x => new Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>(x, x.ToDiGi()?.PolygonalFace2D?.ExternalEdge));
-                            tuples_AdministrativeAreal2D.RemoveAll(x => x?.Item2 is null);
-
-                            if (tuples_AdministrativeAreal2D.Count == 1)
+                            countyId = polygonal2Ds_ByCountyId.CountyId(polygonal2D, tolerance);
+                        }
+                        else
+                        {
+                            // The bounding box path answers a different candidate set per building, so there
+                            // is nothing to cache across them.
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                            if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
                             {
-                                countyId = tuples_AdministrativeAreal2D[0].Item1.Id;
-                            }
-                            else if (count > 1)
-                            {
-                                List<Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?>> tuples_AdministrativeAreal2_Temp = tuples_AdministrativeAreal2D.FindAll(x => x.Item2!.InRange(boundingBox2D, tolerance));
-                                if (tuples_AdministrativeAreal2_Temp.Count == 0)
-                                {
-                                    List<Tuple<AdministrativeAreal2D, double>> tuples_Distance = [];
-                                    foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2D)
-                                    {
-                                        Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
-
-                                        double distance = Geometry.Planar.Query.Distance(boundingBox2D, polygonal2D_AdministrativeAreal2D, out _, out _, tolerance);
-
-                                        tuples_Distance.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, distance));
-                                    }
-
-                                    if (tuples_Distance.Count != 0)
-                                    {
-                                        tuples_Distance.Sort((x, y) => x.Item2.CompareTo(y.Item2));
-
-                                        countyId = tuples_Distance[0].Item1.Id;
-                                    }
-                                }
-                                else if (tuples_AdministrativeAreal2_Temp.Count == 1)
-                                {
-                                    countyId = tuples_AdministrativeAreal2_Temp[0].Item1.Id;
-                                }
-                                else
-                                {
-                                    if ((Polygon2D?)boundingBox2D is Polygon2D polygon2D)
-                                    {
-                                        List<Tuple<AdministrativeAreal2D, double>> tuples_Area = [];
-                                        foreach (Tuple<AdministrativeAreal2D, Geometry.Planar.Interfaces.IPolygonal2D?> tuple in tuples_AdministrativeAreal2_Temp)
-                                        {
-                                            Geometry.Planar.Interfaces.IPolygonal2D polygonal2D_AdministrativeAreal2D = tuple.Item2!;
-
-                                            List<Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection<Geometry.Planar.Interfaces.IPolygonal2D, Geometry.Planar.Interfaces.IPolygonal2D>([polygonal2D_AdministrativeAreal2D, polygon2D], tolerance);
-
-                                            double area = 0;
-                                            if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
-                                            {
-                                                area = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
-                                            }
-
-                                            if (area <= tolerance)
-                                            {
-                                                continue;
-                                            }
-
-                                            tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
-                                        }
-
-                                        if (tuples_Area.Count != 0)
-                                        {
-                                            tuples_Area.Sort((x, y) =>
-                                            {
-                                                int result = y.Item2.CompareTo(x.Item2);
-                                                return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
-                                            });
-
-                                            countyId = tuples_Area[0].Item1.Id;
-                                        }
-                                    }
-                                }
+                                // A single overlapping county is taken as it stands: the bounding box search
+                                // already proved the overlap from the stored extents, so a row whose geometry
+                                // cannot be deserialized must not cost the building its only candidate.
+                                countyId = administrativeAreal2Ds.Count == 1 ? administrativeAreal2Ds[0].Id : administrativeAreal2Ds.CountyId(polygonal2D, tolerance);
                             }
                         }
                     }

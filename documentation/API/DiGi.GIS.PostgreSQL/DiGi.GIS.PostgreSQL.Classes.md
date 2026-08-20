@@ -7604,6 +7604,8 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously updates a collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records in the PostgreSQL database\.
 
+A building that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use [UpdateAsync\(IEnumerable&lt;Building&gt;, IEnumerable&lt;int&gt;, double\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.UpdateAsync\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building\>, System\.Collections\.Generic\.IEnumerable\<int\>, double\)') and hand over the parts - it narrows the field before the geometry runs.
+
 ```csharp
 public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building>? buildings, double tolerance=0.001);
 ```
@@ -7616,6 +7618,49 @@ public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateR
 The collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records to be updated or inserted\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The tolerance to use for spatial classification if county ID is missing\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double)'></a>
+
+## BuildingPostgreSQLConverter\.UpdateAsync\(IEnumerable\<Building\>, IEnumerable\<int\>, double\) Method
+
+Asynchronously updates a collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records in the PostgreSQL database, resolving the county of a building that names none from the given candidate rows\.
+
+County assignment runs in three tiers, in descending reliability:
+
+1. the building's own county identifier - already names the row, nothing to infer.
+
+2. [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.UpdateAsync\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building\>, System\.Collections\.Generic\.IEnumerable\<int\>, double\)\.countyIds') - a county code names one row per polygon part, so the caller can state the county without stating the part. A single candidate resolves outright; several only narrow the field and are handed to tier 3.
+
+3. geometry - [CountyId\(this IDictionary&lt;int,IPolygonal2D&gt;, IPolygonal2D, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyId\(this System\.Collections\.Generic\.IDictionary\<int,DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D\>, DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D, double\)') decides which candidate the building lies in, is nearest to, or overlaps most. With no candidates the field is every county its bounding box overlaps, which is both slower and wider than narrowing first.
+
+The building is tested as the rectangle of its [BoundingBox3D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building.BoundingBox3D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building\.BoundingBox3D') in X and Y: a [DiGi\.CityGML\.Classes\.Building](https://learn.microsoft.com/en-us/dotnet/api/digi.citygml.classes.building 'DiGi\.CityGML\.Classes\.Building') carries no footprint, and county parts lie kilometres apart, so the rectangle and a true footprint can only disagree for a building sitting on a part boundary.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building>? buildings, System.Collections.Generic.IEnumerable<int>? countyIds, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double).buildings'></a>
+
+`buildings` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [Building](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building 'DiGi\.GIS\.PostgreSQL\.Classes\.Building') records to be updated or inserted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The candidate county rows a building with no county of its own may be filed under\. Null or empty searches every county overlapping the building instead\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,System.Collections.Generic.IEnumerable_int_,double).tolerance'></a>
 
 `tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
@@ -8509,6 +8554,8 @@ A task that represents the asynchronous operation\. The task result contains a l
 
 Asynchronously updates the data based on the provided orthodata and tolerance\.
 
+An entry that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use [UpdateAsync\(IEnumerable&lt;OrtoDatas&gt;, IEnumerable&lt;int&gt;, double\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.UpdateAsync\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas\>, System\.Collections\.Generic\.IEnumerable\<int\>, double\)') and hand over the parts - it narrows the field before the geometry runs.
+
 ```csharp
 public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.OrtoDatas>? ortoDatas, double tolerance=0.001);
 ```
@@ -8521,6 +8568,47 @@ public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateR
 A nullable enumerable collection of [OrtoDatas](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatas 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas') to be processed for the update\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+A double\-precision floating\-point number representing the distance tolerance used during the update process\. Defaults to [DiGi\.Core\.Constants\.Tolerance\.MacroDistance](https://learn.microsoft.com/en-us/dotnet/api/digi.core.constants.tolerance.macrodistance 'DiGi\.Core\.Constants\.Tolerance\.MacroDistance')\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double)'></a>
+
+## OrtoDatasPostgreSQLConverter\.UpdateAsync\(IEnumerable\<OrtoDatas\>, IEnumerable\<int\>, double\) Method
+
+Asynchronously updates the data based on the provided orthodata and tolerance, resolving the county of an entry that names none from the given candidate rows\.
+
+County assignment runs in three tiers, in descending reliability:
+
+1. the entry's own county identifier - already names the row, nothing to infer.
+
+2. [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.UpdateAsync\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas\>, System\.Collections\.Generic\.IEnumerable\<int\>, double\)\.countyIds') - a county code names one row per polygon part, so the caller can state the county without stating the part. A single candidate resolves outright; several only narrow the field and are handed to tier 3.
+
+3. geometry - [CountyId\(this IDictionary&lt;int,IPolygonal2D&gt;, IPolygonal2D, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyId\(this System\.Collections\.Generic\.IDictionary\<int,DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D\>, DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D, double\)') decides which candidate the entry lies in, is nearest to, or overlaps most. With no candidates the field is every county its bounding box overlaps, which is both slower and wider than narrowing first.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult?> UpdateAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.OrtoDatas>? ortoDatas, System.Collections.Generic.IEnumerable<int>? countyIds, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double).ortoDatas'></a>
+
+`ortoDatas` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[OrtoDatas](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatas 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A nullable enumerable collection of [OrtoDatas](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatas 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatas') to be processed for the update\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The candidate county rows an entry with no county of its own may be filed under\. Null or empty searches every county overlapping the entry instead\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,System.Collections.Generic.IEnumerable_int_,double).tolerance'></a>
 
 `tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
