@@ -1023,13 +1023,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Retrieves full building data based on a collection of references using optimized UNNEST batching.
         /// </summary>
         /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform an additional fallback query matching by reference only (without county identifier condition) for any references not found in the initial search.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, or null if the input collection was null.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference> building2DReferences, int commandTimeout = 30)
+        public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30)
         {
-            if (building2DReferences == null || !building2DReferences.Any())
+            if (building2DReferences == null)
             {
-                return building2DReferences == null ? null : [];
+                return null;
+            }
+
+            List<Building2DReference> building2DReferences_List = [.. building2DReferences];
+            if (building2DReferences_List.Count == 0)
+            {
+                return [];
             }
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -1040,8 +1047,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            string[] references = [.. building2DReferences.Select(l => l.Reference ?? string.Empty)];
-            int?[] countyIds = [.. building2DReferences.Select(l => l.CountyId)];
+            string[] references = [.. building2DReferences_List.Select(l => l.Reference ?? string.Empty)];
+            int?[] countyIds = [.. building2DReferences_List.Select(l => l.CountyId)];
 
             // Optimized query using UNNEST to perform a join against the input collection
             const string commandText = $@"
@@ -1052,16 +1059,70 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             List<Building2D> result = [];
 
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.CommandTimeout = commandTimeout;
-            npgsqlCommand.Parameters.AddWithValue("refs", references);
-            npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
-
-            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            await using (NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection))
             {
-                // Using the central mapping method to ensure consistency
-                result.Add(Create_Building2D(reader));
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.AddWithValue("refs", references);
+                npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
+
+                await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    // Using the central mapping method to ensure consistency
+                    result.Add(Create_Building2D(reader));
+                }
+            }
+
+            if (fallbackByReference)
+            {
+                HashSet<string> foundCountyReferencePairs = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference)).Select(b => $"{b.CountyId}_{b.Reference}")];
+                HashSet<string> foundReferences = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference)).Select(b => b.Reference!)];
+
+                HashSet<string> missingReferences = [];
+                foreach (Building2DReference building2DReference in building2DReferences_List)
+                {
+                    if (string.IsNullOrWhiteSpace(building2DReference?.Reference))
+                    {
+                        continue;
+                    }
+
+                    bool found = building2DReference.CountyId.HasValue
+                        ? foundCountyReferencePairs.Contains($"{building2DReference.CountyId.Value}_{building2DReference.Reference}")
+                        : foundReferences.Contains(building2DReference.Reference);
+
+                    if (!found)
+                    {
+                        missingReferences.Add(building2DReference.Reference);
+                    }
+                }
+
+                if (missingReferences.Count > 0)
+                {
+                    string[] missingReferences_Array = [.. missingReferences];
+
+                    const string fallbackCommandText = $@"
+                        SELECT DISTINCT ON (input.ref)
+                               b.id, b.county_id, b.reference, b.code, b.min_x, b.min_y, b.max_x, b.max_y, b.subdivision_id, b.object, b.created_at
+                        FROM UNNEST(@missingRefs) AS input(ref)
+                        INNER JOIN {Constants.TableName.Building2D} b ON b.reference = input.ref
+                        ORDER BY input.ref, b.id ASC;";
+
+                    await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
+                    fallbackCommand.CommandTimeout = commandTimeout;
+                    fallbackCommand.Parameters.AddWithValue("missingRefs", missingReferences_Array);
+
+                    HashSet<long> existingIds = [.. result.Select(b => b.Id)];
+
+                    await using NpgsqlDataReader fallbackReader = await fallbackCommand.ExecuteReaderAsync();
+                    while (await fallbackReader.ReadAsync())
+                    {
+                        Building2D building2D = Create_Building2D(fallbackReader);
+                        if (existingIds.Add(building2D.Id))
+                        {
+                            result.Add(building2D);
+                        }
+                    }
+                }
             }
 
             return result;

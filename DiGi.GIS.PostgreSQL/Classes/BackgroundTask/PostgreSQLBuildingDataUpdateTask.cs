@@ -119,7 +119,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout);
+                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout: commandTimeout);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {

@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -196,7 +196,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout);
+                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout: commandTimeout);
                     if (building2Ds is null || building2Ds.Count == 0)
                     {
                         continue;
