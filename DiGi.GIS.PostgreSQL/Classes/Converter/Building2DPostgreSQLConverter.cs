@@ -100,16 +100,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            // Filter references by the county partition key, optionally narrowing to the given subdivisions.
-            const string commandText = $@"
+            int[]? subdivisionIds_Array = subdivisionIds?.ToArray();
+            bool hasSubdivisionIds = subdivisionIds_Array != null && subdivisionIds_Array.Length > 0;
+
+            string commandText = $@"
                 SELECT id, county_id, reference, subdivision_id
                 FROM {Constants.TableName.Building2D}
-                WHERE county_id = @county_id
-                    AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL);";
+                WHERE county_id = @county_id{(hasSubdivisionIds ? " AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)" : "")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("county_id", countyId);
-            npgsqlCommand.Parameters.AddWithValue("subdivision_ids", subdivisionIds?.ToArray() as object ?? DBNull.Value);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+            if (hasSubdivisionIds)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds_Array });
+            }
 
             return await ReadAsync_Building2DReference(npgsqlCommand, cancellationToken);
         }
@@ -511,14 +515,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 double searchMaxX = point2D.X + tolerance;
                 double searchMaxY = point2D.Y + tolerance;
 
-                const string commandText = $@"
-                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                    FROM {Constants.TableName.Building2D}
-                    WHERE county_id = @countyId
-                        AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId OR subdivision_id IS NULL)
-                        AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
-                    ORDER BY id ASC;";
-
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds_Temp)
                 {
                     if (administrativeAreal2D is null)
@@ -539,13 +535,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         ? administrativeAreal2D.Id
                         : null;
 
+                    string commandText = $@"
+                        SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                        FROM {Constants.TableName.Building2D}
+                        WHERE county_id = @countyId
+                            {(subdivisionId.HasValue ? "AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)" : "")}
+                            AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
+                        ORDER BY id ASC;";
+
                     await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                    npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
-                    npgsqlCommand.Parameters.AddWithValue("subdivisionId", subdivisionId as object ?? DBNull.Value);
-                    npgsqlCommand.Parameters.AddWithValue("searchMinX", searchMinX);
-                    npgsqlCommand.Parameters.AddWithValue("searchMinY", searchMinY);
-                    npgsqlCommand.Parameters.AddWithValue("searchMaxX", searchMaxX);
-                    npgsqlCommand.Parameters.AddWithValue("searchMaxY", searchMaxY);
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+                    if (subdivisionId.HasValue)
+                    {
+                        npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = subdivisionId.Value });
+                    }
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
 
                     List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
                     if (results is null || results.Count == 0)
