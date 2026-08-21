@@ -358,7 +358,7 @@ namespace DiGi.GIS.PostgreSQL
 
         /// <summary>
         /// Asynchronously creates the Building 2D Referenced Object table for the specified table name.
-        /// <para>The two constraints carry the addressing convention described on <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/>. <c>UNIQUE (county_id, unique_id)</c> makes one <b>stored object</b> the unit of a row, and the absence of any constraint on <c>(county_id, reference)</c> is deliberate: a building may hold several rows here, so writes append rather than replace.</para>
+        /// <para>The two constraints carry the addressing convention described on <see cref="Building2DReferencedObject{TUniqueObject}"/>. <c>UNIQUE (county_id, unique_id)</c> makes one <b>stored object</b> the unit of a row, and the absence of any constraint on <c>(county_id, reference)</c> is deliberate: a building may hold several rows here, so writes append rather than replace.</para>
         /// <para>Do not add a unique constraint on <c>(county_id, reference)</c> to stop the table growing on re-runs. It would reduce the table to one row per building and discard every record after the first. The plain index created on that pair is not a constraint and places no such restriction on what may be stored.</para>
         /// <para>Indexes: <c>(county_id, reference)</c> is the primary access path and every read filters on it, so it carries an index. <c>(county_id, unique_id)</c> carries none of its own, because the <c>UNIQUE</c> constraint is already an index on exactly those columns in that order.</para>
         /// </summary>

@@ -13,7 +13,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Provides a base implementation for a PostgreSQL converter specifically designed for building 2D referenced objects.
-    /// <para>Rows are addressed at two levels - <c>(county_id, reference)</c> for everything held for a building, <c>unique_id</c> for one stored object within that set - and a building may hold several rows. <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> describes the convention in full; it decides which of the read and remove methods below is the right one for a given job.</para>
+    /// <para>Rows are addressed at two levels - <c>(county_id, reference)</c> for everything held for a building, <c>unique_id</c> for one stored object within that set - and a building may hold several rows. <see cref="Building2DReferencedObject{TUniqueObject}"/> describes the convention in full; it decides which of the read and remove methods below is the right one for a given job.</para>
     /// </summary>
     /// <typeparam name="TBuilding2DReferencedObject">The type of the building 2D referenced object.</typeparam>
     /// <typeparam name="TUniqueObject">The type of the unique object used for identification, which must implement the <see cref="IUniqueObject"/> interface.</typeparam>
@@ -914,7 +914,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously updates the specified collection of building 2D referenced objects.
-        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync(IEnumerable{string}?, int?, CancellationToken)"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
+        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync(IEnumerable{string}?, int?, CancellationToken)"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
         /// </summary>
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
