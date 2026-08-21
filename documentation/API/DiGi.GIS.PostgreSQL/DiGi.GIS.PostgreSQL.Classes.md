@@ -10484,6 +10484,32 @@ private const int commandTimeout = 600;
 
 #### Field Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.count_Point2Ds_Unresolved_Logged'></a>
+
+## PostgreSQLTerrainPointCreateTableTask\.count\_Point2Ds\_Unresolved\_Logged Field
+
+The most unresolved coordinates named in a single log entry, so one bad tile cannot fill the log\.
+
+```csharp
+private const int count_Point2Ds_Unresolved_Logged = 20;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.count_Point2Ds_Unresolved_Maximum'></a>
+
+## PostgreSQLTerrainPointCreateTableTask\.count\_Point2Ds\_Unresolved\_Maximum Field
+
+The most unresolved coordinates kept in memory for the caller\. The count is never capped, only the list\.
+
+```csharp
+private const int count_Point2Ds_Unresolved_Maximum = 1000;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 ### Properties
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.FailedBatchCount'></a>
@@ -10500,6 +10526,23 @@ public long FailedBatchCount { get; private set; }
 
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.Point2Ds_Unresolved'></a>
+
+## PostgreSQLTerrainPointCreateTableTask\.Point2Ds\_Unresolved Property
+
+Gets the coordinates of the points the elevation service returned nothing for, up to the first thousand of them\.
+
+Counting them says a run lost something without saying what, and a point that was never answered for is indistinguishable afterwards from one that was never asked about - telling the two apart otherwise costs a full sweep of the county against the lattice. These are the coordinates to go back for.
+
+Capped, so a run that loses a great many does not hold them all. [UnresolvedPointCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.UnresolvedPointCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointCreateTableTask\.UnresolvedPointCount') is the true figure, and the log names them tile by tile.
+
+```csharp
+public System.Collections.Generic.IReadOnlyList<DiGi.Geometry.Planar.Classes.Point2D> Point2Ds_Unresolved { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.IReadOnlyList&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')[DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableTask.PointCount'></a>
 
@@ -10612,6 +10655,423 @@ The divisor, which has to be greater than zero\.
 #### Returns
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')  
 The quotient rounded towards negative infinity\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions Class
+
+Provides options for going back for the terrain points a sampling run left behind\.
+
+```csharp
+public class PostgreSQLTerrainPointFillGapsOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLTerrainPointFillGapsOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.PostgreSQLTerrainPointFillGapsOptions()'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLTerrainPointFillGapsOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions') class\.
+
+```csharp
+public PostgreSQLTerrainPointFillGapsOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.PostgreSQLTerrainPointFillGapsOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions)'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\(PostgreSQLTerrainPointFillGapsOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLTerrainPointFillGapsOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLTerrainPointFillGapsOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions postgreSQLTerrainPointFillGapsOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.PostgreSQLTerrainPointFillGapsOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions).postgreSQLTerrainPointFillGapsOptions'></a>
+
+`postgreSQLTerrainPointFillGapsOptions` [PostgreSQLTerrainPointFillGapsOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions')
+
+The source options instance to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.PostgreSQLTerrainPointFillGapsOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLTerrainPointFillGapsOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLTerrainPointFillGapsOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.PostgreSQLTerrainPointFillGapsOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the configuration settings\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.BatchSize'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.BatchSize Property
+
+Gets or sets how many missing nodes are asked for at once\.
+
+Every point is one request, and the elevation query holds a whole list in flight against [MaxConcurrentRequests](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.MaxConcurrentRequests 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions\.MaxConcurrentRequests') rather than dividing it up, so a county with a great many gaps is worked through a batch at a time.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.CountyIds'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.CountyIds Property
+
+Gets or sets the counties to repair, by identifier\. Null repairs every county\.
+
+Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier and its own subdivisions, so a code names several of them.
+
+```csharp
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.GridSize'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.GridSize Property
+
+Gets or sets the spacing of the lattice a county is measured against, in model units\.
+
+This has to be the spacing the county was actually sampled at, because it is what decides which nodes count as missing. Set finer than the county holds and every node in between reads as a gap, which turns a repair into a full densification of the country.
+
+The default of 100 is what the whole of the store presently sits on. Check with the density or coverage endpoints before changing it.
+
+```csharp
+public double GridSize { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.MaxConcurrentRequests'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.MaxConcurrentRequests Property
+
+Gets or sets how many elevation requests may be in flight at once\.
+
+```csharp
+public int MaxConcurrentRequests { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.OriginX'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.OriginX Property
+
+Gets or sets the X coordinate the lattice is anchored at\.
+
+Leave at zero, matching the sampling task. A different anchor describes a different lattice, on which every stored point is off grid and every node is missing.
+
+```csharp
+public double OriginX { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.OriginY'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.OriginY Property
+
+Gets or sets the Y coordinate the lattice is anchored at\.
+
+Leave at zero, for the reasons given on [OriginX](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.OriginX 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions\.OriginX').
+
+```csharp
+public double OriginY { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.RetryCount'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.RetryCount Property
+
+Gets or sets how many times a request the elevation service refused for a transient reason is sent again\.
+
+```csharp
+public int RetryCount { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.RetryDelayMilliseconds'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.RetryDelayMilliseconds Property
+
+Gets or sets the delay before the first retry, in milliseconds, doubling for each attempt after that\.
+
+```csharp
+public double RetryDelayMilliseconds { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.TileSize'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.TileSize Property
+
+Gets or sets the edge of one measuring tile, counted in lattice steps\.
+
+Governs only how the county is walked while its gaps are found, not how they are then filled. Matches the sampling task so that both walk the same tiles.
+
+```csharp
+public int TileSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.Tolerance'></a>
+
+## PostgreSQLTerrainPointFillGapsOptions\.Tolerance Property
+
+Gets or sets the distance tolerance\.
+
+Used both when deciding whether a node falls within an area and when matching a stored point to the node it belongs to. It is capped at half of [GridSize](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.GridSize 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions\.GridSize') while the task runs, so that a point can never be taken for its neighbour.
+
+```csharp
+public double Tolerance { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask'></a>
+
+## PostgreSQLTerrainPointFillGapsTask Class
+
+Represents a background task that goes back for the terrain points a sampling run left behind\.
+
+A run of tens of millions of single requests to a public service loses a few of them. The point is simply absent afterwards, and nothing in the run says which: the tallies count what went unanswered without naming it. Re-running the sampling task does recover them, but it pays to read back every tile of every county to find the handful that are short - hours of work to repair minutes of it.
+
+This asks the question directly instead. Each county is measured against the lattice by [GetCoverageByCountyIdAsync\(int, Dictionary&lt;int,PolygonalFace2D&gt;, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(int, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)') - the same comparison the coverage and gap endpoints report - and only the nodes it names are sampled. A county that is already complete costs the measurement and nothing else.
+
+The write is the ordinary one, which leaves points already stored as they are, so the task is idempotent and a run that was stopped can simply be repeated.
+
+What this cannot do is invent a spacing. [GridSize](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions.GridSize 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions\.GridSize') has to be the spacing the county was sampled at, or every node in between reads as a gap and the repair becomes a densification.
+
+```csharp
+public class PostgreSQLTerrainPointFillGapsTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLTerrainPointFillGapsTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PostgreSQLTerrainPointFillGapsTask(System.Net.Http.HttpClient,DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\(HttpClient, GISPostgreSQLConverterManager\) Constructor
+
+Constructor with Dependency Injection\.
+
+```csharp
+public PostgreSQLTerrainPointFillGapsTask(System.Net.Http.HttpClient? httpClient, DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager? gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PostgreSQLTerrainPointFillGapsTask(System.Net.Http.HttpClient,DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).httpClient'></a>
+
+`httpClient` [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient')
+
+The HTTP client used to reach the elevation service\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PostgreSQLTerrainPointFillGapsTask(System.Net.Http.HttpClient,DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS PostgreSQL converter manager used to read the areas and write the points\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.commandTimeout'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.commandTimeout Field
+
+Bulk reads over a whole county exceed the 30 second default; allow up to 10 minutes per statement\.
+
+```csharp
+private const int commandTimeout = 600;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.count_Point2Ds_Unresolved_Logged'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.count\_Point2Ds\_Unresolved\_Logged Field
+
+The most unresolved coordinates named in a single log entry, so one bad county cannot fill the log\.
+
+```csharp
+private const int count_Point2Ds_Unresolved_Logged = 20;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.count_Point2Ds_Unresolved_Maximum'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.count\_Point2Ds\_Unresolved\_Maximum Field
+
+The most unresolved coordinates kept in memory for the caller\. The count is never capped, only the list\.
+
+```csharp
+private const int count_Point2Ds_Unresolved_Maximum = 1000;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.FailedBatchCount'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.FailedBatchCount Property
+
+Gets the number of counties that failed outright and were stepped over\.
+
+Each one is logged with the exception that caused it, so this figure is a count of entries to go and read rather than the whole of what is known.
+
+```csharp
+public long FailedBatchCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.MissingCount'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.MissingCount Property
+
+Gets the number of nodes found to be missing across every county measured\.
+
+What the run set out to fill. [PointCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PointCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsTask\.PointCount') is what it managed, and [UnresolvedPointCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.UnresolvedPointCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsTask\.UnresolvedPointCount') is the difference the elevation service would not answer for.
+
+```csharp
+public long MissingCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.Point2Ds_Unresolved'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.Point2Ds\_Unresolved Property
+
+Gets the coordinates of the nodes the elevation service returned nothing for, up to the first thousand of them\.
+
+A node that stays unresolved through a repair is a different thing to one that was merely lost: the service has now been asked for it twice. These are the ones to look at by hand.
+
+```csharp
+public System.Collections.Generic.IReadOnlyList<DiGi.Geometry.Planar.Classes.Point2D> Point2Ds_Unresolved { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.IReadOnlyList&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')[DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1 'System\.Collections\.Generic\.IReadOnlyList\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PointCount'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.PointCount Property
+
+Gets the number of points the database accepted\.
+
+```csharp
+public long PointCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.PostgreSQLTerrainPointFillGapsOptions'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.PostgreSQLTerrainPointFillGapsOptions Property
+
+Gets the configuration for the PostgreSQL operation\.
+These options will be used when the task is started\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions PostgreSQLTerrainPointFillGapsOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLTerrainPointFillGapsOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointFillGapsOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.RejectionCount'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.RejectionCount Property
+
+Gets the number of points the database declined to store\.
+
+```csharp
+public long RejectionCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.UnresolvedPointCount'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.UnresolvedPointCount Property
+
+Gets the number of missing nodes the elevation service returned nothing for, even after the retries allowed\.
+
+```csharp
+public long UnresolvedPointCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLTerrainPointFillGapsTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task, measuring each county against the lattice and sampling only the nodes it is short of\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter carrying the running total of points stored\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointFillGapsTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true unless the run was cancelled\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions'></a>
 
@@ -11792,6 +12252,10 @@ Gets the number of points stored at exactly zero elevation\.
 
 Worth reading rather than ignoring: the terrain model answers `0` with a success status for a coordinate outside its coverage, and that parses as an elevation like any other. Such a point is recorded as stored rather than as unresolved, so a county straddling the border or the coast can hold a band of them, and this is the only figure that shows it.
 
+Measured against the deployed store on 2026-08-21: 52 222 of 33 377 776 points sit at exactly zero, across 50 of the 406 county partitions. Roughly a quarter of those are inland, clustered over standing water rather than lying along the edge of coverage. Tracked as issue #25.
+
+Not a list of rows to delete. Poland has terrain at and below sea level - 29 partitions report a negative [MinZ](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCountyResult.MinZ 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCountyResult\.MinZ') - so a stored zero cannot yet be told apart from ground that genuinely sits there, and this figure is an upper bound on what is spurious.
+
 ```csharp
 public long ZeroElevationCount { get; }
 ```
@@ -12500,6 +12964,93 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task whose result maps each county identifier to the number of points stored for it, or null when no connection could be opened\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(int, Dictionary\<int,PolygonalFace2D\>, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\) Method
+
+Compares the nodes of a lattice lying on a county's land against the points this table holds for it\.
+
+Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.
+
+The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again elsewhere would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled. This sits on the converter rather than in the Web API for that reason: the endpoint that reports a missing node and the task that goes back for it have to mean the same thing by it.
+
+The subdivision outlines are passed in rather than read here, because they live in a different database to the points.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(int countyId, System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D_Limit, double gridSize, DiGi.Geometry.Planar.Classes.Point2D? origin, double tolerance, int limit, long maximumNodeCount, int tileSize=128, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to measure\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')
+
+The outlines of the county's subdivisions, keyed by subdivision identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).boundingBox2D_Limit'></a>
+
+`boundingBox2D_Limit` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+An area to confine the measurement to, or null for the whole county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).origin'></a>
+
+`origin` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The point the lattice is anchored at\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a stored point may lie from a node and still be counted as that node\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates to carry back\. The counts themselves are never capped, only the list\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount'></a>
+
+`maximumNodeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The largest number of lattice nodes the request may generate, checked before a single node is built\. Values of zero or less do not cap it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tileSize'></a>
+
+`tileSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of lattice steps along a tile edge\. Matches the sampling task so that the two walk the same tiles\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each read of what a tile already holds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the input is unusable or the area and the lattice together exceed [maximumNodeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(int, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)\.maximumNodeCount')\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 

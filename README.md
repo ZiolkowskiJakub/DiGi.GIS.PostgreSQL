@@ -143,6 +143,40 @@ Reference types: `Classes/Building2DReferencedObject.cs` (the convention in full
 
 ---
 
+## ⚠️ Known Data Limitations
+
+### `terrain_point` — the elevation service no-data sentinel is stored as a measurement
+
+GUGiK NMT answers `0` with HTTP 200 for a coordinate it holds no terrain model for. `Query.ElevationAsync`
+parses that as a valid elevation and `PostgreSQLTerrainPointCreateTableTask` writes it, so a sentinel meaning
+*"no data here"* is indistinguishable from ground that genuinely sits at sea level.
+
+Measured against the deployed store on 2026-08-21:
+
+| | |
+|---|---|
+| Points at exactly `z = 0` | **52 222** of 33 377 776 (0.156 %) |
+| County partitions affected | 50 of 406 |
+| On the coast or a national border | 22 partitions, 37 555 zeros (72 %) — coverage genuinely ends there |
+| Fully inland | 28 partitions, 14 667 zeros (28 %) — tightly clustered over standing water |
+
+`TerrainPointCountyResult.ZeroElevationCount` (`gis/terrain/summariesbycountyids`) is the figure that surfaces
+it. Read it as an **upper bound on what is spurious, not a list of rows to delete** — 29 partitions report a
+negative `MinZ`, because Poland does have real terrain at and below sea level, so a blanket delete of `z = 0`
+would take genuine ground with it.
+
+Two consequences worth knowing before building on terrain data:
+
+* A served mesh renders a **flat plateau at sea level over water**, with a cliff around it, and it carries
+  vertices like any other surface.
+* Since the terrain mesher no longer leaves holes (it erodes only inwards from the boundary, so an absent
+  point is spanned rather than opened), this sentinel is the one remaining way "no data" reaches a consumer
+  while looking exactly like a measurement.
+
+Tracked in [#25](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/25).
+
+---
+
 ## 💻 Coding Guidelines for Developers & AI Agents
 
 To maintain codebase health, performance, and compatibility within Visual Studio 2026 / C# 10+ environments, all developers and AI agents must strictly comply with these guidelines.

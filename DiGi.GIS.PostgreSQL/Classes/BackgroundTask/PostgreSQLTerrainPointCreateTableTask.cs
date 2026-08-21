@@ -27,6 +27,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         private const int commandTimeout = 600;
 
+        /// <summary>
+        /// The most unresolved coordinates kept in memory for the caller. The count is never capped, only the list.
+        /// </summary>
+        private const int count_Point2Ds_Unresolved_Maximum = 1000;
+
+        /// <summary>
+        /// The most unresolved coordinates named in a single log entry, so one bad tile cannot fill the log.
+        /// </summary>
+        private const int count_Point2Ds_Unresolved_Logged = 20;
+
+        private readonly List<Point2D> point2Ds_Unresolved = [];
+
         protected readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         protected readonly HttpClient? httpClient;
@@ -70,6 +82,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <para>These are gaps in the terrain rather than points outside the sampled area. They are reported rather than gated on: a run of tens of millions of requests to a public service will meet a few, and treating that as a failed run says nothing about which points were missed. The log names the tile each one belongs to.</para>
         /// </summary>
         public long UnresolvedPointCount { get; private set; }
+
+        /// <summary>
+        /// Gets the coordinates of the points the elevation service returned nothing for, up to the first thousand of them.
+        /// <para>Counting them says a run lost something without saying what, and a point that was never answered for is indistinguishable afterwards from one that was never asked about - telling the two apart otherwise costs a full sweep of the county against the lattice. These are the coordinates to go back for.</para>
+        /// <para>Capped, so a run that loses a great many does not hold them all. <see cref="UnresolvedPointCount"/> is the true figure, and the log names them tile by tile.</para>
+        /// </summary>
+        public IReadOnlyList<Point2D> Point2Ds_Unresolved
+        {
+            get
+            {
+                return point2Ds_Unresolved;
+            }
+        }
         
         /// <summary>
         /// Executes the background task, sampling elevations county by county and writing them to the terrain point table.
@@ -81,6 +106,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             PointCount = 0;
             UnresolvedPointCount = 0;
+            point2Ds_Unresolved.Clear();
             RejectionCount = 0;
             FailedBatchCount = 0;
 
@@ -402,15 +428,51 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 }
 
                                 List<TerrainPoint> terrainPoints = [];
+                                List<Point2D> point2Ds_Unresolved_Tile = [];
                                 for (int i = 0; i < point3Ds.Count; i++)
                                 {
                                     if (point3Ds[i] is not Point3D point3D)
                                     {
                                         UnresolvedPointCount++;
+                                        point2Ds_Unresolved_Tile.Add(point2Ds_Kept[i]);
                                         continue;
                                     }
 
                                     terrainPoints.Add(new TerrainPoint(countyId, point3D, subdivisionIds_Kept[i]));
+                                }
+
+                                if (point2Ds_Unresolved_Tile.Count != 0)
+                                {
+                                    foreach (Point2D point2D_Unresolved in point2Ds_Unresolved_Tile)
+                                    {
+                                        if (point2Ds_Unresolved.Count >= count_Point2Ds_Unresolved_Maximum)
+                                        {
+                                            break;
+                                        }
+
+                                        point2Ds_Unresolved.Add(point2D_Unresolved);
+                                    }
+
+                                    List<string> texts = [];
+                                    foreach (Point2D point2D_Unresolved in point2Ds_Unresolved_Tile)
+                                    {
+                                        if (texts.Count >= count_Point2Ds_Unresolved_Logged)
+                                        {
+                                            texts.Add("...");
+                                            break;
+                                        }
+
+                                        texts.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0} {1}", point2D_Unresolved.X, point2D_Unresolved.Y));
+                                    }
+
+                                    // Named, not merely counted. Reconstructing which nodes a run missed costs a
+                                    // sweep of the whole county against the lattice, and without the coordinates
+                                    // there is nothing to distinguish a point the service refused from one that
+                                    // was never on the lattice to begin with.
+                                    Serilog.Modify.Log(
+                                        Serilog.Enums.LogEventLevel.Warning,
+                                        "Terrain points unresolved - county {CountyId}, block {BlockX}/{BlockY}, {UnresolvedCount} of {AskedCount} asked: {Point2Ds}",
+                                        countyId, block_X, block_Y, point2Ds_Unresolved_Tile.Count, point2Ds_Kept.Count, string.Join("; ", texts));
                                 }
 
                                 if (terrainPoints.Count == 0)
