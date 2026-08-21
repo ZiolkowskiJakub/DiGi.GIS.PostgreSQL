@@ -723,6 +723,49 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result is true if the partition was created successfully; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_)'></a>
+
+## Create\.TerrainPointDensityResult\(int, long, double, Nullable\<double\>\) Method
+
+Works out how densely a county partition of the terrain point table is sampled and returns it as a [TerrainPointDensityResult\(int, long, double, Nullable&lt;double&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_) 'DiGi\.GIS\.PostgreSQL\.Create\.TerrainPointDensityResult\(int, long, double, System\.Nullable\<double\>\)')\.
+
+Every figure the result carries beyond the count and the area is derived here rather than by the constructor, which assigns and nothing more.
+
+A figure that cannot be derived is left null rather than filled with a not-a-number. Strict JSON has no token for one, so a not-a-number reaching a response body is a serialization failure rather than a value a reader can act on.
+
+```csharp
+public static DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult? TerrainPointDensityResult(int countyId, long count, double area, System.Nullable<double> gridSize=null);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of points stored for the county\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_).area'></a>
+
+`area` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The area the points were meant to cover, in square model units \- summed from the county's subdivisions, which is what a sampling run tests its points against\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_).gridSize'></a>
+
+`gridSize` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The spacing a sampling run used, when it is known\. Supplying it is what fills in [ExpectedDensity](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult.ExpectedDensity 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointDensityResult\.ExpectedDensity') and [Completeness](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult.Completeness 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointDensityResult\.Completeness')\.
+
+#### Returns
+[TerrainPointDensityResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointDensityResult')  
+The [TerrainPointDensityResult\(int, long, double, Nullable&lt;double&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_) 'DiGi\.GIS\.PostgreSQL\.Create\.TerrainPointDensityResult\(int, long, double, System\.Nullable\<double\>\)'), or null when the count is negative or the area is not a usable measurement\.
+
 <a name='DiGi.GIS.PostgreSQL.Modify'></a>
 
 ## Modify Class

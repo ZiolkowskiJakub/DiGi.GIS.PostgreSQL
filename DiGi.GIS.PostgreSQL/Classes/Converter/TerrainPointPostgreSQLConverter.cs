@@ -192,6 +192,166 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the number of points stored for each of the specified county partitions.
+        /// <para>Counties holding no point are absent from the result rather than present with a zero, because a county with no partition and a county with an empty one are the same thing to this query.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to count. When null every county is counted.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result maps each county identifier to the number of points stored for it, or null when the connection is null or the terrain point table does not exist.</returns>
+        public static async Task<Dictionary<int, long>?> GetCountsByCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Answered before the aggregate is sent. A store nothing has ever been written to has no table at
+            // all, and running the query against it raises an undefined relation - which reaches a caller as a
+            // server fault rather than as the plain fact that there is nothing stored yet. GetCountAsync has
+            // always answered that case with -1 for the same reason.
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.TerrainPoint))
+            {
+                return null;
+            }
+
+            int[]? countyIds_Array = countyIds is null ? null : [.. countyIds];
+
+            string commandText = $@"
+                SELECT county_id, COUNT(*)
+                FROM {Constants.TableName.TerrainPoint}
+                {WhereCountyIds(countyIds_Array)}
+                GROUP BY county_id
+                ORDER BY county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddCountyIdsParameter(npgsqlCommand, countyIds_Array);
+
+            Dictionary<int, long> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result[npgsqlDataReader.GetInt32(0)] = npgsqlDataReader.GetInt64(1);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the number of points stored for each of the specified county partitions, automatically managing the connection.
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to count. When null every county is counted.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result maps each county identifier to the number of points stored for it, or null when no connection could be opened.</returns>
+        public async Task<Dictionary<int, long>?> GetCountsByCountyIdsAsync(IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await GetCountsByCountyIdsAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously summarises what each of the specified county partitions holds: how many points, over what extent, at what elevations, filed under how many subdivisions, and when they were written.
+        /// <para>This is the lasting account of a sampling run. The run keeps its own tallies in memory and discards them when it ends, so a run that reported failure leaves nothing else to read.</para>
+        /// <para>Counties holding no point are absent from the result rather than present with a zero.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise. When null every county is summarised.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result carries one <see cref="TerrainPointCountyResult"/> per county holding points, ordered by county identifier, or null when the connection is null or the terrain point table does not exist.</returns>
+        public static async Task<List<TerrainPointCountyResult>?> GetSummariesByCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Answered before the aggregate is sent. A store nothing has ever been written to has no table at
+            // all, and running the query against it raises an undefined relation - which reaches a caller as a
+            // server fault rather than as the plain fact that there is nothing stored yet. GetCountAsync has
+            // always answered that case with -1 for the same reason.
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.TerrainPoint))
+            {
+                return null;
+            }
+
+            int[]? countyIds_Array = countyIds is null ? null : [.. countyIds];
+
+            // COUNT(DISTINCT subdivision_id) is the expensive column of the six aggregates, and the one that
+            // catches a county whose points were all filed under a single subdivision. It is what the generous
+            // command timeout is for.
+            string commandText = $@"
+                SELECT
+                    county_id,
+                    COUNT(*),
+                    MIN(x), MAX(x), MIN(y), MAX(y), MIN(z), MAX(z),
+                    COUNT(*) FILTER (WHERE z = 0),
+                    COUNT(DISTINCT subdivision_id),
+                    COUNT(*) FILTER (WHERE subdivision_id IS NULL),
+                    MIN(created_at), MAX(created_at)
+                FROM {Constants.TableName.TerrainPoint}
+                {WhereCountyIds(countyIds_Array)}
+                GROUP BY county_id
+                ORDER BY county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddCountyIdsParameter(npgsqlCommand, countyIds_Array);
+
+            List<TerrainPointCountyResult> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(new TerrainPointCountyResult(
+                    npgsqlDataReader.GetInt32(0),
+                    npgsqlDataReader.GetInt64(1),
+                    npgsqlDataReader.GetDouble(2),
+                    npgsqlDataReader.GetDouble(3),
+                    npgsqlDataReader.GetDouble(4),
+                    npgsqlDataReader.GetDouble(5),
+                    npgsqlDataReader.GetDouble(6),
+                    npgsqlDataReader.GetDouble(7),
+                    npgsqlDataReader.GetInt64(8),
+                    npgsqlDataReader.GetInt64(9),
+                    npgsqlDataReader.GetInt64(10),
+                    npgsqlDataReader.IsDBNull(11) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(11),
+                    npgsqlDataReader.IsDBNull(12) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(12)));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously summarises what each of the specified county partitions holds, automatically managing the connection.
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise. When null every county is summarised.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result carries one <see cref="TerrainPointCountyResult"/> per county holding points, ordered by county identifier, or null when no connection could be opened.</returns>
+        public async Task<List<TerrainPointCountyResult>?> GetSummariesByCountyIdsAsync(IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await GetSummariesByCountyIdsAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously writes a <see cref="PointCloud3D"/> to the database for a specific county, creating the table and the county partition first.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
@@ -199,16 +359,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="pointCloud3D">The <see cref="PointCloud3D"/> containing the point coordinates to write.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision.</param>
         /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created.</returns>
-        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, CancellationToken cancellationToken = default)
+        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            if (!await Create.TableAsync_TerrainPoint(npgsqlConnection, cancellationToken: cancellationToken))
+            if (!await Create.TableAsync_TerrainPoint(npgsqlConnection, commandTimeout, cancellationToken))
             {
                 return null;
             }
@@ -266,7 +427,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     createdAts[i] = createdAt;
                 }
 
-                count = await InsertArraysAsync(npgsqlConnection, countyIds, subdivisionIds, x, y, z, createdAts, cancellationToken);
+                count = await InsertArraysAsync(npgsqlConnection, countyIds, subdivisionIds, x, y, z, createdAts, commandTimeout, cancellationToken);
             }
 
             return new TerrainPointUpdateResult(count, null);
@@ -279,9 +440,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="pointCloud3D">The <see cref="PointCloud3D"/> containing the point coordinates to write.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision.</param>
         /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, which is much faster for large clouds but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when no connection could be opened.</returns>
-        public async Task<TerrainPointUpdateResult?> UpdateAsync(int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, CancellationToken cancellationToken = default)
+        public async Task<TerrainPointUpdateResult?> UpdateAsync(int countyId, PointCloud3D? pointCloud3D, int? subdivisionId = null, bool binaryInsert = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -290,7 +452,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await UpdateAsync(npgsqlConnection, countyId, pointCloud3D, subdivisionId, binaryInsert, cancellationToken);
+            return await UpdateAsync(npgsqlConnection, countyId, pointCloud3D, subdivisionId, binaryInsert, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -300,16 +462,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="terrainPoints">The collection of <see cref="TerrainPoint"/> objects to write.</param>
         /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when the connection is null or the table could not be created.</returns>
-        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, CancellationToken cancellationToken = default)
+        public static async Task<TerrainPointUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            if (!await Create.TableAsync_TerrainPoint(npgsqlConnection, cancellationToken: cancellationToken))
+            if (!await Create.TableAsync_TerrainPoint(npgsqlConnection, commandTimeout, cancellationToken))
             {
                 return null;
             }
@@ -427,7 +590,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     createdAts[i] = terrainPoint.CreatedAt ?? createdAt_Default;
                 }
 
-                count = await InsertArraysAsync(npgsqlConnection, countyIds, subdivisionIds, x, y, z, createdAts, cancellationToken);
+                count = await InsertArraysAsync(npgsqlConnection, countyIds, subdivisionIds, x, y, z, createdAts, commandTimeout, cancellationToken);
             }
 
             return new TerrainPointUpdateResult(count, rejections);
@@ -438,9 +601,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="terrainPoints">The collection of <see cref="TerrainPoint"/> objects to write.</param>
         /// <param name="binaryInsert">Opts into a PostgreSQL binary COPY, one per county, which is much faster for large collections but cannot skip points the table already holds - a repeated import, or two source tiles overlapping, fails on the primary key. Left at its default the points are sent as a single array-valued INSERT that leaves existing points as they are, so the write can be repeated safely. Set it true only for data known to carry no point already stored.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task whose result carries the number of points stored and any rejections, or null when no connection could be opened.</returns>
-        public async Task<TerrainPointUpdateResult?> UpdateAsync(IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, CancellationToken cancellationToken = default)
+        public async Task<TerrainPointUpdateResult?> UpdateAsync(IEnumerable<TerrainPoint>? terrainPoints, bool binaryInsert = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -449,7 +613,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await UpdateAsync(npgsqlConnection, terrainPoints, binaryInsert, cancellationToken);
+            return await UpdateAsync(npgsqlConnection, terrainPoints, binaryInsert, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -459,9 +623,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point or county identifiers are null.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || point2D is null)
             {
@@ -469,7 +634,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             BoundingBox2D boundingBox2D = new(point2D, point2D);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -478,9 +643,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search around. This value can be null.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The half-width, in model units, of the square searched around the coordinate. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>, which is a millimetre - well below the spacing of an elevation grid, so a caller wanting the points near a coordinate has to pass a distance of its own.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the matching <see cref="PointCloud3D"/>, or null if no points are found within the distance or if the provided point or county identifiers are null.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<PointCloud3D?> GetPointCloud3DByPoint2DAsync(Point2D? point2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
@@ -494,7 +660,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, countyIds, tolerance, cancellationToken);
+            return await GetPointCloud3DByPoint2DAsync(npgsqlConnection, point2D, countyIds, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -505,9 +671,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the <see cref="PointCloud3D"/> within the bounding box, or null if no points match.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -522,6 +689,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             AddBoundingBox2DParameters(npgsqlCommand, boundingBox2D, tolerance);
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = (object?)subdivisionId ?? DBNull.Value });
@@ -536,9 +704,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the <see cref="PointCloud3D"/> within the bounding box, or null if no points match.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -552,7 +721,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, subdivisionId, tolerance, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, subdivisionId, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -562,9 +731,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if no county was given or no points match.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null || countyIds is null)
             {
@@ -574,7 +744,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<PointCloud3D?> pointCloud3Ds = [];
             foreach (int countyId in countyIds)
             {
-                pointCloud3Ds.Add(await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, cancellationToken));
+                pointCloud3Ds.Add(await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, commandTimeout, cancellationToken));
             }
 
             // Concatenation is plain geometry, and the factory does it in one block copy per county.
@@ -588,9 +758,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if no county was given or no points match.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<PointCloud3D?> GetPointCloud3DByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null || countyIds is null)
             {
@@ -604,7 +775,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
+            return await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -616,9 +787,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the <see cref="PointCloud3D"/> inside the circle, or null if the circle is null or degenerate, or no points match.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || circle2D is null || !IsQueryable(circle2D))
             {
@@ -633,6 +805,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             AddCircle2DParameters(npgsqlCommand, circle2D, tolerance);
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = (object?)subdivisionId ?? DBNull.Value });
@@ -647,9 +820,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the <see cref="PointCloud3D"/> inside the circle, or null if the circle is null or degenerate, or no points match.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D is null || !IsQueryable(circle2D))
             {
@@ -663,7 +837,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, subdivisionId, tolerance, cancellationToken);
+            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, subdivisionId, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -673,9 +847,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if the circle is null or degenerate, no county was given, or no points match.</returns>
-        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(NpgsqlConnection? npgsqlConnection, Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || circle2D is null || countyIds is null || !IsQueryable(circle2D))
             {
@@ -685,7 +860,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<PointCloud3D?> pointCloud3Ds = [];
             foreach (int countyId in countyIds)
             {
-                pointCloud3Ds.Add(await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, null, tolerance, cancellationToken));
+                pointCloud3Ds.Add(await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, null, tolerance, commandTimeout, cancellationToken));
             }
 
             return DiGi.Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
@@ -697,9 +872,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search radius is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task containing the combined <see cref="PointCloud3D"/> across the given county partitions, or null if the circle is null or degenerate, no county was given, or no points match.</returns>
-        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<PointCloud3D?> GetPointCloud3DByCircle2DAsync(Circle2D? circle2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D is null || countyIds is null || !IsQueryable(circle2D))
             {
@@ -713,7 +889,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyIds, tolerance, cancellationToken);
+            return await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyIds, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -724,9 +900,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="TerrainPoint"/> objects, or null if no records match.</returns>
-        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -741,6 +918,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND (@subdivisionId IS NULL OR subdivision_id = @subdivisionId);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             AddBoundingBox2DParameters(npgsqlCommand, boundingBox2D, tolerance);
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = (object?)subdivisionId ?? DBNull.Value });
@@ -755,9 +933,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The integer identifier of the county partition to query.</param>
         /// <param name="subdivisionId">The optional integer identifier of the subdivision to filter by.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="TerrainPoint"/> objects, or null if no records match.</returns>
-        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, int countyId, int? subdivisionId = null, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -771,7 +950,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, subdivisionId, tolerance, cancellationToken);
+            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, subdivisionId, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -781,9 +960,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across the given counties, or null if no county was given or no records match.</returns>
-        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null || countyIds is null)
             {
@@ -794,7 +974,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             foreach (int countyId in countyIds)
             {
-                List<TerrainPoint>? terrainPoints = await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, cancellationToken);
+                List<TerrainPoint>? terrainPoints = await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, null, tolerance, commandTimeout, cancellationToken);
                 if (terrainPoints is not null && terrainPoints.Count != 0)
                 {
                     result.AddRange(terrainPoints);
@@ -815,9 +995,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
         /// <param name="countyIds">The identifiers of the county partitions to search. The terrain table is partitioned by county and this database holds no administrative geometry to derive them from, so they are the caller's to supply.</param>
         /// <param name="tolerance">The distance the search bounding box is expanded by. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of all <see cref="TerrainPoint"/> objects across the given counties, or null if no county was given or no records match.</returns>
-        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<TerrainPoint>?> GetTerrainPointsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null || countyIds is null)
             {
@@ -831,7 +1012,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, cancellationToken);
+            return await GetTerrainPointsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyIds, tolerance, commandTimeout, cancellationToken);
         }
 
         private static string TableName(int? countyId)
@@ -871,7 +1052,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlBinaryImporter.WriteAsync(createdAt, NpgsqlDbType.TimestampTz, cancellationToken);
         }
 
-        private static async Task<long> InsertArraysAsync(NpgsqlConnection npgsqlConnection, int[] countyIds, int?[] subdivisionIds, double[] x, double[] y, double[] z, DateTime[] createdAts, CancellationToken cancellationToken)
+        private static async Task<long> InsertArraysAsync(NpgsqlConnection npgsqlConnection, int[] countyIds, int?[] subdivisionIds, double[] x, double[] y, double[] z, DateTime[] createdAts, int commandTimeout, CancellationToken cancellationToken)
         {
             // One statement carrying six arrays, rather than one statement per point. A cloud of a million
             // points would otherwise become a million commands with five parameters each, all built and
@@ -884,6 +1065,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ON CONFLICT (county_id, x, y) DO NOTHING;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Array | NpgsqlDbType.Double) { Value = x });
@@ -892,6 +1074,37 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("createdAts", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) { Value = createdAts });
 
             return await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Renders the county filter of an aggregate over the partitioned parent, or nothing at all when every county is wanted.
+        /// <para>Written as a clause that is present or absent rather than as one parameter that may be null. A predicate of the form <c>@countyIds IS NULL OR county_id = ANY(@countyIds)</c> reads the same but cannot be resolved when the plan is made, so PostgreSQL keeps every one of the several hundred partitions in the plan even when a single county was asked for.</para>
+        /// </summary>
+        /// <param name="countyIds">The county identifiers to filter by, or null for every county.</param>
+        /// <returns>The WHERE clause, or an empty string.</returns>
+        private static string WhereCountyIds(int[]? countyIds)
+        {
+            if (countyIds is null)
+            {
+                return string.Empty;
+            }
+
+            return "WHERE county_id = ANY(@countyIds)";
+        }
+
+        /// <summary>
+        /// Adds the county filter parameter that <see cref="WhereCountyIds(int[])"/> refers to, when there is a clause to refer to it.
+        /// </summary>
+        /// <param name="npgsqlCommand">The command to add the parameter to.</param>
+        /// <param name="countyIds">The county identifiers to filter by, or null for every county.</param>
+        private static void AddCountyIdsParameter(NpgsqlCommand npgsqlCommand, int[]? countyIds)
+        {
+            if (countyIds is null)
+            {
+                return;
+            }
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
         }
 
         private static void AddBoundingBox2DParameters(NpgsqlCommand npgsqlCommand, BoundingBox2D boundingBox2D, double tolerance)

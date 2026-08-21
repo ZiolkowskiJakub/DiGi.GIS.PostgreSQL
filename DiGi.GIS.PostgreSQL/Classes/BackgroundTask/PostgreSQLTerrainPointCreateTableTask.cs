@@ -18,6 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <para>The work is driven county by county rather than by one grid over the whole area. Each county's subdivisions are read once, their outlines are derived once, and the points of that county are then decided against them in memory - so a point costs no database round trip at all, where deciding it through the database costs six of them plus the deserializing of an outline of thousands of vertices.</para>
     /// <para>Every county is sampled on tiles cut from one grid shared by all of them, anchored by <see cref="PostgreSQLTerrainPointCreateTableOptions.OriginX"/> and <see cref="PostgreSQLTerrainPointCreateTableOptions.OriginY"/>. Neighbouring counties therefore produce the same coordinates for a shared point instead of two grids that do not line up, and a tile that was already sampled is recognised and skipped - so a run that was stopped resumes, and a county sampled coarsely can later be sampled finely without paying for the points it already holds.</para>
     /// <para>What remains is one request to the elevation service per point, which is the whole of the running time. <see cref="PostgreSQLTerrainPointCreateTableOptions.MaxConcurrentRequests"/> governs it.</para>
+    /// <para>A run reports success unless it was cancelled. A county or a tile that cannot be sampled is counted in <see cref="FailedBatchCount"/>, logged with the exception that caused it, and stepped over - so a run of many hours is not reduced to a single word by one batch out of hundreds of thousands, and what did go wrong is named in the log rather than inferred from a count nothing reads.</para>
     /// </summary>
     public class PostgreSQLTerrainPointCreateTableTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -43,6 +44,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets the number of counties and tiles that failed outright and were stepped over.
+        /// <para>Each one is logged with its county, its tile and the exception that caused it, so this figure is a count of entries to go and read rather than the whole of what is known.</para>
         /// </summary>
         public long FailedBatchCount { get; private set; }
 
@@ -65,7 +67,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets the number of points that lie inside a subdivision but for which the elevation service returned nothing, even after the retries allowed.
-        /// <para>These are gaps in the terrain rather than points outside the sampled area, and any of them makes the run report failure.</para>
+        /// <para>These are gaps in the terrain rather than points outside the sampled area. They are reported rather than gated on: a run of tens of millions of requests to a public service will meet a few, and treating that as a failed run says nothing about which points were missed. The log names the tile each one belongs to.</para>
         /// </summary>
         public long UnresolvedPointCount { get; private set; }
         
@@ -74,7 +76,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="progress">A progress reporter carrying the running total of points stored.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when every county was sampled without a failed batch, an unresolved point or a cancellation; otherwise false.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true unless the run was cancelled.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             PointCount = 0;
@@ -84,18 +86,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (httpClient is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no elevation service client - nothing can be sampled", nameof(PostgreSQLTerrainPointCreateTableTask));
                 return false;
             }
 
             AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<AdministrativeAreal2DPostgreSQLConverter>();
             if (administrativeAreal2DPostgreSQLConverter is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no {Converter} - the administrative areas cannot be read", nameof(PostgreSQLTerrainPointCreateTableTask), nameof(AdministrativeAreal2DPostgreSQLConverter));
                 return false;
             }
 
             TerrainPointPostgreSQLConverter? terrainPointPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<TerrainPointPostgreSQLConverter>();
             if (terrainPointPostgreSQLConverter is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no {Converter} - the points cannot be written", nameof(PostgreSQLTerrainPointCreateTableTask), nameof(TerrainPointPostgreSQLConverter));
                 return false;
             }
 
@@ -103,6 +108,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int tileSize = PostgreSQLTerrainPointCreateTableOptions.TileSize;
             if (double.IsNaN(gridSize) || double.IsInfinity(gridSize) || gridSize <= 0 || tileSize < 1)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: grid size {GridSize} and tile size {TileSize} do not describe a lattice", nameof(PostgreSQLTerrainPointCreateTableTask), gridSize, tileSize);
                 return false;
             }
 
@@ -133,6 +139,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 if (npgsqlConnection is null)
                 {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no connection to the terrain point database could be built", nameof(PostgreSQLTerrainPointCreateTableTask));
                     return false;
                 }
 
@@ -140,6 +147,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (!await Create.TableAsync_TerrainPoint(npgsqlConnection, commandTimeout, cancellationToken))
                 {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: the terrain point table could not be created - the run would have no place to write to", nameof(PostgreSQLTerrainPointCreateTableTask));
                     return false;
                 }
             }
@@ -150,11 +158,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
             countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken);
             if (countyIds is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: the counties could not be read - the run cannot be scoped", nameof(PostgreSQLTerrainPointCreateTableTask));
                 return false;
             }
 
             if (countyIds.Count == 0)
             {
+                Serilog.Modify.Log("{Type}: no county was named - nothing to sample", nameof(PostgreSQLTerrainPointCreateTableTask));
                 return true;
             }
 
@@ -162,9 +172,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<int> countyIds_Sorted = [.. countyIds];
             countyIds_Sorted.Sort();
 
+            Serilog.Modify.Log(
+                "{Type} started: {CountyCount} counties, grid {GridSize}, tile {TileSize}, origin {OriginX}/{OriginY}, tolerance {Tolerance}, {MaxConcurrentRequests} requests in flight, {RetryCount} retries, override existing {OverrideExisting}",
+                nameof(PostgreSQLTerrainPointCreateTableTask), countyIds_Sorted.Count, gridSize, tileSize, origin.X, origin.Y, tolerance, maxConcurrentRequests, retryCount, overrideExisting);
+
             foreach (int countyId in countyIds_Sorted)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // Read before the county rather than accumulated inside it, so that the county's own contribution
+                // survives the batches that fail: the running totals are what the tallies below are subtracted from.
+                long pointCount_County = PointCount;
+                long unresolvedPointCount_County = UnresolvedPointCount;
+                long rejectionCount_County = RejectionCount;
+                long failedBatchCount_County = FailedBatchCount;
 
                 try
                 {
@@ -175,6 +196,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         if (npgsqlConnection is null)
                         {
                             FailedBatchCount++;
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county skipped - county {CountyId}, no connection to the administrative database could be built", countyId);
                             continue;
                         }
 
@@ -185,6 +207,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                     {
+                        Serilog.Modify.Log("Terrain county skipped - county {CountyId} has no subdivisions, so nothing decides which of its points are on land", countyId);
                         continue;
                     }
 
@@ -193,6 +216,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     Dictionary<int, PolygonalFace2D> polygonalFace2Ds_ById = administrativeAreal2Ds.PolygonalFace2DsById();
                     if (polygonalFace2Ds_ById.Count == 0)
                     {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county skipped - county {CountyId} has {Count} subdivisions but none of them carries an outline", countyId, administrativeAreal2Ds.Count);
                         continue;
                     }
 
@@ -207,6 +231,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (boundingBox2Ds_Subdivision.Count == 0)
                     {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county skipped - county {CountyId} has outlines but none of them bounds an area", countyId);
                         continue;
                     }
 
@@ -219,17 +244,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     if (double.IsNaN(index_X_Min_Double) || double.IsNaN(index_X_Max_Double) || double.IsNaN(index_Y_Min_Double) || double.IsNaN(index_Y_Max_Double))
                     {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county skipped - county {CountyId} has an outline that does not place on the lattice", countyId);
                         continue;
                     }
 
                     if (index_X_Max_Double < index_X_Min_Double || index_Y_Max_Double < index_Y_Min_Double)
                     {
+                        Serilog.Modify.Log("Terrain county skipped - county {CountyId} is smaller than one step of the {GridSize} lattice, so it holds no node", countyId, gridSize);
                         continue;
                     }
 
                     if (index_X_Min_Double < int.MinValue || index_X_Max_Double > int.MaxValue || index_Y_Min_Double < int.MinValue || index_Y_Max_Double > int.MaxValue)
                     {
                         FailedBatchCount++;
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county skipped - county {CountyId} places outside the range of the lattice index", countyId);
                         continue;
                     }
 
@@ -288,7 +316,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 HashSet<(int, int)> indexes_Stored = [];
                                 if (!overrideExisting)
                                 {
-                                    PointCloud3D? pointCloud3D = await terrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(boundingBox2D_Tile, countyId, null, tolerance, cancellationToken);
+                                    PointCloud3D? pointCloud3D = await terrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
                                     if (pointCloud3D is not null)
                                     {
                                         for (int i = 0; i < pointCloud3D.Count; i++)
@@ -369,6 +397,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 if (point3Ds is null)
                                 {
                                     FailedBatchCount++;
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain tile not sampled - county {CountyId}, block {BlockX}/{BlockY}, the elevation service returned nothing for {PointCount} points", countyId, block_X, block_Y, point2Ds_Kept.Count);
                                     continue;
                                 }
 
@@ -389,10 +418,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                     continue;
                                 }
 
-                                TerrainPointUpdateResult? terrainPointUpdateResult = await terrainPointPostgreSQLConverter.UpdateAsync(terrainPoints, binaryInsert: false, cancellationToken: cancellationToken);
+                                TerrainPointUpdateResult? terrainPointUpdateResult = await terrainPointPostgreSQLConverter.UpdateAsync(terrainPoints, binaryInsert: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                                 if (terrainPointUpdateResult is null)
                                 {
                                     FailedBatchCount++;
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain tile not written - county {CountyId}, block {BlockX}/{BlockY}, {PointCount} points sampled but the write returned nothing", countyId, block_X, block_Y, terrainPoints.Count);
                                     continue;
                                 }
 
@@ -405,11 +435,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             {
                                 throw;
                             }
-                            catch (Exception)
+                            catch (Exception exception)
                             {
                                 // One tile that will not sample should not end the run: it is counted and stepped over,
-                                // and the points it holds are picked up whenever the county is sampled again.
+                                // and the points it holds are picked up whenever the county is sampled again. It is
+                                // logged rather than only counted, because a count says a tile failed and nothing about
+                                // why - and a run of hours produces the count long after the condition has passed.
                                 FailedBatchCount++;
+                                Serilog.Modify.Log(exception, "Terrain tile failed - county {CountyId}, block {BlockX}/{BlockY}", countyId, block_X, block_Y);
                                 continue;
                             }
                         }
@@ -419,14 +452,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     throw;
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
                     FailedBatchCount++;
+                    Serilog.Modify.Log(exception, "Terrain county failed - county {CountyId}", countyId);
                     continue;
                 }
+
+                Serilog.Modify.Log(
+                    "Terrain county {CountyId} done: {PointCount} points stored, {UnresolvedPointCount} unresolved, {RejectionCount} rejected, {FailedBatchCount} batches stepped over",
+                    countyId, PointCount - pointCount_County, UnresolvedPointCount - unresolvedPointCount_County, RejectionCount - rejectionCount_County, FailedBatchCount - failedBatchCount_County);
             }
 
-            return FailedBatchCount == 0 && UnresolvedPointCount == 0 && !cancellationToken.IsCancellationRequested;
+            bool cancelled = cancellationToken.IsCancellationRequested;
+
+            Serilog.Modify.Log(
+                cancelled ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
+                "{Type} finished{Cancelled}: {PointCount} points stored, {UnresolvedPointCount} unresolved, {RejectionCount} rejected, {FailedBatchCount} batches stepped over, over {CountyCount} counties",
+                nameof(PostgreSQLTerrainPointCreateTableTask), cancelled ? " after being cancelled" : string.Empty, PointCount, UnresolvedPointCount, RejectionCount, FailedBatchCount, countyIds_Sorted.Count);
+
+            // Cancellation is the only thing that makes a run unsuccessful. The three tallies are the record of what
+            // went wrong, not the gate on whether anything did: one point out of tens of millions that the elevation
+            // service would not answer for is a statistic, and gating on it reported a run of thirty hours as a
+            // failure while saying nothing about which point, which county or which hour.
+            return !cancelled;
         }
 
         /// <summary>
