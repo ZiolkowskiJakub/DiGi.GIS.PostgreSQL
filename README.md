@@ -143,7 +143,7 @@ Reference types: `Classes/Building2DReferencedObject.cs` (the convention in full
 
 ---
 
-## ⚠️ Known Data Limitations
+## ⚠️ Known Limitations
 
 ### `terrain_point` — the elevation service no-data sentinel is stored as a measurement
 
@@ -174,6 +174,33 @@ Two consequences worth knowing before building on terrain data:
   while looking exactly like a measurement.
 
 Tracked in [#25](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/25).
+
+---
+
+### Terrain coverage walks — concurrent calls exhaust the connection pool
+
+`GetCoverageByCountyIdAsync` (served as `gis/terrain/coveragebycountyid`, and shared by
+`gis/terrain/gapsbyboundingbox`) measures a county against the lattice **one tile at a time, opening a pooled
+connection per tile**. Nothing bounds how many tiles that is — `Constants.Terrain.MaximumNodeCount` caps how
+many nodes are generated, not how many queries are sent.
+
+Run those requests **concurrently** and the terrain connection pool is exhausted. Once that happens:
+
+* every `gis/terrain/*` endpoint returns `HTTP 500 "Internal server error during database query"`, **instantly**
+  (~0.07 s) — including `countbycountyid?estimated=true`, which only reads catalogue statistics;
+* `building_2d` on the same database and `administrative_areal_2d` on the other keep answering `200`, so the
+  database itself is healthy and only the terrain path is affected;
+* it may not recover on its own. Observed on 2026-08-21: once it cleared after ~90 s, once it stayed down for
+  25+ minutes under no load and needed the WebAPI service restarted.
+
+It is also **silent to users**. `DiGi.GIS.WebAPI.UI` collapses every terrain failure to `null` and answers
+`NoContent`, so the terrain page renders empty rather than showing an error.
+
+**Sweep counties sequentially.** 20 consecutive calls, one at a time with 8 s between them, complete without a
+single failure across counties from 3 259 to 176 413 nodes. The endpoint is fine to use — it just must not be
+parallelised.
+
+Tracked in [#26](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/26).
 
 ---
 
