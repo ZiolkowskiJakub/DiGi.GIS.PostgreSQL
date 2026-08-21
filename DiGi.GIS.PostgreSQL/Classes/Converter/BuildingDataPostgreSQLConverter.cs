@@ -5,6 +5,7 @@ using DiGi.PostgreSQL.Table;
 using DiGi.PostgreSQL.Table.Classes;
 using DiGi.PostgreSQL.Table.Enums;
 using Npgsql;
+using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,16 +50,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         };
 
         /// <summary>
-        /// Asynchronously retrieves a collection of unique values based on the specified unique identifier and county identifier, applying optional dynamic filters.
+        /// Asynchronously retrieves a collection of unique values based on the specified column unique identifier and county identifier, applying optional dynamic filters.
         /// </summary>
         /// <typeparam name="T">The type of the values to be retrieved.</typeparam>
-        /// <param name="uniqueId">The nullable string representing the unique identifier used for filtering.</param>
+        /// <param name="columnUniqueId">The unique identifier of the column used for filtering; can be <see langword="null"/>.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a nullable collection of nullable elements of type <typeparam ref="T"/>, or null if no values are found.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? uniqueId, int countyId, FilterGroup? filterGroup = null)
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? columnUniqueId, int countyId, FilterGroup? filterGroup = null)
         {
-            if (string.IsNullOrWhiteSpace(uniqueId))
+            if (string.IsNullOrWhiteSpace(columnUniqueId))
             {
                 return null;
             }
@@ -71,21 +72,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, countyId, filterGroup);
+            return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, countyId, filterGroup);
         }
 
         /// <summary>
-        /// Asynchronously retrieves a collection of unique values for a specified identifier and county from the database, applying optional dynamic filters.
+        /// Asynchronously retrieves a collection of unique values for a specified column identifier and county from the database, applying optional dynamic filters.
         /// </summary>
         /// <typeparam name="T">The type of the unique values to be retrieved.</typeparam>
         /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the command.</param>
-        /// <param name="uniqueId">The string identifier used to filter for unique values.</param>
+        /// <param name="columnUniqueId">The unique identifier of the column used to filter for unique values.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of nullable values of type T, or null if no results are found or the connection is invalid.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? uniqueId, int countyId, FilterGroup? filterGroup = null)
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? columnUniqueId, int countyId, FilterGroup? filterGroup = null)
         {
-            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(uniqueId))
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(columnUniqueId))
             {
                 return null;
             }
@@ -107,15 +108,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 filterGroup_Combined.FilterConditions = [filterCondition_County];
                 filterGroup_Combined.FilterGroups = [filterGroup];
 
-                return await GetUniqueValuesAsync<T>(npgsqlConnection, uniqueId, filterGroup_Combined);
+                return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, filterGroup_Combined);
             }
 
             string commandQuery = $@"
-                SELECT DISTINCT {uniqueId}
+                SELECT DISTINCT {columnUniqueId}
                 FROM {TableName}
                 WHERE (@countyId IS NULL OR county_id = @countyId)
-                  AND {uniqueId} IS NOT NULL
-                ORDER BY {uniqueId}";
+                  AND {columnUniqueId} IS NOT NULL
+                ORDER BY {columnUniqueId}";
 
             HashSet<T?> result = [];
 
@@ -147,43 +148,125 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">An optional integer identifying the specific county.</param>
         /// <param name="columnUniqueIds">An optional <see cref="IEnumerable{T}"/> of <see cref="string"/> unique identifiers for columns to include in the operation.</param>
         /// <param name="batchSize">The integer number of records to process per batch. Defaults to 1000.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the specified county.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Table"/> object if the data is successfully retrieved; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(
+            NpgsqlConnection? npgsqlConnection,
+            IEnumerable<string> references,
+            int? countyId,
+            IEnumerable<string>? columnUniqueIds = null,
+            int batchSize = 1000,
+            bool fallbackByReference = false)
         {
             if (npgsqlConnection is null || references is null || !references.Any())
             {
                 return null;
             }
 
-            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
-
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp) ?? [];
-
-            Core.IO.Table.Classes.Table table = new(columns);
-
-            Core.IO.Table.Classes.Column? column_Reference = table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
-            if (column_Reference is null)
+            if (countyId is null || !fallbackByReference)
             {
-                return null;
-            }
+                HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            Core.IO.Table.Classes.Column? column_CountyId = countyId is null ? null : table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
+                List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp) ?? [];
 
-            foreach (string reference in references)
-            {
-                Dictionary<int, object?> values = [];
-                values[column_Reference.Index] = reference;
-                if (column_CountyId is not null)
+                Core.IO.Table.Classes.Table table = new(columns);
+
+                Core.IO.Table.Classes.Column? column_Reference = table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
+                if (column_Reference is null)
                 {
-                    values[column_CountyId.Index] = countyId;
+                    return null;
                 }
 
-                table.AddRow(values);
+                Core.IO.Table.Classes.Column? column_CountyId = countyId is null ? null : table.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
+
+                foreach (string reference in references)
+                {
+                    Dictionary<int, object?> values = [];
+                    values[column_Reference.Index] = reference;
+                    if (column_CountyId is not null)
+                    {
+                        values[column_CountyId.Index] = countyId;
+                    }
+
+                    table.AddRow(values);
+                }
+
+                await PullAsync(npgsqlConnection, table, batchSize);
+
+                return table;
             }
 
-            await PullAsync(npgsqlConnection, table, batchSize);
+            string[] references_Array = [.. references.Distinct()];
 
-            return table;
+            string checkCommandText = $@"
+                SELECT reference
+                FROM ""{TableName}""
+                WHERE reference = ANY(@references)
+                  AND county_id = @countyId;";
+
+            HashSet<string> inCountyReferences = [];
+            await using (NpgsqlCommand checkCommand = new(checkCommandText, npgsqlConnection))
+            {
+                checkCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
+                checkCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+
+                await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync();
+                while (await checkReader.ReadAsync())
+                {
+                    inCountyReferences.Add(checkReader.GetString(0));
+                }
+            }
+
+            List<string> inCounty = [];
+            List<string> missing = [];
+            foreach (string reference in references)
+            {
+                if (inCountyReferences.Contains(reference))
+                {
+                    inCounty.Add(reference);
+                }
+                else
+                {
+                    missing.Add(reference);
+                }
+            }
+
+            if (missing.Count == 0)
+            {
+                return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference: false);
+            }
+
+            if (inCounty.Count == 0)
+            {
+                return await PullAsync(npgsqlConnection, references, null, columnUniqueIds, batchSize, fallbackByReference: false);
+            }
+
+            Core.IO.Table.Classes.Table? table_InCounty = await PullAsync(npgsqlConnection, inCounty, countyId, columnUniqueIds, batchSize, fallbackByReference: false);
+            Core.IO.Table.Classes.Table? table_Missing = await PullAsync(npgsqlConnection, missing, null, columnUniqueIds, batchSize, fallbackByReference: false);
+
+            if (table_InCounty is null)
+            {
+                return table_Missing;
+            }
+
+            if (table_Missing is not null)
+            {
+                foreach (Core.IO.Table.Classes.Row row in table_Missing.Rows)
+                {
+                    Dictionary<string, object?> rowValues = [];
+                    foreach (Core.IO.Table.Classes.Column column in table_Missing.Columns)
+                    {
+                        if (column.Name is not null)
+                        {
+                            rowValues[column.Name] = row[column.Index];
+                        }
+                    }
+
+                    table_InCounty.AddRow(rowValues);
+                }
+            }
+
+            return table_InCounty;
         }
 
         /// <summary>
@@ -299,8 +382,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">An optional <see cref="int"/> representing the unique identifier of the county.</param>
         /// <param name="columnUniqueIds">An optional <see cref="IEnumerable{T}"/> of <see cref="string"/> specifying the unique identifiers of the columns to retrieve.</param>
         /// <param name="batchSize">An <see cref="int"/> specifying the number of records to process per batch. Defaults to 1000.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the specified county.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing a <see cref="Core.IO.Table.Classes.Table"/> object if successful; otherwise, <see langword="null"/>.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000, bool fallbackByReference = false)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -310,7 +394,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync();
 
-            return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize);
+            return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference);
         }
 
         /// <summary>

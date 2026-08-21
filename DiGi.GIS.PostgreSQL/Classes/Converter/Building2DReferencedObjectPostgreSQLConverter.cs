@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Interfaces;
+using DiGi.Core.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -49,6 +49,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the total count of records, optionally filtered by a specific county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional unique identifier of the county to filter the count; if null, the total count across all counties is retrieved.</param>
+        /// <param name="cancellationToken">The cancellation token used to propagate notification that the operation should be canceled.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer.</returns>
+        public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountAsync(npgsqlConnection, countyId, cancellationToken);
         }
 
         /// <summary>
@@ -158,16 +177,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="reference">The string reference of the item to retrieve.</param>
         /// <param name="countyId">The optional integer identifier for the county.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone if the item is not found in the specified county.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the matching <seeref name="TBuilding2DReferencedObject"/> if found; otherwise, null.</returns>
-        public async Task<TBuilding2DReferencedObject?> GetItemByReferenceAsync(string reference, int? countyId, CancellationToken cancellationToken = default)
+        public async Task<TBuilding2DReferencedObject?> GetItemByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], countyId, 1, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetItemsByReferencesAsync([reference], countyId, 1, fallbackByReference, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         /// <summary>
@@ -242,16 +262,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="reference">The string reference used to identify the items.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
         /// <param name="limit">The optional maximum number of items to retrieve, specified as a long integer.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone if the items are not found in the specified county.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <typeparamref name="TBuilding2DReferencedObject"/> objects if matching items are found; otherwise, null.</returns>
-        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferenceAsync(string reference, int? countyId, long? limit = null, CancellationToken cancellationToken = default)
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferenceAsync(string reference, int? countyId, long? limit = null, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], countyId, limit, cancellationToken);
+            return await GetItemsByReferencesAsync([reference], countyId, limit, fallbackByReference, cancellationToken);
         }
 
         /// <summary>
@@ -261,16 +282,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of <see cref="System.String" /> representing the references of the items to be retrieved.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
         /// <param name="limit">The optional maximum number of items to retrieve as a <see cref="System.Int64" />.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}" /> of matching items, or null if the connection or references are null.</returns>
-        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, long? limit = null, CancellationToken cancellationToken = default)
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(
+            NpgsqlConnection? npgsqlConnection,
+            IEnumerable<string>? references,
+            int? countyId,
+            long? limit = null,
+            bool fallbackByReference = false,
+            CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
                 return null;
             }
 
-            if (!references.Any())
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
             {
                 return [];
             }
@@ -299,7 +328,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
 
             // Adding parameters with explicit handling of nulls for PostgreSQL
-            npgsqlCommand.Parameters.AddWithValue("references", references.ToArray());
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
 
             // The type has to be stated explicitly: an untyped DBNull leaves the server unable to resolve
             // the parameter type for the '@countyId IS NULL' occurrence, which fails the whole query.
@@ -310,7 +339,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlCommand.Parameters.AddWithValue("limit", limit.Value);
             }
 
-            return await ReadAsync(npgsqlCommand, cancellationToken);
+            List<TBuilding2DReferencedObject>? result = await ReadAsync(npgsqlCommand, cancellationToken);
+            if (result is null)
+            {
+                return null;
+            }
+
+            if (fallbackByReference && countyId is not null)
+            {
+                HashSet<string> foundReferences = [.. result.Where(r => !string.IsNullOrWhiteSpace(r.Reference)).Select(r => r.Reference!)];
+                string[] missingReferences = [.. references_Array.Where(r => !foundReferences.Contains(r))];
+
+                if (missingReferences.Length > 0)
+                {
+                    long? remainingLimit = limit.HasValue ? limit.Value - result.Count : null;
+                    if (!limit.HasValue || (remainingLimit.HasValue && remainingLimit.Value > 0))
+                    {
+                        List<TBuilding2DReferencedObject>? fallbackItems = await GetItemsByReferencesAsync(npgsqlConnection, missingReferences, null, remainingLimit, false, cancellationToken);
+                        if (fallbackItems is not null && fallbackItems.Count > 0)
+                        {
+                            result.AddRange(fallbackItems);
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -319,9 +373,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">An optional collection of strings representing the unique references of the items to be retrieved.</param>
         /// <param name="countyId">An optional integer specifying the county identifier to filter the results.</param>
         /// <param name="limit">An optional long value that specifies the maximum number of items to return.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <typeparamref name="TBuilding2DReferencedObject"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, long? limit = null, CancellationToken cancellationToken = default)
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, long? limit = null, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -336,34 +391,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, limit, cancellationToken);
+            return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, limit, fallbackByReference, cancellationToken);
         }
 
         /// <summary>
-        /// Asynchronously retrieves every reference held under a single county row.
+        /// Asynchronously retrieves every reference held under the specified county identifier, or across all counties if null.
         /// <para>The whole row is not read - only the reference column - so this stays usable on a county part holding tens of thousands of rows, which reading the objects would not be.</para>
         /// </summary>
-        /// <param name="countyId">The identifier of the county row to read.</param>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="countyId">The optional identifier of the county row to read; if null, references across all counties are retrieved.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the distinct references held under the county row, or null when the connection could not be created.</returns>
-        public async Task<HashSet<string>?> GetReferencesAsync(int countyId, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the distinct references held, or null when the connection is null.</returns>
+        public async Task<HashSet<string>?> GetReferencesAsync(NpgsqlConnection? npgsqlConnection, int? countyId, CancellationToken cancellationToken = default)
         {
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
             string commandText = $@"
                 SELECT DISTINCT reference
                 FROM {TableName}
-                WHERE county_id = @countyId
+                WHERE (@countyId IS NULL OR county_id = @countyId)
                   AND reference IS NOT NULL;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             HashSet<string> result = [];
 
@@ -377,17 +430,39 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves the unique identifiers of every row held for the given references under a single county row.
+        /// Asynchronously retrieves every reference held under the specified county identifier, or across all counties if null.
+        /// <para>The whole row is not read - only the reference column - so this stays usable on a county part holding tens of thousands of rows, which reading the objects would not be.</para>
+        /// </summary>
+        /// <param name="countyId">The optional identifier of the county row to read; if null, references across all counties are retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the distinct references held, or null when the connection could not be created.</returns>
+        public async Task<HashSet<string>?> GetReferencesAsync(int? countyId, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetReferencesAsync(npgsqlConnection, countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the unique identifiers of every row held for the given references under an optional county identifier.
         /// <para>Only the identifier column is read. It is the counterpart of <c>GetItemsByReferencesAsync</c> for a caller that wants to address the rows rather than the objects inside them - reading the objects to reach one column would move every stored object across the connection, which on a table of building models is gigabytes fetched for a value a few characters long.</para>
         /// <para>This is the read half of replacing what a building holds. Take the identifiers first, write the new rows, then delete the identifiers taken here with <c>RemoveByUniqueIdsAsync(uniqueIds, countyId)</c>. Ordered that way round a run interrupted between the write and the delete leaves the building holding both its old and its new object, which is recoverable, rather than holding neither.</para>
         /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="references">The references whose rows are to be identified.</param>
-        /// <param name="countyId">The identifier of the county row holding them.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, searches across all counties.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, or null when no references were given or the connection could not be created.</returns>
-        public async Task<HashSet<string>?> GetUniqueIdsByReferencesAsync(IEnumerable<string>? references, int countyId, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, or null when no references were given or the connection is null.</returns>
+        public async Task<HashSet<string>?> GetUniqueIdsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
-            if (references is null)
+            if (npgsqlConnection is null || references is null)
             {
                 return null;
             }
@@ -398,6 +473,65 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
+            string commandText = $@"
+                SELECT unique_id, reference
+                FROM {TableName}
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+
+            HashSet<string> result = [];
+            HashSet<string> foundReferences = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetString(0));
+                if (!npgsqlDataReader.IsDBNull(1))
+                {
+                    foundReferences.Add(npgsqlDataReader.GetString(1));
+                }
+            }
+
+            if (fallbackByReference && countyId is not null)
+            {
+                string[] missingReferences = [.. references_Array.Where(r => !foundReferences.Contains(r))];
+                if (missingReferences.Length > 0)
+                {
+                    HashSet<string>? fallbackUniqueIds = await GetUniqueIdsByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    if (fallbackUniqueIds is not null && fallbackUniqueIds.Count > 0)
+                    {
+                        foreach (string uniqueId in fallbackUniqueIds)
+                        {
+                            result.Add(uniqueId);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the unique identifiers of every row held for the given references under an optional county identifier.
+        /// <para>Only the identifier column is read. It is the counterpart of <c>GetItemsByReferencesAsync</c> for a caller that wants to address the rows rather than the objects inside them - reading the objects to reach one column would move every stored object across the connection, which on a table of building models is gigabytes fetched for a value a few characters long.</para>
+        /// <para>This is the read half of replacing what a building holds. Take the identifiers first, write the new rows, then delete the identifiers taken here with <c>RemoveByUniqueIdsAsync(uniqueIds, countyId)</c>. Ordered that way round a run interrupted between the write and the delete leaves the building holding both its old and its new object, which is recoverable, rather than holding neither.</para>
+        /// </summary>
+        /// <param name="references">The references whose rows are to be identified.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, searches across all counties.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, or null when no references were given or the connection could not be created.</returns>
+        public async Task<HashSet<string>?> GetUniqueIdsByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
@@ -406,44 +540,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // ANY keeps this one statement rather than one per reference, and county_id leads the filter
-            // because it is the partition key and the leading column of the index reads go through.
-            string commandText = $@"
-                SELECT unique_id
-                FROM {TableName}
-                WHERE county_id = @countyId
-                  AND reference = ANY(@references);";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
-            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
-
-            HashSet<string> result = [];
-
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-            while (await npgsqlDataReader.ReadAsync(cancellationToken))
-            {
-                result.Add(npgsqlDataReader.GetString(0));
-            }
-
-            return result;
+            return await GetUniqueIdsByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, cancellationToken);
         }
 
         /// <summary>
         /// Moves every row held for the given references under some other county row into <paramref name="countyId"/>, so that all of a building's data sits under the county part the building actually belongs to.
         /// <para>This repairs data filed under the wrong part of a multi-part county. <c>building_2d</c> is the source of truth for the <c>(county_id, reference)</c> pair; rows in this table that disagree with it are unreachable, because every read here filters on <c>county_id</c> first and so returns nothing for the part the building is now known to belong to.</para>
         /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
-        /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}, string, int, CancellationToken)"/> - rather than having it silently discarded here.</para>
+        /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}?, string, int?, CancellationToken)"/> - rather than having it silently discarded here.</para>
         /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. It is one statement for the whole batch: call it once per county with all of that county's references, never once per reference.</para>
         /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
         /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection could not be created.</returns>
-        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection is null.</returns>
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
-            if (references is null)
+            if (npgsqlConnection is null || references is null)
             {
                 return null;
             }
@@ -465,14 +580,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 return result;
             }
-
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Nothing of this type has ever been stored, so there is nothing to move. Creating the
             // table here instead would be worse than useless: TableAsync_Building2DReferencedObject
@@ -555,25 +662,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Deletes the rows holding the given references under a single county row.
-        /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
-        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// Moves every row held for the given references under some other county row into <paramref name="countyId"/>, so that all of a building's data sits under the county part the building actually belongs to.
+        /// <para>This repairs data filed under the wrong part of a multi-part county. <c>building_2d</c> is the source of truth for the <c>(county_id, reference)</c> pair; rows in this table that disagree with it are unreachable, because every read here filters on <c>county_id</c> first and so returns nothing for the part the building is now known to belong to.</para>
+        /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
+        /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}?, string, int?, CancellationToken)"/> - rather than having it silently discarded here.</para>
+        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. It is one statement for the whole batch: call it once per county with all of that county's references, never once per reference.</para>
         /// </summary>
-        /// <param name="references">The references to delete.</param>
-        /// <param name="countyId">The identifier of the county row to delete them from.</param>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there.</returns>
-        public async Task<HashSet<long>?> RemoveAsync(IEnumerable<string>? references, int countyId, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection could not be created.</returns>
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
                 return null;
-            }
-
-            string[] references_Array = [.. references];
-            if (references_Array.Length == 0)
-            {
-                return [];
             }
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -584,17 +688,116 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // ANY keeps this one statement rather than one per reference, and RETURNING reports what was
-            // really removed - the count is the only evidence that the delete matched what was intended.
+            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Deletes the rows holding the given references under an optional county identifier.
+        /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="references">The references to delete.</param>
+        /// <param name="countyId">The optional identifier of the county row to delete them from; if null, deletes matching references across all counties.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, or null if the connection or references are null.</returns>
+        public async Task<HashSet<long>?> RemoveAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return [];
+            }
+
             string commandText = $@"
                 DELETE FROM {TableName}
-                WHERE county_id = @countyId
-                  AND reference = ANY(@references)
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId)
                 RETURNING id;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
             npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+
+            HashSet<long> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt64(0));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Deletes the rows holding the given references under an optional county identifier.
+        /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="references">The references to delete.</param>
+        /// <param name="countyId">The optional identifier of the county row to delete them from; if null, deletes matching references across all counties.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there.</returns>
+        public async Task<HashSet<long>?> RemoveAsync(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await RemoveAsync(npgsqlConnection, references, countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Deletes single stored objects from the set held for one building, naming each of them by its own unique identifier.
+        /// <para>A building can hold several rows in this table - one per stored object - so <see cref="RemoveAsync(IEnumerable{string}?, int?, CancellationToken)"/>, which takes out everything held for a reference, is too blunt to correct one of them. This is the delete half of updating a single object: read the set with <see cref="GetItemsByReferenceAsync"/>, pick the one to change, remove it here, then write the replacement.</para>
+        /// <para><c>county_id</c> and <c>unique_id</c> already identify the row on their own - the table declares <c>UNIQUE (county_id, unique_id)</c>. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different building cannot silently take out that building's object.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
+        /// <param name="reference">The reference of the building the objects belong to.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, deletes matching unique IDs across all counties.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, or null if the connection or inputs are null.</returns>
+        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? uniqueIds, string reference, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || uniqueIds is null || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            string[] uniqueIds_Array = [.. uniqueIds];
+            if (uniqueIds_Array.Length == 0)
+            {
+                return [];
+            }
+
+            string commandText = $@"
+                DELETE FROM {TableName}
+                WHERE reference = @reference
+                  AND unique_id = ANY(@uniqueIds)
+                  AND (@countyId IS NULL OR county_id = @countyId)
+                RETURNING id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("reference", reference);
+            npgsqlCommand.Parameters.AddWithValue("uniqueIds", uniqueIds_Array);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             HashSet<long> result = [];
 
@@ -609,26 +812,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Deletes single stored objects from the set held for one building, naming each of them by its own unique identifier.
-        /// <para>A building can hold several rows in this table - one per stored object - so <see cref="RemoveAsync"/>, which takes out everything held for a reference, is too blunt to correct one of them. This is the delete half of updating a single object: read the set with <see cref="GetItemsByReferenceAsync"/>, pick the one to change, remove it here, then write the replacement.</para>
+        /// <para>A building can hold several rows in this table - one per stored object - so <see cref="RemoveAsync(IEnumerable{string}?, int?, CancellationToken)"/>, which takes out everything held for a reference, is too blunt to correct one of them. This is the delete half of updating a single object: read the set with <see cref="GetItemsByReferenceAsync"/>, pick the one to change, remove it here, then write the replacement.</para>
         /// <para><c>county_id</c> and <c>unique_id</c> already identify the row on their own - the table declares <c>UNIQUE (county_id, unique_id)</c>. The reference is required as well and is matched as a guard, so a unique identifier belonging to a different building cannot silently take out that building's object.</para>
         /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
         /// </summary>
         /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
         /// <param name="reference">The reference of the building the objects belong to.</param>
-        /// <param name="countyId">The identifier of the county row holding them.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, deletes matching unique IDs across all counties.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there.</returns>
-        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, string reference, int countyId, CancellationToken cancellationToken = default)
+        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, string reference, int? countyId, CancellationToken cancellationToken = default)
         {
             if (uniqueIds is null || string.IsNullOrWhiteSpace(reference))
             {
                 return null;
-            }
-
-            string[] uniqueIds_Array = [.. uniqueIds];
-            if (uniqueIds_Array.Length == 0)
-            {
-                return [];
             }
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -639,19 +836,42 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // ANY keeps this one statement rather than one per identifier, and RETURNING reports what was
-            // really removed - the count is the only evidence that the delete matched what was intended.
+            return await RemoveByUniqueIdsAsync(npgsqlConnection, uniqueIds, reference, countyId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Deletes single stored objects from one county row, naming each of them by its own unique identifier without stating which building it belongs to.
+        /// <para>The unguarded counterpart of <see cref="RemoveByUniqueIdsAsync(NpgsqlConnection?, IEnumerable{string}?, string, int?, CancellationToken)"/>. That overload matches the reference as well, so a unique identifier belonging to a different building cannot silently take out that building's object; it is the right one whenever the identifiers came from anywhere other than the rows being deleted, and it costs one statement per building.</para>
+        /// <para>This one is for the case where the identifiers were read back from the very rows being replaced, with <see cref="GetUniqueIdsByReferencesAsync(NpgsqlConnection?, IEnumerable{string}?, int?, bool, CancellationToken)"/>. They already name exactly those rows, so the guard would only re-check what that read established, and a whole batch of buildings goes out in one statement instead of one each.</para>
+        /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, deletes matching unique IDs across all counties.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, or null if the connection or inputs are null.</returns>
+        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? uniqueIds, int? countyId, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || uniqueIds is null)
+            {
+                return null;
+            }
+
+            string[] uniqueIds_Array = [.. uniqueIds];
+            if (uniqueIds_Array.Length == 0)
+            {
+                return [];
+            }
+
             string commandText = $@"
                 DELETE FROM {TableName}
-                WHERE county_id = @countyId
-                  AND reference = @reference
-                  AND unique_id = ANY(@uniqueIds)
+                WHERE unique_id = ANY(@uniqueIds)
+                  AND (@countyId IS NULL OR county_id = @countyId)
                 RETURNING id;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
-            npgsqlCommand.Parameters.AddWithValue("reference", reference);
             npgsqlCommand.Parameters.AddWithValue("uniqueIds", uniqueIds_Array);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
 
             HashSet<long> result = [];
 
@@ -666,25 +886,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Deletes single stored objects from one county row, naming each of them by its own unique identifier without stating which building it belongs to.
-        /// <para>The unguarded counterpart of <c>RemoveByUniqueIdsAsync(uniqueIds, reference, countyId)</c>. That overload matches the reference as well, so a unique identifier belonging to a different building cannot silently take out that building's object; it is the right one whenever the identifiers came from anywhere other than the rows being deleted, and it costs one statement per building.</para>
-        /// <para>This one is for the case where the identifiers were read back from the very rows being replaced, with <see cref="GetUniqueIdsByReferencesAsync"/>. They already name exactly those rows, so the guard would only re-check what that read established, and a whole batch of buildings goes out in one statement instead of one each.</para>
+        /// <para>The unguarded counterpart of <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}?, string, int?, CancellationToken)"/>. That overload matches the reference as well, so a unique identifier belonging to a different building cannot silently take out that building's object; it is the right one whenever the identifiers came from anywhere other than the rows being deleted, and it costs one statement per building.</para>
+        /// <para>This one is for the case where the identifiers were read back from the very rows being replaced, with <see cref="GetUniqueIdsByReferencesAsync(IEnumerable{string}?, int?, bool, CancellationToken)"/>. They already name exactly those rows, so the guard would only re-check what that read established, and a whole batch of buildings goes out in one statement instead of one each.</para>
         /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
         /// </summary>
         /// <param name="uniqueIds">The unique identifiers of the stored objects to delete.</param>
-        /// <param name="countyId">The identifier of the county row holding them.</param>
+        /// <param name="countyId">The optional identifier of the county row holding them; if null, deletes matching unique IDs across all counties.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the rows actually deleted, which is how many of the unique identifiers were really there.</returns>
-        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, int countyId, CancellationToken cancellationToken = default)
+        public async Task<HashSet<long>?> RemoveByUniqueIdsAsync(IEnumerable<string>? uniqueIds, int? countyId, CancellationToken cancellationToken = default)
         {
             if (uniqueIds is null)
             {
                 return null;
-            }
-
-            string[] uniqueIds_Array = [.. uniqueIds];
-            if (uniqueIds_Array.Length == 0)
-            {
-                return [];
             }
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
@@ -695,32 +909,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // ANY keeps this one statement rather than one per identifier, and RETURNING reports what was
-            // really removed - the count is the only evidence that the delete matched what was intended.
-            string commandText = $@"
-                DELETE FROM {TableName}
-                WHERE county_id = @countyId
-                  AND unique_id = ANY(@uniqueIds)
-                RETURNING id;";
-
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
-            npgsqlCommand.Parameters.AddWithValue("uniqueIds", uniqueIds_Array);
-
-            HashSet<long> result = [];
-
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-            while (await npgsqlDataReader.ReadAsync(cancellationToken))
-            {
-                result.Add(npgsqlDataReader.GetInt64(0));
-            }
-
-            return result;
+            return await RemoveByUniqueIdsAsync(npgsqlConnection, uniqueIds, countyId, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously updates the specified collection of building 2D referenced objects.
-        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
+        /// <para>The upsert targets <c>(county_id, unique_id)</c>, which is the identity of the stored <b>object</b>, not of the building. An object read back from the database keeps its identifier and so replaces its own row; an object built fresh carries a new one and is <b>added</b> alongside whatever the building already holds. That is the intended behaviour - see <see cref="Classes.Building2DReferencedObject{TUniqueObject}"/> - so a caller that means to replace a building's data has to remove it first, with <see cref="RemoveAsync(IEnumerable{string}?, int?, CancellationToken)"/> for the whole set or <c>RemoveByUniqueIdsAsync</c> for one object.</para>
         /// </summary>
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>

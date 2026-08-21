@@ -196,7 +196,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout: commandTimeout);
+                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                     if (building2Ds is null || building2Ds.Count == 0)
                     {
                         continue;

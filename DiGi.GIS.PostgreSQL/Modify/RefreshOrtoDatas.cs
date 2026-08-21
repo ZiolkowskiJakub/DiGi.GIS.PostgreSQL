@@ -1,4 +1,4 @@
-﻿using DiGi.GIS.PostgreSQL.Classes;
+using DiGi.GIS.PostgreSQL.Classes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -67,12 +67,12 @@ namespace DiGi.GIS.PostgreSQL
 
                     if (PostgreSQLOrtoDatasRefreshOptions.UpdateSubdivisionIds)
                     {
-                        await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(building2DReferences, cancellationToken);
+                        await ortoDatasPostgreSQLConverter.UpdateSubdivisionIds(building2DReferences, fallbackByReference: false, cancellationToken: cancellationToken);
                     }
 
                     if (!PostgreSQLOrtoDatasRefreshOptions.OverrideExistsing)
                     {
-                        building2DReferences = await ortoDatasPostgreSQLConverter.GetExistingBuilding2DReferencesAsync(building2DReferences, true, cancellationToken);
+                        building2DReferences = await ortoDatasPostgreSQLConverter.GetExistingBuilding2DReferencesAsync(building2DReferences, inverted: true, fallbackByReference: false, cancellationToken: cancellationToken);
                     }
 
                     if (building2DReferences is null || building2DReferences.Count == 0)

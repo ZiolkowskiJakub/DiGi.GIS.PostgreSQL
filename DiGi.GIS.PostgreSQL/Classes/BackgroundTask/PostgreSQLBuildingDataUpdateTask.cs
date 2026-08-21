@@ -119,7 +119,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences, commandTimeout: commandTimeout);
+                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -156,7 +156,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         {
                             List<string> references = building2DReferences.Select(x => x.Reference).OfType<string>().ToList();
 
-                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, cancellationToken: cancellationToken);
+                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, fallbackByReference: true, cancellationToken: cancellationToken);
                             if (building2DOccupancyDatas is not null)
                             {
                                 Modify.Update_Occupancy(table, building2DOccupancyDatas);
