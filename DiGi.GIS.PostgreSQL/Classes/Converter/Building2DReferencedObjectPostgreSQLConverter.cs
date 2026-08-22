@@ -918,13 +918,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of <see cref="long"/> identifiers for the objects that were updated, or <c>null</c> if no updates occurred.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30)
+        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReferencedObjects is null)
             {
                 return null;
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -932,62 +935,82 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool succeded = await npgsqlConnection.TableAsync_Building2DReferencedObject(TableName);
-            if (!succeded)
+            bool succeeded = await npgsqlConnection.TableAsync_Building2DReferencedObject(TableName);
+            if (!succeeded)
             {
                 return null;
             }
 
             HashSet<long> result = [];
-            if (!building2DReferencedObjects.Any())
+            List<TBuilding2DReferencedObject> building2DReferencedObjects_List = [.. building2DReferencedObjects.Where(x => x != null)];
+            if (building2DReferencedObjects_List.Count == 0)
             {
                 return result;
             }
 
-            IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects.GroupBy(x => x.CountyId);
+            IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects_List.GroupBy(x => x.CountyId);
 
             foreach (IGrouping<int?, TBuilding2DReferencedObject> grouping in groupings)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (!grouping.Key.HasValue)
                 {
                     continue;
                 }
 
-                await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, grouping.Key.Value);
+                int countyId = grouping.Key.Value;
+                await npgsqlConnection.TableAsync_Building2DReferencedObject_Partition(TableName, countyId);
 
-                string commandText = $@"
-                    INSERT INTO {TableName} (county_id, unique_id, reference, object)
-                    VALUES (@county_id, @unique_id, @reference, @object)
-                    ON CONFLICT (county_id, unique_id)
-                    DO UPDATE SET
-                        object = EXCLUDED.object,
-                        reference = EXCLUDED.reference
-                    RETURNING id;";
+                List<TBuilding2DReferencedObject> objectsInGroup = [.. grouping];
 
-                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                npgsqlCommand.CommandTimeout = commandTimeout;
-
-                // Define parameters once
-                NpgsqlParameter npgsqlParameter_UniqueId = npgsqlCommand.Parameters.Add("unique_id", NpgsqlDbType.Text);
-                NpgsqlParameter npgsqlParameter_CountyId = npgsqlCommand.Parameters.Add("county_id", NpgsqlDbType.Integer);
-                NpgsqlParameter npgsqlParameter_Reference = npgsqlCommand.Parameters.Add("reference", NpgsqlDbType.Text);
-                NpgsqlParameter npgsqlParameter_Object = npgsqlCommand.Parameters.Add("object", NpgsqlDbType.Jsonb);
-
-                foreach (TBuilding2DReferencedObject? countyReferencedObject in grouping)
+                const int batchSize = 1000;
+                for (int i = 0; i < objectsInGroup.Count; i += batchSize)
                 {
-                    npgsqlParameter_UniqueId.Value = countyReferencedObject.UniqueId;
-                    npgsqlParameter_CountyId.Value = countyReferencedObject.CountyId;
-                    npgsqlParameter_Reference.Value = countyReferencedObject.Reference ?? (object)DBNull.Value;
-                    npgsqlParameter_Object.Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value;
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                    object? returnedId = await npgsqlCommand.ExecuteScalarAsync();
-                    if (returnedId is long id)
+                    List<TBuilding2DReferencedObject> chunk = objectsInGroup.GetRange(i, Math.Min(batchSize, objectsInGroup.Count - i));
+
+                    await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+                    npgsqlBatch.Timeout = commandTimeout;
+
+                    foreach (TBuilding2DReferencedObject countyReferencedObject in chunk)
                     {
-                        result.Add(id);
-                        countyReferencedObject.Id = id;
+                        NpgsqlBatchCommand npgsqlBatchCommand = new($@"
+                            INSERT INTO {TableName} (county_id, unique_id, reference, object)
+                            VALUES (@county_id, @unique_id, @reference, @object)
+                            ON CONFLICT (county_id, unique_id)
+                            DO UPDATE SET
+                                object = EXCLUDED.object,
+                                reference = EXCLUDED.reference
+                            RETURNING id;");
+
+                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyReferencedObject.CountyId });
+                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("unique_id", NpgsqlDbType.Text) { Value = countyReferencedObject.UniqueId });
+                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = countyReferencedObject.Reference ?? (object)DBNull.Value });
+                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb) { Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value });
+
+                        npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
                     }
+
+                    await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
+                    int chunkIndex = 0;
+                    do
+                    {
+                        while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                        {
+                            long id = npgsqlDataReader.GetInt64(0);
+                            result.Add(id);
+                            if (chunkIndex < chunk.Count)
+                            {
+                                chunk[chunkIndex].Id = id;
+                            }
+                            chunkIndex++;
+                        }
+                    }
+                    while (await npgsqlDataReader.NextResultAsync(cancellationToken));
                 }
             }
 

@@ -101,7 +101,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 List<Building2D>? building2Ds = null;
                 List<AdministrativeAreal2D>? administrativeAreal2Ds = null;
-                List<Building2DReference>? building2DReferences = null;
 
                 try
                 {
@@ -113,13 +112,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(ids);
                     }
 
-                    building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                    if (building2DReferences is null || building2DReferences.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -136,6 +129,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
+                List<Building2DReference> building2DReferences = [.. building2Ds.Select(x => new Building2DReference(x))];
                 List<GIS.Classes.Building2D> building2Ds_GIS = [.. building2Ds.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
                 List<GIS.Classes.AdministrativeAreal2D>? administrativeAreal2Ds_GIS = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeAreal2D>().ToList();
 
@@ -154,7 +148,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         if (building2DOccupancyDataPostgreSQLConverter is not null)
                         {
-                            List<string> references = building2DReferences.Select(x => x.Reference).OfType<string>().ToList();
+                            List<string> references = [.. building2Ds.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
 
                             List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, fallbackByReference: true, cancellationToken: cancellationToken);
                             if (building2DOccupancyDatas is not null)

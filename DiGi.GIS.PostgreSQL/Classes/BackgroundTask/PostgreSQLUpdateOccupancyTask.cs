@@ -190,13 +190,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, administrativeAreal2DReference.Id, null, cancellationToken: cancellationToken, commandTimeout: commandTimeout);
-                    if (building2DReferences is null || building2DReferences.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    List<Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId, administrativeAreal2DReference.Id, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                     if (building2Ds is null || building2Ds.Count == 0)
                     {
                         continue;
@@ -283,7 +277,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    await building2DOccupancyDataPostgreSQLConverter.UpdateAsync(building2DOccupancyDatas, commandTimeout);
+                    await building2DOccupancyDataPostgreSQLConverter.UpdateAsync(building2DOccupancyDatas, commandTimeout, cancellationToken);
 
                     totalUpdated += building2DOccupancyDatas.Count;
                     progress.Report(totalUpdated);
