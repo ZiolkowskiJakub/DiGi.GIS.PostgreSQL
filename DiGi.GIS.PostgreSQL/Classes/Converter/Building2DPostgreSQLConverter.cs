@@ -39,7 +39,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer, or -1 if the connection is null.</returns>
-        public static async Task<long> CountAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public static async Task<long> CountAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection == null)
             {
@@ -60,19 +60,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Dynamically append the subdivision_id filter if the collection has elements
             if (hasSubdivisionIds)
             {
-                commandText += " AND subdivision_id = ANY(@subdivisionIds)";
+                commandText += " AND (subdivision_id = ANY(@subdivisionIds) OR subdivision_id IS NULL)";
             }
 
-            commandText += ";";
-
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
 
             if (hasSubdivisionIds)
             {
-                // Explicitly converting to an array for the ANY() operator in PostgreSQL
-                int[] subdivisionIdsArray = [.. subdivisionIds!];
-                npgsqlCommand.Parameters.AddWithValue("subdivisionIds", subdivisionIdsArray);
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+                {
+                    Value = subdivisionIds!.ToArray()
+                });
             }
 
             object? executeResult = await npgsqlCommand.ExecuteScalarAsync(cancellationToken);
@@ -93,7 +92,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DReference" /> objects, or null if no references are found or an error occurs.</returns>
-        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(NpgsqlConnection npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -323,17 +322,174 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously retrieves a list of <see cref="Point2D"/> objects associated with the specified references and an optional county identifier.
+        /// Asynchronously retrieves full building data based on a collection of references using optimized partition-pruned batching.
         /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to connect to the database.</param>
-        /// <param name="references">An <see cref="IEnumerable{T}"/> of <see cref="string"/> containing the references to query.</param>
-        /// <param name="countyId">An optional <see cref="int"/> representing the county identifier for filtering results.</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="Point2D"/> objects if matches are found; otherwise, null.</returns>
-        public static async Task<List<Point2D>?> GetPoint2DsByReferences(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform an additional fallback query matching by reference only (without county identifier condition) for any references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, an empty list if none match, or null if the input collection was null or the connection is null.</returns>
+        public static async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            return await GetPoint2DsByReferencesAsync(npgsqlConnection, references, countyId, false, cancellationToken);
+            if (npgsqlConnection is null || building2DReferences is null)
+            {
+                return null;
+            }
+
+            List<Building2DReference> building2DReferences_List = [.. building2DReferences];
+            if (building2DReferences_List.Count == 0)
+            {
+                return [];
+            }
+
+            const int batchSize = 1000;
+            List<Building2D> result = [];
+            HashSet<long> existingIds = [];
+
+            // 1. Group references with a known county ID for partition pruning
+            IEnumerable<IGrouping<int, Building2DReference>> countyGroupings = building2DReferences_List
+                .Where(r => r?.CountyId != null && !string.IsNullOrWhiteSpace(r.Reference))
+                .GroupBy(r => r.CountyId!.Value);
+
+            foreach (IGrouping<int, Building2DReference> countyGroup in countyGroupings)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int countyId = countyGroup.Key;
+                string[] uniqueRefsInCounty = [.. countyGroup.Select(r => r.Reference!).Distinct()];
+
+                for (int i = 0; i < uniqueRefsInCounty.Length; i += batchSize)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    string[] chunk = uniqueRefsInCounty.Skip(i).Take(batchSize).ToArray();
+
+                    const string commandText = $@"
+                        SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                        FROM {Constants.TableName.Building2D}
+                        WHERE county_id = @countyId AND reference = ANY(@references);";
+
+                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                    npgsqlCommand.CommandTimeout = commandTimeout;
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
+
+                    List<Building2D>? chunkResults = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+                    if (chunkResults != null)
+                    {
+                        foreach (Building2D item in chunkResults)
+                        {
+                            if (existingIds.Add(item.Id))
+                            {
+                                result.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. References with no CountyId specified
+            string[] unassignedRefs = [.. building2DReferences_List
+                .Where(r => r?.CountyId == null && !string.IsNullOrWhiteSpace(r?.Reference))
+                .Select(r => r!.Reference!)
+                .Distinct()];
+
+            if (unassignedRefs.Length > 0)
+            {
+                for (int i = 0; i < unassignedRefs.Length; i += batchSize)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    string[] chunk = unassignedRefs.Skip(i).Take(batchSize).ToArray();
+
+                    const string commandText = $@"
+                        SELECT DISTINCT ON (reference)
+                               id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                        FROM {Constants.TableName.Building2D}
+                        WHERE reference = ANY(@references)
+                        ORDER BY reference, id ASC;";
+
+                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                    npgsqlCommand.CommandTimeout = commandTimeout;
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
+
+                    List<Building2D>? chunkResults = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+                    if (chunkResults != null)
+                    {
+                        foreach (Building2D item in chunkResults)
+                        {
+                            if (existingIds.Add(item.Id))
+                            {
+                                result.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Fallback for missing references if requested
+            if (fallbackByReference)
+            {
+                HashSet<string> foundCountyReferencePairs = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference) && b.CountyId.HasValue).Select(b => $"{b.CountyId!.Value}_{b.Reference}")];
+                HashSet<string> foundReferences = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference)).Select(b => b.Reference!)];
+
+                HashSet<string> missingReferences = [];
+                foreach (Building2DReference building2DReference in building2DReferences_List)
+                {
+                    if (string.IsNullOrWhiteSpace(building2DReference?.Reference))
+                    {
+                        continue;
+                    }
+
+                    bool found = building2DReference.CountyId.HasValue
+                        ? foundCountyReferencePairs.Contains($"{building2DReference.CountyId.Value}_{building2DReference.Reference}")
+                        : foundReferences.Contains(building2DReference.Reference);
+
+                    if (!found)
+                    {
+                        missingReferences.Add(building2DReference.Reference);
+                    }
+                }
+
+                if (missingReferences.Count > 0)
+                {
+                    string[] missingRefs_Array = [.. missingReferences];
+                    for (int i = 0; i < missingRefs_Array.Length; i += batchSize)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        string[] chunk = missingRefs_Array.Skip(i).Take(batchSize).ToArray();
+
+                        const string fallbackCommandText = $@"
+                            SELECT DISTINCT ON (reference)
+                                   id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                            FROM {Constants.TableName.Building2D}
+                            WHERE reference = ANY(@missingRefs)
+                            ORDER BY reference, id ASC;";
+
+                        await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
+                        fallbackCommand.CommandTimeout = commandTimeout;
+                        fallbackCommand.Parameters.Add(new NpgsqlParameter("missingRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
+
+                        List<Building2D>? fallbackResults = await ReadAsync_Building2D(fallbackCommand, cancellationToken);
+                        if (fallbackResults != null)
+                        {
+                            foreach (Building2D item in fallbackResults)
+                            {
+                                if (existingIds.Add(item.Id))
+                                {
+                                    result.Add(item);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
+
 
         /// <summary>
         /// Asynchronously clears all data from the specified table and restarts its identity sequence.
@@ -1278,13 +1434,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Retrieves full building data based on a collection of references using optimized partition-pruned batching.
+        /// Asynchronously retrieves full building data based on a collection of references using optimized partition-pruned batching.
         /// </summary>
         /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform an additional fallback query matching by reference only (without county identifier condition) for any references not found in the initial search.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, or null if the input collection was null.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, an empty list if none match, or null if the input collection was null or the database connection could not be established.</returns>
         public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReferences == null)
@@ -1301,168 +1457,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection == null)
             {
-                return [];
+                return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            const int batchSize = 1000;
-            List<Building2D> result = [];
-            HashSet<long> existingIds = [];
-
-            // 1. Group references with a known county ID for partition pruning
-            IEnumerable<IGrouping<int, Building2DReference>> countyGroupings = building2DReferences_List
-                .Where(r => r?.CountyId != null && !string.IsNullOrWhiteSpace(r.Reference))
-                .GroupBy(r => r.CountyId!.Value);
-
-            foreach (IGrouping<int, Building2DReference> countyGroup in countyGroupings)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                int countyId = countyGroup.Key;
-                string[] uniqueRefsInCounty = [.. countyGroup.Select(r => r.Reference!).Distinct()];
-
-                for (int i = 0; i < uniqueRefsInCounty.Length; i += batchSize)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    string[] chunk = uniqueRefsInCounty.Skip(i).Take(batchSize).ToArray();
-
-                    const string commandText = $@"
-                        SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                        FROM {Constants.TableName.Building2D}
-                        WHERE county_id = @countyId AND reference = ANY(@references);";
-
-                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                    npgsqlCommand.CommandTimeout = commandTimeout;
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
-
-                    List<Building2D>? chunkResults = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-                    if (chunkResults != null)
-                    {
-                        foreach (Building2D item in chunkResults)
-                        {
-                            if (existingIds.Add(item.Id))
-                            {
-                                result.Add(item);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 2. References with no CountyId specified
-            string[] unassignedRefs = [.. building2DReferences_List
-                .Where(r => r?.CountyId == null && !string.IsNullOrWhiteSpace(r?.Reference))
-                .Select(r => r!.Reference!)
-                .Distinct()];
-
-            if (unassignedRefs.Length > 0)
-            {
-                for (int i = 0; i < unassignedRefs.Length; i += batchSize)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    string[] chunk = unassignedRefs.Skip(i).Take(batchSize).ToArray();
-
-                    const string commandText = $@"
-                        SELECT DISTINCT ON (reference)
-                               id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                        FROM {Constants.TableName.Building2D}
-                        WHERE reference = ANY(@references)
-                        ORDER BY reference, id ASC;";
-
-                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                    npgsqlCommand.CommandTimeout = commandTimeout;
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
-
-                    List<Building2D>? chunkResults = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-                    if (chunkResults != null)
-                    {
-                        foreach (Building2D item in chunkResults)
-                        {
-                            if (existingIds.Add(item.Id))
-                            {
-                                result.Add(item);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. Fallback for missing references if requested
-            if (fallbackByReference)
-            {
-                HashSet<string> foundCountyReferencePairs = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference) && b.CountyId.HasValue).Select(b => $"{b.CountyId!.Value}_{b.Reference}")];
-                HashSet<string> foundReferences = [.. result.Where(b => !string.IsNullOrWhiteSpace(b.Reference)).Select(b => b.Reference!)];
-
-                HashSet<string> missingReferences = [];
-                foreach (Building2DReference building2DReference in building2DReferences_List)
-                {
-                    if (string.IsNullOrWhiteSpace(building2DReference?.Reference))
-                    {
-                        continue;
-                    }
-
-                    bool found = building2DReference.CountyId.HasValue
-                        ? foundCountyReferencePairs.Contains($"{building2DReference.CountyId.Value}_{building2DReference.Reference}")
-                        : foundReferences.Contains(building2DReference.Reference);
-
-                    if (!found)
-                    {
-                        missingReferences.Add(building2DReference.Reference);
-                    }
-                }
-
-                if (missingReferences.Count > 0)
-                {
-                    string[] missingRefs_Array = [.. missingReferences];
-                    for (int i = 0; i < missingRefs_Array.Length; i += batchSize)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-
-                        string[] chunk = missingRefs_Array.Skip(i).Take(batchSize).ToArray();
-
-                        const string fallbackCommandText = $@"
-                            SELECT DISTINCT ON (reference)
-                                   id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                            FROM {Constants.TableName.Building2D}
-                            WHERE reference = ANY(@missingRefs)
-                            ORDER BY reference, id ASC;";
-
-                        await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
-                        fallbackCommand.CommandTimeout = commandTimeout;
-                        fallbackCommand.Parameters.Add(new NpgsqlParameter("missingRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = chunk });
-
-                        List<Building2D>? fallbackResults = await ReadAsync_Building2D(fallbackCommand, cancellationToken);
-                        if (fallbackResults != null)
-                        {
-                            foreach (Building2D item in fallbackResults)
-                            {
-                                if (existingIds.Add(item.Id))
-                                {
-                                    result.Add(item);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Retrieves full building data based on a collection of references using optimized partition-pruned batching.
-        /// </summary>
-        /// <param name="building2DReferences">The collection of <see cref="Building2DReference"/> objects used to identify and retrieve the corresponding buildings from the database.</param>
-        /// <param name="fallbackByReference">A boolean value indicating whether to perform an additional fallback query matching by reference only (without county identifier condition) for any references not found in the initial search.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects matching the provided references, or null if the input collection was null.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByBuilding2DReferences(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30)
-        {
-            return await GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference, commandTimeout);
+            return await GetBuilding2DsByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences_List, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1614,24 +1614,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="references">An <see cref="IEnumerable{T}"/> of <see cref="string"/> containing the reference identifiers for the points to retrieve.</param>
         /// <param name="countyId">An optional <see cref="int"/> representing the unique identifier of the county used to filter the search.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="Point2D"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<Point2D>?> GetPoint2DsByReferences(IEnumerable<string>? references, int? countyId, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="Point2D"/> objects if matches are found, an empty list if none match, or null if the input collection was null or the connection could not be established.</returns>
+        public async Task<List<Point2D>?> GetPoint2DsByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
                 return null;
             }
 
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
+            List<string> references_List = [.. references];
+            if (references_List.Count == 0)
             {
                 return [];
             }
 
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetPoint2DsByReferences(npgsqlConnection, references, countyId, cancellationToken);
+            return await GetPoint2DsByReferencesAsync(npgsqlConnection, references_List, countyId, fallbackByReference, cancellationToken);
         }
 
         /// <summary>
