@@ -298,6 +298,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     int block_Y_Min = FloorDivide(index_Y_Min, tileSize);
                     int block_Y_Max = FloorDivide(index_Y_Max, tileSize);
 
+                    await using NpgsqlConnection? npgsqlConnection_Terrain = !overrideExisting ? DiGi.PostgreSQL.Create.NpgsqlConnection(terrainPointPostgreSQLConverter.ConnectionData) : null;
+                    if (npgsqlConnection_Terrain is not null)
+                    {
+                        await npgsqlConnection_Terrain.OpenAsync(cancellationToken);
+                    }
+
                     for (int block_X = block_X_Min; block_X <= block_X_Max; block_X++)
                     {
                         for (int block_Y = block_Y_Min; block_Y <= block_Y_Max; block_Y++)
@@ -342,7 +348,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 HashSet<(int, int)> indexes_Stored = [];
                                 if (!overrideExisting)
                                 {
-                                    PointCloud3D? pointCloud3D = await terrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
+                                    PointCloud3D? pointCloud3D = await TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection_Terrain, boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
                                     if (pointCloud3D is not null)
                                     {
                                         for (int i = 0; i < pointCloud3D.Count; i++)
