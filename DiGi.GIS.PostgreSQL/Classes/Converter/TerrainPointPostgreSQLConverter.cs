@@ -618,6 +618,64 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously deletes zero-elevation sentinel points from the terrain point table.
+        /// <para>The elevation service returns <c>0</c> for coordinates outside terrain coverage or over water bodies. This method removes rows where <c>z = 0</c> across the specified counties or the whole table.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to delete zero-elevation points from, or null to clean every county partition.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result carries the number of zero-elevation points deleted, or null when the connection is null or the terrain point table does not exist.</returns>
+        public static async Task<long?> DeleteZeroElevationsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.TerrainPoint))
+            {
+                return null;
+            }
+
+            int[]? countyIds_Array = countyIds is null ? null : [.. countyIds];
+
+            string whereClause = countyIds_Array is null
+                ? "WHERE z = 0"
+                : "WHERE z = 0 AND county_id = ANY(@countyIds)";
+
+            string commandText = $@"
+                DELETE FROM {Constants.TableName.TerrainPoint}
+                {whereClause};";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddCountyIdsParameter(npgsqlCommand, countyIds_Array);
+
+            int rowsAffected = await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+            return rowsAffected;
+        }
+
+        /// <summary>
+        /// Asynchronously deletes zero-elevation sentinel points from the terrain point table, automatically managing the connection.
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to delete zero-elevation points from, or null to clean every county partition.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task whose result carries the number of zero-elevation points deleted, or null when no connection could be opened.</returns>
+        public async Task<long?> DeleteZeroElevationsAsync(IEnumerable<int>? countyIds = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await DeleteZeroElevationsAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a <see cref="PointCloud3D"/> of the terrain points lying within a distance of the specified plan coordinate.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>

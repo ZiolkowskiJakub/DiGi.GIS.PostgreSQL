@@ -171,9 +171,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets the number of points stored at exactly zero elevation.
-        /// <para>Worth reading rather than ignoring: the terrain model answers <c>0</c> with a success status for a coordinate outside its coverage, and that parses as an elevation like any other. Such a point is recorded as stored rather than as unresolved, so a county straddling the border or the coast can hold a band of them, and this is the only figure that shows it.</para>
-        /// <para>Measured against the deployed store on 2026-08-21: 52 222 of 33 377 776 points sit at exactly zero, across 50 of the 406 county partitions. Roughly a quarter of those are inland, clustered over standing water rather than lying along the edge of coverage. Tracked as issue #25.</para>
-        /// <para>Not a list of rows to delete. Poland has terrain at and below sea level - 29 partitions report a negative <see cref="MinZ"/> - so a stored zero cannot yet be told apart from ground that genuinely sits there, and this figure is an upper bound on what is spurious.</para>
+        /// <para>The public elevation model answers <c>0</c> with a success status for a coordinate outside its coverage or over water bodies. <see cref="GIS.Query.ElevationAsync(System.Net.Http.HttpClient, Geometry.Planar.Classes.Point2D)"/> filters these sentinels as unresolved points, and <see cref="TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection, System.Collections.Generic.IEnumerable{int}, int, System.Threading.CancellationToken)"/> purges historical sentinels.</para>
         /// </summary>
         [JsonIgnore]
         public long ZeroElevationCount => zeroElevationCount;

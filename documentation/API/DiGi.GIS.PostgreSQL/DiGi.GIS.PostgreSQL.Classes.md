@@ -12413,11 +12413,7 @@ public long UnassignedSubdivisionCount { get; }
 
 Gets the number of points stored at exactly zero elevation\.
 
-Worth reading rather than ignoring: the terrain model answers `0` with a success status for a coordinate outside its coverage, and that parses as an elevation like any other. Such a point is recorded as stored rather than as unresolved, so a county straddling the border or the coast can hold a band of them, and this is the only figure that shows it.
-
-Measured against the deployed store on 2026-08-21: 52 222 of 33 377 776 points sit at exactly zero, across 50 of the 406 county partitions. Roughly a quarter of those are inland, clustered over standing water rather than lying along the edge of coverage. Tracked as issue #25.
-
-Not a list of rows to delete. Poland has terrain at and below sea level - 29 partitions report a negative [MinZ](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCountyResult.MinZ 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCountyResult\.MinZ') - so a stored zero cannot yet be told apart from ground that genuinely sits there, and this figure is an upper bound on what is spurious.
+The public elevation model answers `0` with a success status for a coordinate outside its coverage or over water bodies. [DiGi\.GIS\.Query\.ElevationAsync\(System\.Net\.Http\.HttpClient,DiGi\.Geometry\.Planar\.Classes\.Point2D\)](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.query.elevationasync#digi-gis-query-elevationasync(system-net-http-httpclient-digi-geometry-planar-classes-point2d) 'DiGi\.GIS\.Query\.ElevationAsync\(System\.Net\.Http\.HttpClient,DiGi\.Geometry\.Planar\.Classes\.Point2D\)') filters these sentinels as unresolved points, and [DeleteZeroElevationsAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.DeleteZeroElevationsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)') purges historical sentinels.
 
 ```csharp
 public long ZeroElevationCount { get; }
@@ -12993,6 +12989,80 @@ The cancellation token to monitor for cancellation requests\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result is true if the operation succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.DeleteZeroElevationsAsync\(NpgsqlConnection, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously deletes zero\-elevation sentinel points from the terrain point table\.
+
+The elevation service returns `0` for coordinates outside terrain coverage or over water bodies. This method removes rows where `z = 0` across the specified counties or the whole table.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Nullable<long>> DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county partitions to delete zero\-elevation points from, or null to clean every county partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of zero\-elevation points deleted, or null when the connection is null or the terrain point table does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.DeleteZeroElevationsAsync\(IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously deletes zero\-elevation sentinel points from the terrain point table, automatically managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Nullable<long>> DeleteZeroElevationsAsync(System.Collections.Generic.IEnumerable<int>? countyIds=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county partitions to delete zero\-elevation points from, or null to clean every county partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.DeleteZeroElevationsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result carries the number of zero\-elevation points deleted, or null when no connection could be opened\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
