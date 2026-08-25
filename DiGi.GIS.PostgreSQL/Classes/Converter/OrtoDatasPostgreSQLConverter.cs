@@ -106,14 +106,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to check for existence in the database.</param>
         /// <param name="inverted">A boolean value indicating whether to invert the search criteria, returning references that do not exist if set to true.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="countyId">The county the lookup is confined to. The table is partitioned on that column, so naming it lets the query reach a single partition instead of every one of them. Null searches the whole table, which is what a collection spanning several counties needs.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DReference"/> objects, or null if the connection or input collection is null.</returns>
-        public static async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(
-            NpgsqlConnection? npgsqlConnection,
-            IEnumerable<Building2DReference>? building2DReferences,
-            bool inverted = false,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, bool fallbackByReference = false, int? countyId = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || building2DReferences is null)
             {
@@ -132,10 +129,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // 2. We use a LEFT JOIN between the input list (UNNEST) and the actual table.
             // If u.reference IS NULL, it means the item does NOT exist in the database.
-            const string commandText = $@"
+            // The county equality is emitted only when there is one to emit, and as a plain parameterised
+            // equality on the partition key rather than an "@countyId IS NULL OR ..." disjunction, because
+            // only the former lets the executor prune to a single partition. It belongs in the ON clause:
+            // moved to WHERE it would discard the non-matching rows the inverted case exists to report.
+            string commandText = $@"
                 SELECT input.c, input.r
                 FROM UNNEST(@counties, @refs) AS input(c, r)
-                LEFT JOIN {TableName.OrtoDatas} u ON (input.c = 0 OR u.county_id = input.c) AND u.reference = input.r
+                LEFT JOIN {TableName.OrtoDatas} u ON (input.c = 0 OR u.county_id = input.c) AND u.reference = input.r{(countyId.HasValue ? " AND u.county_id = @countyId" : string.Empty)}
                 WHERE (@inverted = false AND u.reference IS NOT NULL)  -- Item exists
                    OR (@inverted = true AND u.reference IS NULL);     -- Item does not exist";
 
@@ -144,9 +145,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             try
             {
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
                 npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
                 npgsqlCommand.Parameters.AddWithValue("refs", references);
                 npgsqlCommand.Parameters.AddWithValue("inverted", inverted);
+                if (countyId.HasValue)
+                {
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+                }
 
                 await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
                 while (await npgsqlDataReader.ReadAsync(cancellationToken))
@@ -154,9 +160,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     results.Add(new Building2DReference { CountyId = npgsqlDataReader.GetInt32(0), Reference = npgsqlDataReader.GetString(1) });
                 }
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException npgsqlException)
             {
-                Console.WriteLine($"Postgres Error {nameof(GetExistingBuilding2DReferencesAsync)}: {ex.Message}");
+                Serilog.Modify.Log(npgsqlException, "{Method} failed for {Count} references", nameof(GetExistingBuilding2DReferencesAsync), building2DReferences_List.Count);
                 return null;
             }
 
@@ -177,6 +183,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
+                            fallbackCommand.CommandTimeout = commandTimeout;
                             fallbackCommand.Parameters.AddWithValue("missingRefs", missingReferences);
 
                             await using NpgsqlDataReader fallbackReader = await fallbackCommand.ExecuteReaderAsync(cancellationToken);
@@ -189,9 +196,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 });
                             }
                         }
-                        catch (NpgsqlException ex)
+                        catch (NpgsqlException npgsqlException)
                         {
-                            Console.WriteLine($"Postgres Error {nameof(GetExistingBuilding2DReferencesAsync)} fallback: {ex.Message}");
+                            Serilog.Modify.Log(npgsqlException, "{Method} fallback failed for {Count} references", nameof(GetExistingBuilding2DReferencesAsync), missingReferences.Length);
                             return null;
                         }
                     }
@@ -212,6 +219,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand checkCommand = new(checkExistCommandText, npgsqlConnection);
+                            checkCommand.CommandTimeout = commandTimeout;
                             checkCommand.Parameters.AddWithValue("candidateRefs", candidateReferences);
 
                             await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync(cancellationToken);
@@ -220,9 +228,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 existingGlobally.Add(checkReader.GetString(0));
                             }
                         }
-                        catch (NpgsqlException ex)
+                        catch (NpgsqlException npgsqlException)
                         {
-                            Console.WriteLine($"Postgres Error {nameof(GetExistingBuilding2DReferencesAsync)} inverted fallback: {ex.Message}");
+                            Serilog.Modify.Log(npgsqlException, "{Method} inverted fallback failed for {Count} references", nameof(GetExistingBuilding2DReferencesAsync), candidateReferences.Length);
                             return null;
                         }
 
@@ -529,13 +537,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="building2DReferences">An <see cref="IEnumerable{Building2DReference}"/> of building 2D references to check for existence.</param>
         /// <param name="inverted">A boolean value indicating whether to invert the result; if set to <see langword="true"/>, retrieves references that do not exist.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="countyId">The county the lookup is confined to. The table is partitioned on that column, so naming it lets the query reach a single partition instead of every one of them. Null searches the whole table, which is what a collection spanning several counties needs.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of matching references, or null if the input collection is null.</returns>
-        public async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(
-            IEnumerable<Building2DReference>? building2DReferences,
-            bool inverted = false,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetExistingBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool inverted = false, bool fallbackByReference = false, int? countyId = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (building2DReferences == null)
             {
@@ -555,7 +561,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetExistingBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, inverted, fallbackByReference, cancellationToken);
+            return await GetExistingBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, inverted, fallbackByReference, countyId, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -998,13 +1004,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously updates the specified collection of building 2D references.
+        /// Asynchronously enqueues the specified collection of building 2D references for an orthophoto download.
+        /// <para>The rows land in <see cref="TableName.OrtoDatas_Building2DReference_Update"/>, the queue drained by the download task, so this schedules work rather than storing any orthophoto data of its own.</para>
+        /// <para>A reference carrying no county is dropped rather than filed under county 0: the queue's county column is the address the download writes its result back to, and 0 is not a county.</para>
         /// </summary>
         /// <param name="building2DReferences">An <see cref="IEnumerable{Building2DReference}"/> containing the building 2D references to update.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of the updated references, or null if the operation failed or the input collection was null.</returns>
-        public async Task<List<Building2DReference>?> UpdateBuilding2DReferencesAsync(IEnumerable<Building2DReference> building2DReferences, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> UpdateBuilding2DReferencesAsync(IEnumerable<Building2DReference> building2DReferences, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
+            if (building2DReferences is null)
+            {
+                return null;
+            }
+
+            // A reference with no county has nowhere to be filed, and county 0 is not a partition anyone
+            // reads back. Dropped here rather than written as a row nothing can act on.
+            List<Building2DReference> building2DReferences_List = [.. building2DReferences.Where(x => x is not null && x.CountyId.HasValue && !string.IsNullOrWhiteSpace(x.Reference))];
+            if (building2DReferences_List.Count == 0)
+            {
+                return [];
+            }
+
             // Ensure we have a valid connection
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection == null)
@@ -1015,7 +1037,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Check if table exists before proceeding
-            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, cancellationToken);
+            bool created = await Create.TableAsync_Building2DReference(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, commandTimeout, cancellationToken);
             if (!created)
             {
                 return null;
@@ -1034,11 +1056,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             try
             {
                 await using NpgsqlCommand command = new(sql, npgsqlConnection);
+                command.CommandTimeout = commandTimeout;
 
                 // Preparing arrays for PostgreSQL UNNEST to avoid multiple INSERT calls (optimization)
-                int[] countyIds = [.. building2DReferences.Select(x => x.CountyId ?? 0)];
-                string[] references = [.. building2DReferences.Select(x => x.Reference ?? string.Empty)];
-                int?[] subdivisionIds = [.. building2DReferences.Select(x => x.SubdivisionId)];
+                int[] countyIds = [.. building2DReferences_List.Select(x => x.CountyId!.Value)];
+                string[] references = [.. building2DReferences_List.Select(x => x.Reference!)];
+                int?[] subdivisionIds = [.. building2DReferences_List.Select(x => x.SubdivisionId)];
 
                 command.Parameters.AddWithValue("counties", countyIds);
                 command.Parameters.AddWithValue("refs", references);
@@ -1059,9 +1082,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     result.Add(building2DReference);
                 }
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException npgsqlException)
             {
-                Console.WriteLine($"Database error during {nameof(UpdateBuilding2DReferencesAsync)}: {ex.Message}");
+                Serilog.Modify.Log(npgsqlException, "{Method} failed while enqueuing {Count} references", nameof(UpdateBuilding2DReferencesAsync), building2DReferences_List.Count);
                 throw;
             }
 
@@ -1069,20 +1092,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously updates the subdivision identifiers for the specified collection of building 2D references.
+        /// Asynchronously pushes the subdivision identifier each reference carries onto the matching stored row.
+        /// <para>An entry whose <see cref="Building2DReference.SubdivisionId"/> is null is left out of the write entirely, and the statement guards the same case again with a <c>COALESCE</c>. A null there means the building's subdivision has not been resolved yet, not that it has none, so writing it through would clear a subdivision resolved by an earlier run - the defect issue #23 fixed on <c>building_2d</c> and issue #31 on this table.</para>
+        /// <para>Naming <paramref name="countyId"/> confines the statement to a single partition. Without it the join is planned against the whole partitioned table, because a county carried per row in an unnested array is not something the planner can prune on.</para>
         /// </summary>
         /// <param name="building2DReferences">An <see cref="IEnumerable{Building2DReference}"/> containing the building 2D references to be updated, or null.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search across partitions by reference alone for references whose county identifier was mismatched.</param>
+        /// <param name="countyId">The county the write is confined to, or null to let each entry name its own.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of the updated references, or null if the input collection was null or an error occurred.</returns>
-        public async Task<List<Building2DReference>?> UpdateSubdivisionIds(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of the rows actually written, or null if the input collection was null or no connection could be built.</returns>
+        public async Task<List<Building2DReference>?> UpdateSubdivisionIdsAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int? countyId = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (building2DReferences == null)
             {
                 return null;
             }
 
-            List<Building2DReference> building2DReferences_List = [.. building2DReferences];
+            // Only an entry that names a subdivision can do anything here. Dropping the rest is what keeps a
+            // building whose subdivision has not been resolved from clearing a stored one, and it is also what
+            // keeps the statement small - most of building_2d carries no subdivision link yet.
+            List<Building2DReference> building2DReferences_List = [.. building2DReferences.Where(x => x is not null && x.SubdivisionId.HasValue)];
             if (building2DReferences_List.Count == 0)
             {
                 return [];
@@ -1096,38 +1126,58 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // Rozdzielamy dane na te, które mają CountyId i te, które go nie mają
+            // Separated into the entries that name their county and the ones that do not
             List<Building2DReference> withCounty = [.. building2DReferences_List.Where(x => x.CountyId.HasValue)];
             List<Building2DReference> withoutCounty = [.. building2DReferences_List.Where(x => !x.CountyId.HasValue)];
 
-            // Jeśli brakuje CountyId, musimy je dociągnąć z bazy danych przed aktualizacją
+            // An entry with no county has to have one read back before the update can be addressed
             if (withoutCounty.Count > 0)
             {
-                string[] missingRefs = [.. withoutCounty.Select(x => x.Reference ?? string.Empty)];
-
-                string findSql = $@"
-                    SELECT reference, county_id
-                    FROM {TableName.OrtoDatas}
-                    WHERE reference = ANY(@refs)";
-
-                await using NpgsqlCommand npgsqlCommand = new(findSql, npgsqlConnection);
-                npgsqlCommand.Parameters.AddWithValue("refs", missingRefs);
-
-                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                Dictionary<string, Building2DReference> building2DReferences_ByReference = [];
+                foreach (Building2DReference building2DReference_WithoutCounty in withoutCounty)
                 {
-                    string @ref = npgsqlDataReader.GetString(0);
-                    int cid = npgsqlDataReader.GetInt32(1);
-
-                    // Uzupełniamy brakujące ID w obiektach wejściowych
-                    Building2DReference? match = withoutCounty.FirstOrDefault(x => x.Reference == @ref);
-                    if (match != null)
+                    if (string.IsNullOrWhiteSpace(building2DReference_WithoutCounty.Reference))
                     {
-                        match.CountyId = cid;
-                        withCounty.Add(match);
+                        continue;
                     }
+
+                    building2DReferences_ByReference[building2DReference_WithoutCounty.Reference] = building2DReference_WithoutCounty;
                 }
-                await npgsqlDataReader.CloseAsync();
+
+                if (building2DReferences_ByReference.Count != 0)
+                {
+                    string[] missingReferences = [.. building2DReferences_ByReference.Keys];
+
+                    string findSql = $@"
+                        SELECT reference, county_id
+                        FROM {TableName.OrtoDatas}
+                        WHERE reference = ANY(@refs){(countyId.HasValue ? " AND county_id = @countyId" : string.Empty)}";
+
+                    await using NpgsqlCommand npgsqlCommand = new(findSql, npgsqlConnection);
+                    npgsqlCommand.CommandTimeout = commandTimeout;
+                    npgsqlCommand.Parameters.AddWithValue("refs", missingReferences);
+                    if (countyId.HasValue)
+                    {
+                        npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+                    }
+
+                    await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                    while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                    {
+                        // Taken out of the dictionary as it is matched, so a reference held by more than one
+                        // polygon part of a county resolves once rather than being queued for every part.
+                        if (!building2DReferences_ByReference.Remove(npgsqlDataReader.GetString(0), out Building2DReference? building2DReference_Match) || building2DReference_Match is null)
+                        {
+                            continue;
+                        }
+
+                        // Copied rather than assigned into: the caller handed these over to be read, and a
+                        // county filled in here would otherwise change what the caller sees afterwards.
+                        withCounty.Add(new Building2DReference(building2DReference_Match) { CountyId = npgsqlDataReader.GetInt32(1) });
+                    }
+
+                    await npgsqlDataReader.CloseAsync();
+                }
             }
 
             if (withCounty.Count == 0)
@@ -1135,14 +1185,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            // Teraz wykonujemy właściwy UPDATE na kompletnych danych
+            // COALESCE guards the case the filter above has already removed. Both are kept: the filter spares
+            // the database a write that could only ever be a no-op or a loss, and the COALESCE protects the row
+            // from any future caller that does not filter.
             string updateSql = $@"
                 UPDATE {TableName.OrtoDatas} u
-                SET subdivision_id = data.new_sub_id
+                SET subdivision_id = COALESCE(data.new_sub_id, u.subdivision_id)
                 FROM (
                     SELECT * FROM UNNEST(@counties, @refs, @subs) AS t(c_id, r_text, new_sub_id)
                 ) AS data
-                WHERE u.county_id = data.c_id  -- To gwarantuje Partition Pruning
+                WHERE u.county_id = data.c_id{(countyId.HasValue ? " AND u.county_id = @countyId" : string.Empty)}
                   AND u.reference = data.r_text
                 RETURNING u.id, u.county_id, u.reference, u.subdivision_id;";
 
@@ -1151,10 +1203,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
             try
             {
                 await using NpgsqlCommand command = new(updateSql, npgsqlConnection);
+                command.CommandTimeout = commandTimeout;
 
                 command.Parameters.AddWithValue("counties", withCounty.Select(x => x.CountyId ?? 0).ToArray());
                 command.Parameters.AddWithValue("refs", withCounty.Select(x => x.Reference ?? string.Empty).ToArray());
                 command.Parameters.AddWithValue("subs", withCounty.Select(x => x.SubdivisionId).ToArray());
+                if (countyId.HasValue)
+                {
+                    command.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+                }
 
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
                 while (await reader.ReadAsync(cancellationToken))
@@ -1168,21 +1225,33 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     });
                 }
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException npgsqlException)
             {
-                Console.WriteLine($"Database error in UpdateSubdivisionIds: {ex.Message}");
+                Serilog.Modify.Log(npgsqlException, "{Method} failed while writing {Count} subdivision identifiers", nameof(UpdateSubdivisionIdsAsync), withCounty.Count);
                 throw;
             }
 
             if (fallbackByReference)
             {
                 HashSet<string> updatedRefs = [.. result.Where(r => !string.IsNullOrWhiteSpace(r.Reference)).Select(r => r.Reference!)];
-                List<Building2DReference> remaining = [.. withCounty.Where(b => !string.IsNullOrWhiteSpace(b.Reference) && !updatedRefs.Contains(b.Reference!))];
 
-                if (remaining.Count > 0)
+                Dictionary<string, Building2DReference> building2DReferences_Remaining = [];
+                foreach (Building2DReference building2DReference_WithCounty in withCounty)
                 {
-                    string[] remainingRefs = [.. remaining.Select(b => b.Reference!)];
+                    if (string.IsNullOrWhiteSpace(building2DReference_WithCounty.Reference) || updatedRefs.Contains(building2DReference_WithCounty.Reference))
+                    {
+                        continue;
+                    }
 
+                    building2DReferences_Remaining[building2DReference_WithCounty.Reference] = building2DReference_WithCounty;
+                }
+
+                if (building2DReferences_Remaining.Count > 0)
+                {
+                    string[] remainingRefs = [.. building2DReferences_Remaining.Keys];
+
+                    // No county filter: this searches the partitions the county-addressed statement above has
+                    // already failed to match, which is the whole point of the fallback.
                     string fallbackFindSql = $@"
                         SELECT reference, county_id
                         FROM {TableName.OrtoDatas}
@@ -1192,30 +1261,42 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     await using (NpgsqlCommand fallbackFindCmd = new(fallbackFindSql, npgsqlConnection))
                     {
+                        fallbackFindCmd.CommandTimeout = commandTimeout;
                         fallbackFindCmd.Parameters.AddWithValue("refs", remainingRefs);
 
                         await using NpgsqlDataReader fallbackFindReader = await fallbackFindCmd.ExecuteReaderAsync(cancellationToken);
                         while (await fallbackFindReader.ReadAsync(cancellationToken))
                         {
-                            string @ref = fallbackFindReader.GetString(0);
-                            int cid = fallbackFindReader.GetInt32(1);
-
-                            Building2DReference? match = remaining.FirstOrDefault(x => x.Reference == @ref);
-                            if (match != null)
+                            if (!building2DReferences_Remaining.TryGetValue(fallbackFindReader.GetString(0), out Building2DReference? building2DReference_Match) || building2DReference_Match is null)
                             {
-                                fallbackResolved.Add(new Building2DReference
-                                {
-                                    Reference = match.Reference,
-                                    CountyId = cid,
-                                    SubdivisionId = match.SubdivisionId
-                                });
+                                continue;
                             }
+
+                            fallbackResolved.Add(new Building2DReference
+                            {
+                                Reference = building2DReference_Match.Reference,
+                                CountyId = fallbackFindReader.GetInt32(1),
+                                SubdivisionId = building2DReference_Match.SubdivisionId
+                            });
                         }
                     }
 
                     if (fallbackResolved.Count > 0)
                     {
-                        await using NpgsqlCommand fallbackUpdateCmd = new(updateSql, npgsqlConnection);
+                        // Deliberately the unconfined form of the statement: the counties the fallback found are
+                        // by definition not the one the caller named.
+                        string fallbackUpdateSql = $@"
+                            UPDATE {TableName.OrtoDatas} u
+                            SET subdivision_id = COALESCE(data.new_sub_id, u.subdivision_id)
+                            FROM (
+                                SELECT * FROM UNNEST(@counties, @refs, @subs) AS t(c_id, r_text, new_sub_id)
+                            ) AS data
+                            WHERE u.county_id = data.c_id
+                              AND u.reference = data.r_text
+                            RETURNING u.id, u.county_id, u.reference, u.subdivision_id;";
+
+                        await using NpgsqlCommand fallbackUpdateCmd = new(fallbackUpdateSql, npgsqlConnection);
+                        fallbackUpdateCmd.CommandTimeout = commandTimeout;
 
                         fallbackUpdateCmd.Parameters.AddWithValue("counties", fallbackResolved.Select(x => x.CountyId ?? 0).ToArray());
                         fallbackUpdateCmd.Parameters.AddWithValue("refs", fallbackResolved.Select(x => x.Reference ?? string.Empty).ToArray());
@@ -1239,6 +1320,250 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return result;
         }
 
+        /// <summary>
+        /// Asynchronously summarises what each of the named county partitions holds: how many rows, how many name a subdivision, how many distinct subdivisions they are spread across, and when they were written.
+        /// <para>One aggregate per partition rather than a row per building, so it costs the same whether a county holds a thousand rows or a hundred thousand. It is the cheap way to ask the question <see cref="Query.SubdivisionLinksAsync(OrtoDatasPostgreSQLConverter?, Building2DPostgreSQLConverter?, int, int, int, CancellationToken)"/> answers exactly, and the figure to record either side of a refresh.</para>
+        /// <para>Naming no county summarises every partition. Counties holding no row are absent from the result rather than present with a zero.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise. Null summarises every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one <see cref="OrtoDatasCountyResult"/> per county holding rows, or null when the connection is null or nothing has ever been stored.</returns>
+        public static async Task<List<OrtoDatasCountyResult>?> GetSummariesByCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Answered before the aggregate is sent. A store nothing has ever been written to has no table at
+            // all, and running the query against it raises an undefined relation - which reaches a caller as a
+            // server fault rather than as the plain fact that there is nothing stored yet.
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas))
+            {
+                return null;
+            }
+
+            int[]? countyIds_Array = countyIds is null ? null : [.. countyIds];
+
+            string commandText = $@"
+                SELECT
+                    county_id,
+                    COUNT(*),
+                    COUNT(*) FILTER (WHERE subdivision_id IS NOT NULL),
+                    COUNT(DISTINCT subdivision_id),
+                    MIN(created_at), MAX(created_at)
+                FROM {TableName.OrtoDatas}
+                {WhereCountyIds(countyIds_Array)}
+                GROUP BY county_id
+                ORDER BY county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddCountyIdsParameter(npgsqlCommand, countyIds_Array);
+
+            List<OrtoDatasCountyResult> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(new OrtoDatasCountyResult(
+                    npgsqlDataReader.GetInt32(0),
+                    npgsqlDataReader.GetInt64(1),
+                    npgsqlDataReader.GetInt64(2),
+                    npgsqlDataReader.GetInt64(3),
+                    npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(4),
+                    npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(5)));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously summarises what each of the named county partitions holds.
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise. Null summarises every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one <see cref="OrtoDatasCountyResult"/> per county holding rows, or null when no connection could be built or nothing has ever been stored.</returns>
+        public async Task<List<OrtoDatasCountyResult>?> GetSummariesByCountyIdsAsync(IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetSummariesByCountyIdsAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the subdivision each of a county's stored rows is filed under, keyed by reference.
+        /// <para>Deliberately projects two columns and never <c>object</c>: that column holds the orthophoto imagery for every year the row carries, so the ordinary reads cost megabytes a row. This is what makes a whole-county comparison affordable at all.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result maps each reference to the subdivision it is filed under, which is null when it is filed under none, or null overall when the connection is null or nothing has ever been stored.</returns>
+        public static async Task<Dictionary<string, int?>?> GetSubdivisionIdsByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas))
+            {
+                return null;
+            }
+
+            const string commandText = $@"
+                SELECT reference, subdivision_id
+                FROM {TableName.OrtoDatas}
+                WHERE county_id = @countyId;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+
+            Dictionary<string, int?> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (npgsqlDataReader.IsDBNull(0))
+                {
+                    continue;
+                }
+
+                // The unique index on (county_id, reference) makes the key unique within a partition, so the
+                // indexer cannot silently drop a row here.
+                result[npgsqlDataReader.GetString(0)] = npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously reads the subdivision each of a county's stored rows is filed under, keyed by reference.
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result maps each reference to the subdivision it is filed under, or null when no connection could be built or nothing has ever been stored.</returns>
+        public async Task<Dictionary<string, int?>?> GetSubdivisionIdsByCountyIdAsync(int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetSubdivisionIdsByCountyIdAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reports what each of the named counties still has waiting in the download queue.
+        /// <para>Reads the queue without taking anything out of it, unlike <see cref="GetNextBuilding2DReferencesAsync(int)"/>, which deletes the rows it returns. It is the only way to see what a refresh queued.</para>
+        /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the counties to report on. Null reports every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one <see cref="OrtoDatasQueueResult"/> per county with entries waiting, or null when the connection is null or the queue has never been created.</returns>
+        public static async Task<List<OrtoDatasQueueResult>?> GetQueueSummariesByCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // The queue table is created by the first write rather than up front, so its absence means no
+            // refresh has ever run - a fact, not a fault.
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update))
+            {
+                return null;
+            }
+
+            int[]? countyIds_Array = countyIds is null ? null : [.. countyIds];
+
+            string commandText = $@"
+                SELECT
+                    county_id,
+                    COUNT(*),
+                    COUNT(*) FILTER (WHERE subdivision_id IS NOT NULL),
+                    MIN(created_at), MAX(created_at)
+                FROM {TableName.OrtoDatas_Building2DReference_Update}
+                {WhereCountyIds(countyIds_Array)}
+                GROUP BY county_id
+                ORDER BY county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddCountyIdsParameter(npgsqlCommand, countyIds_Array);
+
+            List<OrtoDatasQueueResult> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(new OrtoDatasQueueResult(
+                    npgsqlDataReader.GetInt32(0),
+                    npgsqlDataReader.GetInt64(1),
+                    npgsqlDataReader.GetInt64(2),
+                    npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(3),
+                    npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(4)));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously reports what each of the named counties still has waiting in the download queue.
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the counties to report on. Null reports every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one <see cref="OrtoDatasQueueResult"/> per county with entries waiting, or null when no connection could be built or the queue has never been created.</returns>
+        public async Task<List<OrtoDatasQueueResult>?> GetQueueSummariesByCountyIdsAsync(IEnumerable<int>? countyIds, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetQueueSummariesByCountyIdsAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+        }
+
+        private static void AddCountyIdsParameter(NpgsqlCommand npgsqlCommand, int[]? countyIds)
+        {
+            if (countyIds is null)
+            {
+                return;
+            }
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
+        }
+
+        private static string WhereCountyIds(int[]? countyIds)
+        {
+            if (countyIds is null)
+            {
+                return string.Empty;
+            }
+
+            return "WHERE county_id = ANY(@countyIds)";
+        }
         private static OrtoDatas Create_OrtoDatas(NpgsqlDataReader npgsqlDataReader)
         {
             return new OrtoDatas

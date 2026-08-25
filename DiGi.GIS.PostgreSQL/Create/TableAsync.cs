@@ -314,9 +314,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="tableName">The name of the table to be created for Building 2D references.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by other methods as a token for cancelling the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, CancellationToken cancellationToken = default)
+        public static async Task<bool> TableAsync_Building2DReference(this NpgsqlConnection? npgsqlConnection, string? tableName, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(tableName))
             {
@@ -344,14 +345,14 @@ namespace DiGi.GIS.PostgreSQL
             {
                 // Explicitly specifying NpgsqlCommand type
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException npgsqlException)
             {
-                // For engineering plugins (Revit/Rhino), logging to a dedicated console or file is key
-                Console.WriteLine($"Postgres Error during table creation ({tableName}): {ex.Message}");
+                Serilog.Modify.Log(npgsqlException, "{Method} failed for table {TableName}", nameof(TableAsync_Building2DReference), tableName);
                 return false;
             }
         }
