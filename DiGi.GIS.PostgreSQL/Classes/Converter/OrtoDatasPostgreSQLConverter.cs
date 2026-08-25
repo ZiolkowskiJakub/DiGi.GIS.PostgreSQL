@@ -789,6 +789,316 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects for a specified county, with optional filtering by subdivision identifiers.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null.</returns>
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            int[]? subdivisionIds_Array = subdivisionIds?.ToArray();
+            bool hasSubdivisionIds = subdivisionIds_Array != null && subdivisionIds_Array.Length > 0;
+
+            string commandText = $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, created_at
+                FROM {TableName.OrtoDatas}
+                WHERE county_id = @county_id{(hasSubdivisionIds ? " AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)" : "")};";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+            if (hasSubdivisionIds)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds_Array });
+            }
+
+            return await ReadAsync_OrtoDatasReference(npgsqlCommand, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects for a specified county, with optional filtering by subdivision identifiers.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if connection fails.</returns>
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetOrtoDatasReferencesByCountyIdAsync(npgsqlConnection, countyId, subdivisionIds, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects based on the specified references and optional county identifier, omitting the binary JSON payload.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="references">A collection of strings representing the references to search for.</param>
+        /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null or input references are null.</returns>
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(
+            NpgsqlConnection? npgsqlConnection,
+            IEnumerable<string>? references,
+            int? countyId,
+            bool fallbackByReference = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return [];
+            }
+
+            const string commandText = $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, created_at
+                FROM {TableName.OrtoDatas}
+                WHERE reference = ANY(@references)
+                  AND (@countyId IS NULL OR county_id = @countyId);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+
+            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+
+            List<OrtoDatasReference>? result = await ReadAsync_OrtoDatasReference(npgsqlCommand, cancellationToken);
+            if (result is null)
+            {
+                return null;
+            }
+
+            if (fallbackByReference && countyId is not null)
+            {
+                HashSet<string> foundReferences = [.. result.Where(o => !string.IsNullOrWhiteSpace(o.Reference)).Select(o => o.Reference!)];
+                string[] missingReferences = [.. references_Array.Where(r => !string.IsNullOrWhiteSpace(r) && !foundReferences.Contains(r)).Distinct()];
+
+                if (missingReferences.Length > 0)
+                {
+                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    if (fallbackItems is not null && fallbackItems.Count > 0)
+                    {
+                        result.AddRange(fallbackItems);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects based on the specified references and optional county identifier.
+        /// </summary>
+        /// <param name="references">An optional collection of strings representing the references to filter by.</param>
+        /// <param name="countyId">An optional integer representing the unique identifier of the county.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if references are null or connection fails.</returns>
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(
+            IEnumerable<string>? references,
+            int? countyId,
+            bool fallbackByReference = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves an <see cref="OrtoDatasReference"/> object based on the specified reference and optional county identifier.
+        /// </summary>
+        /// <param name="reference">The reference string to search for.</param>
+        /// <param name="countyId">An optional integer representing the unique identifier of the county.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> if found; otherwise, null.</returns>
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByReferenceAsync(
+            string reference,
+            int? countyId,
+            bool fallbackByReference = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            return await GetOrtoDatasReferencesByReferencesAsync([reference], countyId, fallbackByReference, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects based on the specified building 2D references.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null or input references are null.</returns>
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || building2DReferences is null)
+            {
+                return null;
+            }
+
+            List<Building2DReference> building2DReferences_List = [.. building2DReferences];
+            if (building2DReferences_List.Count == 0)
+            {
+                return [];
+            }
+
+            int[] countyIds = [.. building2DReferences_List.Select(l => l.CountyId ?? 0)];
+            string[] references = [.. building2DReferences_List.Select(l => l.Reference ?? string.Empty)];
+
+            const string commandText = $@"
+                SELECT u.id, u.county_id, u.reference, u.min_x, u.min_y, u.max_x, u.max_y, u.subdivision_id, u.created_at
+                FROM UNNEST(@counties, @refs) AS input(c, r)
+                INNER JOIN {TableName.OrtoDatas} u ON (input.c = 0 OR u.county_id = input.c) AND u.reference = input.r;";
+
+            List<OrtoDatasReference>? result;
+
+            await using (NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection))
+            {
+                npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
+                npgsqlCommand.Parameters.AddWithValue("refs", references);
+
+                result = await ReadAsync_OrtoDatasReference(npgsqlCommand, cancellationToken);
+            }
+
+            if (result is null)
+            {
+                return null;
+            }
+
+            if (fallbackByReference)
+            {
+                HashSet<string> foundReferences = [.. result.Where(o => !string.IsNullOrWhiteSpace(o.Reference)).Select(o => o.Reference!)];
+                string[] missingReferences = [.. references.Where(r => !string.IsNullOrWhiteSpace(r) && !foundReferences.Contains(r)).Distinct()];
+
+                if (missingReferences.Length > 0)
+                {
+                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    if (fallbackItems is not null && fallbackItems.Count > 0)
+                    {
+                        result.AddRange(fallbackItems);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="OrtoDatasReference"/> objects based on the specified building 2D references.
+        /// </summary>
+        /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if no matching data is found.</returns>
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            if (building2DReferences is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection == null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetOrtoDatasReferencesByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, fallbackByReference, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves an <see cref="OrtoDatasReference"/> based on a specified building 2D reference.
+        /// </summary>
+        /// <param name="building2DReference">The <see cref="Building2DReference"/> used to identify the orthodata reference.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions if not matched by county.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> object if found; otherwise, null.</returns>
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByBuilding2DReferenceAsync(Building2DReference? building2DReference, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            if (building2DReference is null || string.IsNullOrWhiteSpace(building2DReference.Reference))
+            {
+                return null;
+            }
+
+            List<OrtoDatasReference>? results = await GetOrtoDatasReferencesByBuilding2DReferencesAsync([building2DReference], fallbackByReference, cancellationToken);
+            return results?.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves an <see cref="OrtoDatasReference"/> object by its unique ID and optional county identifier.
+        /// </summary>
+        /// <param name="id">The unique ID of the orthodata record.</param>
+        /// <param name="countyId">The optional county identifier used to narrow the search.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> if found; otherwise, null.</returns>
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByIdAsync(long id, int? countyId = null, CancellationToken cancellationToken = default)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, created_at
+                FROM {TableName.OrtoDatas}
+                WHERE id = @id{(countyId is null ? "" : " AND county_id = @countyId")};";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.Parameters.AddWithValue("id", id);
+            if (countyId is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId.Value);
+            }
+
+            List<OrtoDatasReference>? results = await ReadAsync_OrtoDatasReference(npgsqlCommand, cancellationToken);
+            return results?.FirstOrDefault();
+        }
+
+        /// <summary>
         /// Asynchronously updates the data based on the provided orthodata and tolerance.
         /// <para>An entry that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{OrtoDatas}, IEnumerable{int}, double)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
         /// </summary>
@@ -1604,6 +1914,47 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
             return await ReadAsync_OrtoDatas(npgsqlDataReader, cancellationToken);
+        }
+
+        private static OrtoDatasReference Create_OrtoDatasReference(NpgsqlDataReader npgsqlDataReader)
+        {
+            return new OrtoDatasReference
+            {
+                Id = npgsqlDataReader.GetInt64(0),
+                CountyId = npgsqlDataReader.IsDBNull(1) ? null : (int?)npgsqlDataReader.GetInt32(1),
+                Reference = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
+                BoundingBox2D = new BoundingBox2D(
+                        new Point2D(npgsqlDataReader.IsDBNull(3) ? double.NaN : npgsqlDataReader.GetDouble(3),
+                                    npgsqlDataReader.IsDBNull(4) ? double.NaN : npgsqlDataReader.GetDouble(4)),
+                        new Point2D(npgsqlDataReader.IsDBNull(5) ? double.NaN : npgsqlDataReader.GetDouble(5),
+                                    npgsqlDataReader.IsDBNull(6) ? double.NaN : npgsqlDataReader.GetDouble(6))),
+                SubdivisionId = npgsqlDataReader.IsDBNull(7) ? null : (int?)npgsqlDataReader.GetInt32(7),
+                CreatedAt = npgsqlDataReader.IsDBNull(8) ? null : (DateTime?)npgsqlDataReader.GetDateTime(8)
+            };
+        }
+
+        private static async Task<List<OrtoDatasReference>> ReadAsync_OrtoDatasReference(NpgsqlDataReader npgsqlDataReader, CancellationToken cancellationToken = default)
+        {
+            List<OrtoDatasReference> result = [];
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(Create_OrtoDatasReference(npgsqlDataReader));
+            }
+
+            return result;
+        }
+
+        private static async Task<List<OrtoDatasReference>?> ReadAsync_OrtoDatasReference(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlCommand is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            return await ReadAsync_OrtoDatasReference(npgsqlDataReader, cancellationToken);
         }
     }
 }
