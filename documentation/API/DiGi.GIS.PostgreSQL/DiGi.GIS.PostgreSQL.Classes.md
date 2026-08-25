@@ -12273,7 +12273,7 @@ The GIS PostgreSQL converter manager used to retrieve converters and execute ope
 The GIS PostgreSQL converter manager used to retrieve converters and execute operations\.
 
 ```csharp
-private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+protected readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 ```
 
 #### Field Value

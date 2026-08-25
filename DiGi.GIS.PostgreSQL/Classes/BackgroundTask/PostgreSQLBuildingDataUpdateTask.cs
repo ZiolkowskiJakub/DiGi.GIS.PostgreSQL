@@ -22,7 +22,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// The GIS PostgreSQL converter manager used to retrieve converters and execute operations.
         /// </summary>
-        private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+        protected readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 
         /// <summary>
         /// Gets or sets the options used to configure the PostgreSQL building data update process.
