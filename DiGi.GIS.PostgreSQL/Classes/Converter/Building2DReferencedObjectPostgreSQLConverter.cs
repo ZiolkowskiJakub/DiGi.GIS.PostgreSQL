@@ -187,7 +187,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], countyId, 1, fallbackByReference, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetItemsByReferencesAsync([reference], countyId, 1, fallbackByReference, cancellationToken: cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         /// <summary>
@@ -272,7 +272,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return await GetItemsByReferencesAsync([reference], countyId, limit, fallbackByReference, cancellationToken);
+            return await GetItemsByReferencesAsync([reference], countyId, limit, fallbackByReference, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -283,6 +283,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
         /// <param name="limit">The optional maximum number of items to retrieve as a <see cref="System.Int64" />.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}" /> of matching items, or null if the connection or references are null.</returns>
         public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(
@@ -291,6 +292,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int? countyId,
             long? limit = null,
             bool fallbackByReference = false,
+            int commandTimeout = 30,
             CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
@@ -326,6 +328,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             commandText += ";";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding parameters with explicit handling of nulls for PostgreSQL
             npgsqlCommand.Parameters.AddWithValue("references", references_Array);
@@ -355,7 +358,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     long? remainingLimit = limit.HasValue ? limit.Value - result.Count : null;
                     if (!limit.HasValue || (remainingLimit.HasValue && remainingLimit.Value > 0))
                     {
-                        List<TBuilding2DReferencedObject>? fallbackItems = await GetItemsByReferencesAsync(npgsqlConnection, missingReferences, null, remainingLimit, false, cancellationToken);
+                        List<TBuilding2DReferencedObject>? fallbackItems = await GetItemsByReferencesAsync(npgsqlConnection, missingReferences, null, remainingLimit, false, commandTimeout, cancellationToken);
                         if (fallbackItems is not null && fallbackItems.Count > 0)
                         {
                             result.AddRange(fallbackItems);
@@ -374,9 +377,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">An optional integer specifying the county identifier to filter the results.</param>
         /// <param name="limit">An optional long value that specifies the maximum number of items to return.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <typeparamref name="TBuilding2DReferencedObject"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, long? limit = null, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(IEnumerable<string>? references, int? countyId, long? limit = null, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -391,7 +395,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, limit, fallbackByReference, cancellationToken);
+            return await GetItemsByReferencesAsync(npgsqlConnection, references, countyId, limit, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>

@@ -6,7 +6,7 @@ using DiGi.PostgreSQL.Table.Classes;
 using DiGi.PostgreSQL.Table.Enums;
 using Npgsql;
 using NpgsqlTypes;
-using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -56,8 +56,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The unique identifier of the column used for filtering; can be <see langword="null"/>.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a nullable collection of nullable elements of type <typeparam ref="T"/>, or null if no values are found.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? columnUniqueId, int countyId, FilterGroup? filterGroup = null)
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(string? columnUniqueId, int countyId, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(columnUniqueId))
             {
@@ -70,9 +72,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, countyId, filterGroup);
+            return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, countyId, filterGroup, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -83,61 +85,37 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The unique identifier of the column used to filter for unique values.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to retrieving the unique values.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of nullable values of type T, or null if no results are found or the connection is invalid.</returns>
-        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? columnUniqueId, int countyId, FilterGroup? filterGroup = null)
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of nullable values of type T, or null if no results are found, the connection is invalid, or <paramref name="columnUniqueId"/> does not name a stored column.</returns>
+        public async Task<IEnumerable<T?>?> GetUniqueValuesAsync<T>(NpgsqlConnection? npgsqlConnection, string? columnUniqueId, int countyId, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(columnUniqueId))
             {
                 return null;
             }
 
-            if (filterGroup is not null)
+            // The county is folded into the filters rather than written into the statement, so that every
+            // read goes through the base method: it resolves each identifier against the stored column list
+            // and rejects anything not on it before a statement is built. What this replaced pasted
+            // columnUniqueId straight into SELECT DISTINCT, the WHERE clause and ORDER BY, and that value
+            // arrives from a query string - an identifier cannot be parameterised, so the list is the guard.
+            FilterGroup filterGroup_Combined = new()
             {
-                FilterGroup filterGroup_Combined = new()
-                {
-                    LogicalOperator = FilterLogicalOperator.And
-                };
+                LogicalOperator = FilterLogicalOperator.And
+            };
 
-                FilterCondition filterCondition_County = new()
-                {
-                    ColumnUniqueId = IO.Constants.Column.CountyId.UniqueId(),
-                    FilterOperator = FilterOperator.Equals,
-                    Value = countyId
-                };
-
-                filterGroup_Combined.FilterConditions = [filterCondition_County];
-                filterGroup_Combined.FilterGroups = [filterGroup];
-
-                return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, filterGroup_Combined);
-            }
-
-            string commandQuery = $@"
-                SELECT DISTINCT {columnUniqueId}
-                FROM {TableName}
-                WHERE (@countyId IS NULL OR county_id = @countyId)
-                  AND {columnUniqueId} IS NOT NULL
-                ORDER BY {columnUniqueId}";
-
-            HashSet<T?> result = [];
-
-            using NpgsqlCommand npgsqlCommand = new(commandQuery, npgsqlConnection);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
-
-            using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync();
-
-            while (await npgsqlDataReader.ReadAsync())
+            FilterCondition filterCondition_County = new()
             {
-                if (npgsqlDataReader.IsDBNull(0) || !Core.Query.TryConvert(npgsqlDataReader.GetValue(0), out T? value))
-                {
-                    result.Add(default);
-                }
-                else
-                {
-                    result.Add(value);
-                }
-            }
+                ColumnUniqueId = IO.Constants.Column.CountyId.UniqueId(),
+                FilterOperator = FilterOperator.Equals,
+                Value = countyId
+            };
 
-            return result;
+            filterGroup_Combined.FilterConditions = [filterCondition_County];
+            filterGroup_Combined.FilterGroups = filterGroup is null ? [] : [filterGroup];
+
+            return await GetUniqueValuesAsync<T>(npgsqlConnection, columnUniqueId, filterGroup_Combined, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -149,6 +127,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueIds">An optional <see cref="IEnumerable{T}"/> of <see cref="string"/> unique identifiers for columns to include in the operation.</param>
         /// <param name="batchSize">The integer number of records to process per batch. Defaults to 1000.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Table"/> object if the data is successfully retrieved; otherwise, null.</returns>
         public async Task<Core.IO.Table.Classes.Table?> PullAsync(
             NpgsqlConnection? npgsqlConnection,
@@ -156,7 +136,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int? countyId,
             IEnumerable<string>? columnUniqueIds = null,
             int batchSize = 1000,
-            bool fallbackByReference = false)
+            bool fallbackByReference = false,
+            int commandTimeout = 30,
+            CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null || !references.Any())
             {
@@ -167,7 +149,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-                List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp) ?? [];
+                List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
                 Core.IO.Table.Classes.Table table = new(columns);
 
@@ -191,7 +173,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     table.AddRow(values);
                 }
 
-                await PullAsync(npgsqlConnection, table, batchSize);
+                await PullAsync(npgsqlConnection, table, batchSize, commandTimeout, cancellationToken);
 
                 return table;
             }
@@ -205,13 +187,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND county_id = @countyId;";
 
             HashSet<string> inCountyReferences = [];
-            await using (NpgsqlCommand checkCommand = new(checkCommandText, npgsqlConnection))
+            await using (NpgsqlCommand checkCommand = new(checkCommandText, npgsqlConnection) { CommandTimeout = commandTimeout })
             {
                 checkCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
                 checkCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
 
-                await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync();
-                while (await checkReader.ReadAsync())
+                await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync(cancellationToken);
+                while (await checkReader.ReadAsync(cancellationToken))
                 {
                     inCountyReferences.Add(checkReader.GetString(0));
                 }
@@ -233,16 +215,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (missing.Count == 0)
             {
-                return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference: false);
+                return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             }
 
             if (inCounty.Count == 0)
             {
-                return await PullAsync(npgsqlConnection, references, null, columnUniqueIds, batchSize, fallbackByReference: false);
+                return await PullAsync(npgsqlConnection, references, null, columnUniqueIds, batchSize, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             }
 
-            Core.IO.Table.Classes.Table? table_InCounty = await PullAsync(npgsqlConnection, inCounty, countyId, columnUniqueIds, batchSize, fallbackByReference: false);
-            Core.IO.Table.Classes.Table? table_Missing = await PullAsync(npgsqlConnection, missing, null, columnUniqueIds, batchSize, fallbackByReference: false);
+            Core.IO.Table.Classes.Table? table_InCounty = await PullAsync(npgsqlConnection, inCounty, countyId, columnUniqueIds, batchSize, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            Core.IO.Table.Classes.Table? table_Missing = await PullAsync(npgsqlConnection, missing, null, columnUniqueIds, batchSize, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
             if (table_InCounty is null)
             {
@@ -277,8 +259,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The unique identifier of the column used as the primary filter.</param>
         /// <param name="values">A collection of values of type <typeparam ref="TObject"/> to retrieve from the table. Can be null.</param>
         /// <param name="columnUniqueIds">An optional collection of additional column unique identifiers to include in the retrieval process. Defaults to null.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Core.IO.Table.Classes.Table"/> object if data was successfully retrieved; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(NpgsqlConnection? npgsqlConnection, string columnUniqueId, IEnumerable<TObject>? values, IEnumerable<string>? columnUniqueIds = null)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(NpgsqlConnection? npgsqlConnection, string columnUniqueId, IEnumerable<TObject>? values, IEnumerable<string>? columnUniqueIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || values is null || !values.Any() || string.IsNullOrWhiteSpace(columnUniqueId))
             {
@@ -287,11 +271,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
             Core.IO.Table.Classes.Table table = new(columns);
 
-            await PullAsync(npgsqlConnection, table, columnUniqueId, values);
+            await PullAsync(npgsqlConnection, table, columnUniqueId, values, commandTimeout, cancellationToken);
 
             return table;
         }
@@ -303,8 +287,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The unique identifier of the column to be used as the primary filter.</param>
         /// <param name="value">The value to search for in the specified column; can be null.</param>
         /// <param name="columnUniqueIds">An optional collection of string unique identifiers for additional columns to be retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Core.IO.Table.Classes.Table"/> instance if a matching record is found; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(string columnUniqueId, object? value, IEnumerable<string>? columnUniqueIds = null)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(string columnUniqueId, object? value, IEnumerable<string>? columnUniqueIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(columnUniqueId))
             {
@@ -313,11 +299,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
             Core.IO.Table.Classes.Table table = new(columns);
 
-            await PullAsync(table, columnUniqueId, value);
+            await PullAsync(table, columnUniqueId, value, commandTimeout, cancellationToken);
 
             return table;
         }
@@ -330,8 +316,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The name of the column used as the unique identifier for filtering the record.</param>
         /// <param name="value">The value to match against the specified unique identifier column. Can be null.</param>
         /// <param name="columnUniqueIds">An optional collection of strings representing additional column identifiers to be processed. Can be null.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Core.IO.Table.Classes.Table"/> object if a matching record is found; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(NpgsqlConnection? npgsqlConnection, string columnUniqueId, object? value, IEnumerable<string>? columnUniqueIds = null)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(NpgsqlConnection? npgsqlConnection, string columnUniqueId, object? value, IEnumerable<string>? columnUniqueIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(columnUniqueId))
             {
@@ -340,11 +328,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
             Core.IO.Table.Classes.Table table = new(columns);
 
-            await PullAsync(npgsqlConnection, table, columnUniqueId, value);
+            await PullAsync(npgsqlConnection, table, columnUniqueId, value, commandTimeout, cancellationToken);
 
             return table;
         }
@@ -356,8 +344,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueId">The unique identifier of the primary column used for the pull operation.</param>
         /// <param name="values">An enumerable collection of <typeparamref name="TObject"/> values to be used as criteria. Can be null.</param>
         /// <param name="columnUniqueIds">An optional enumerable collection of additional unique identifiers for columns. Defaults to null.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="Core.IO.Table.Classes.Table"/> instance if data is successfully retrieved; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(string columnUniqueId, IEnumerable<TObject>? values, IEnumerable<string>? columnUniqueIds = null)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync<TObject>(string columnUniqueId, IEnumerable<TObject>? values, IEnumerable<string>? columnUniqueIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (values is null || !values.Any() || string.IsNullOrWhiteSpace(columnUniqueId))
             {
@@ -366,11 +356,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
 
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
             Core.IO.Table.Classes.Table table = new(columns);
 
-            await PullAsync(table, columnUniqueId, values);
+            await PullAsync(table, columnUniqueId, values, commandTimeout, cancellationToken);
 
             return table;
         }
@@ -383,8 +373,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueIds">An optional <see cref="IEnumerable{T}"/> of <see cref="string"/> specifying the unique identifiers of the columns to retrieve.</param>
         /// <param name="batchSize">An <see cref="int"/> specifying the number of records to process per batch. Defaults to 1000.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing a <see cref="Core.IO.Table.Classes.Table"/> object if successful; otherwise, <see langword="null"/>.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000, bool fallbackByReference = false)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(IEnumerable<string> references, int? countyId, IEnumerable<string>? columnUniqueIds = null, int batchSize = 1000, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -392,9 +384,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference);
+            return await PullAsync(npgsqlConnection, references, countyId, columnUniqueIds, batchSize, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -404,11 +396,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="columnUniqueIds">The optional list of column unique identifiers to project.</param>
         /// <param name="lastReference">The last reference string from the previous page used as the cursor seek-key.</param>
         /// <param name="pageSize">The page size count limit.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the async operation, returning the populated <see cref="Core.IO.Table.Classes.Table"/> if successful; otherwise, null.</returns>
-        public async Task<Core.IO.Table.Classes.Table?> PullAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250)
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp) ?? [];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
 
             Core.IO.Table.Classes.Table table_Result = new(columns);
             table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
@@ -419,7 +413,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 return null;
             }
-            await npgsqlConnection_Db.OpenAsync();
+            await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
             bool isSuccess = await PullAsync(
                 npgsqlConnection_Db,
@@ -427,7 +421,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 IO.Constants.Column.Reference.UniqueId()!,
                 lastReference,
                 pageSize,
-                countyId);
+                countyId,
+                commandTimeout,
+                cancellationToken);
 
             return isSuccess ? table_Result : null;
         }
@@ -439,17 +435,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="singlevalueAggregateFunction">The single-value aggregate calculation function.</param>
         /// <param name="countyId">The optional partition county identifier. If null, aggregation is performed across all partitions.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, SinglevalueAggregateFunction singlevalueAggregateFunction, int? countyId = null, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, SinglevalueAggregateFunction singlevalueAggregateFunction, int? countyId = null, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
             {
                 return null;
             }
-            await npgsqlConnection_Db.OpenAsync();
+            await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
-            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, singlevalueAggregateFunction, countyId, filterGroup);
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, singlevalueAggregateFunction, countyId, filterGroup, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -460,17 +458,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional partition county identifier. If null, aggregation is performed across all partitions.</param>
         /// <param name="separator">The optional custom string delimiter; if null, it is automatically detected.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to aggregation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the async operation, returning the aggregate result as a <see cref="System.Text.Json.Nodes.JsonNode"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, MultivalueAggregateFunction multivalueAggregateFunction, int? countyId = null, string? separator = null, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAggregateSummaryAsync(string columnUniqueId, MultivalueAggregateFunction multivalueAggregateFunction, int? countyId = null, string? separator = null, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
             {
                 return null;
             }
-            await npgsqlConnection_Db.OpenAsync();
+            await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
-            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, multivalueAggregateFunction, countyId, separator, filterGroup);
+            return await GetAggregateSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, multivalueAggregateFunction, countyId, separator, filterGroup, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -480,17 +480,248 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="bucketCount">The total number of buckets to segment the value range into.</param>
         /// <param name="countyId">The optional partition county identifier. If null, histogram is generated across all partitions.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to generating the histogram.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the async operation, returning the histogram aggregate result as a <see cref="System.Text.Json.Nodes.JsonArray"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int? countyId = null, FilterGroup? filterGroup = null)
+        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int? countyId = null, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
             {
                 return null;
             }
-            await npgsqlConnection_Db.OpenAsync();
+            await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
-            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, bucketCount, countyId, filterGroup);
+            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, bucketCount, countyId, filterGroup, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously counts the building data rows of one county partition, or of the whole table.
+        /// <para>A county that has no partition answers -1 rather than 0, and the two mean different things: never written against written and empty. Reporting both as zero would hide a county no run has reached.</para>
+        /// </summary>
+        /// <param name="countyId">The optional identifier of the county partition to count. If null, the whole table is counted.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the row count, or -1 when there is no such partition or no connection could be built.</returns>
+        public async Task<long> GetCountAsync(int? countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string tableName = Constants.TableName.BuildingData;
+            if (countyId is not null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the planner's row estimate for one county partition, or for the whole table.
+        /// <para>Far cheaper than counting on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment.</para>
+        /// <para>The estimate comes from <c>pg_class.reltuples</c>, which a partitioned parent carries as -1 until something analyses it - so a null <paramref name="countyId"/>, and a county partition that has never been analysed, both answer -1 rather than a number. Pass <paramref name="analyze"/> to settle it, or count instead.</para>
+        /// </summary>
+        /// <param name="countyId">The optional identifier of the county partition to estimate. If null, the whole table is estimated.</param>
+        /// <param name="analyze">Runs an analysis before reading the estimate, which costs a scan but makes the answer current.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count, or -1 when there is no such partition or no connection could be built.</returns>
+        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string tableName = Constants.TableName.BuildingData;
+            if (countyId is not null && countyId.HasValue)
+            {
+                tableName = string.Format("{0}_{1}", tableName, countyId.Value);
+            }
+
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the references the building data holds for one county.
+        /// <para>Only the reference column is read. It is the counterpart of a table pull for a caller that wants to know which buildings are covered rather than what is stored about them - pulling the rows to reach one column would move every derived value of every building across the connection.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the set of references, an empty set when the county holds none, or null when no connection could be built.</returns>
+        public async Task<HashSet<string>?> GetReferencesByCountyIdAsync(int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetReferencesByCountyIdAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the references the building data holds for one county, over the given connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the query. This value can be null.</param>
+        /// <param name="countyId">The identifier of the county to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the set of references, an empty set when the county holds none, or null when the connection is null.</returns>
+        public async Task<HashSet<string>?> GetReferencesByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandText = $@"
+                SELECT reference
+                FROM {Constants.TableName.BuildingData}
+                WHERE county_id = @countyId
+                  AND reference IS NOT NULL;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+
+            HashSet<string> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (!npgsqlDataReader.IsDBNull(0))
+                {
+                    result.Add(npgsqlDataReader.GetString(0));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the references the building data holds under more than one county, ordered by collision count descending.
+        /// <para>A reference addresses one building of one county, so a reference filed under several counties is a defect rather than a fact about the data. It is what a write that resolved a reference outside the county it was processing leaves behind, and nothing removes it afterwards.</para>
+        /// </summary>
+        /// <param name="limit">The maximum number of references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the duplicated references, an empty list when there are none, or null when no connection could be built.</returns>
+        public async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetDuplicateReferencesAsync(npgsqlConnection, limit, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the references the building data holds under more than one county, over the given connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the query. This value can be null.</param>
+        /// <param name="limit">The maximum number of references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the duplicated references, an empty list when there are none, or null when the connection is null.</returns>
+        public static async Task<List<Building2DReferenceDuplicate>?> GetDuplicateReferencesAsync(NpgsqlConnection? npgsqlConnection, int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Grouped on the county rather than on the row: the primary key already holds a reference to one row
+            // per county, so a reference appearing twice is by definition appearing under two counties.
+            string commandText = $@"
+                SELECT reference, COUNT(DISTINCT county_id) AS count, ARRAY_AGG(DISTINCT county_id ORDER BY county_id) AS county_ids
+                FROM {Constants.TableName.BuildingData}
+                WHERE reference IS NOT NULL
+                GROUP BY reference
+                HAVING COUNT(DISTINCT county_id) > 1
+                ORDER BY count DESC
+                LIMIT @limit;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("limit", NpgsqlDbType.Integer) { Value = limit });
+
+            List<Building2DReferenceDuplicate> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                string? reference = npgsqlDataReader.IsDBNull(0) ? null : npgsqlDataReader.GetString(0);
+                long count = npgsqlDataReader.IsDBNull(1) ? 0 : npgsqlDataReader.GetInt64(1);
+                int[]? countyIds = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetFieldValue<int[]>(2);
+
+                result.Add(new Building2DReferenceDuplicate(reference, count, countyIds));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the counties whose building data holds a row for one reference.
+        /// <para>The targeted form of the duplicate reference read, for checking a single building. More than one county means the reference was written outside the county it belongs to.</para>
+        /// </summary>
+        /// <param name="reference">The building reference to look up.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the county identifiers in ascending order, an empty list when the reference is not stored, or null when no reference was given or no connection could be built.</returns>
+        public async Task<List<int>?> GetCountyIdsByReferenceAsync(string? reference, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            string commandText = $@"
+                SELECT DISTINCT county_id
+                FROM {Constants.TableName.BuildingData}
+                WHERE reference = @reference
+                ORDER BY county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = reference });
+
+            List<int> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (!npgsqlDataReader.IsDBNull(0))
+                {
+                    result.Add(npgsqlDataReader.GetInt32(0));
+                }
+            }
+
+            return result;
         }
     }
 }

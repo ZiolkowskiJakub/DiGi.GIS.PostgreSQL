@@ -844,7 +844,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            return await GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, ids, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -852,9 +852,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="ids">An <see cref="IEnumerable{T}"/> of integer identifiers for the administrative areal 2D objects to retrieve.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="AdministrativeAreal2D"/> objects if successful; otherwise, null.</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || ids is null)
             {
@@ -873,6 +874,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Using strongly typed parameter to prevent SQL injection and ensure correct DB type mapping
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = ids!.ToArray() });
@@ -1784,19 +1786,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves a list of administrative areas based on the provided identifiers.
         /// </summary>
-        /// <param name="ids">An optional collection of integer identifiers used to filter the results. If this parameter is null or empty, no ID filtering is applied.</param>
+        /// <param name="ids">An optional collection of integer identifiers used to filter the results. If this parameter is null or empty, no ID filtering is applied and the whole table is read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects if successful; otherwise, null.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByIdsAsync(IEnumerable<int>? ids = null)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByIdsAsync(IEnumerable<int>? ids = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
-
-            List<AdministrativeAreal2D> result = [];
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             // 1. Dynamic SQL construction
             // If ids is null or empty, the WHERE clause is effectively ignored or skipped
@@ -1809,6 +1813,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             if (!noFilter)
             {
@@ -1816,7 +1821,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = ids!.ToArray() });
             }
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>

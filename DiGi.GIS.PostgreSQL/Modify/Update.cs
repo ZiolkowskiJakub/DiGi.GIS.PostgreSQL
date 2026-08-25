@@ -2,7 +2,6 @@ using DiGi.Core.IO.Table.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.IO;
 using DiGi.GIS.PostgreSQL.Classes;
-using System;
 using System.Collections.Generic;
 
 namespace DiGi.GIS.PostgreSQL
@@ -35,32 +34,7 @@ namespace DiGi.GIS.PostgreSQL
 
             Column? column_Id = table.UpdateColumn<Column>(IO.Constants.Column.DatabaseId);
 
-            List<Tuple<Row, int, string>> tuples = [];
-
-            int count = table.RowCount;
-            if (count != 0)
-            {
-                for (int i = count - 1; i >= 0; i--)
-                {
-                    Row? row = table.GetRow(i);
-                    if (row is null)
-                    {
-                        continue;
-                    }
-
-                    if (!row.TryGetValue(column_CountyId.Index, out int countyId_Row))
-                    {
-                        continue;
-                    }
-
-                    if (!row.TryGetValue(column_Reference.Index, out string? reference_Row) || string.IsNullOrWhiteSpace(reference_Row))
-                    {
-                        continue;
-                    }
-
-                    tuples.Add(new Tuple<Row, int, string>(row, countyId_Row, reference_Row));
-                }
-            }
+            Dictionary<(int, string), Row> dictionary_Row = Query.RowsByCountyIdAndReference(table, column_CountyId, column_Reference);
 
             foreach (Building2DReference building2DReference in building2DReferences)
             {
@@ -76,13 +50,14 @@ namespace DiGi.GIS.PostgreSQL
                     continue;
                 }
 
-                Row? row = tuples.Find(x => x.Item2 == county_Id && x.Item3 == reference)?.Item1;
-                if (row is null)
+                if (!dictionary_Row.TryGetValue((county_Id.Value, reference!), out Row? row) || row is null)
                 {
                     row = table.AddRow();
 
                     IO.Modify.SetValue(row, column_CountyId, county_Id);
                     IO.Modify.SetValue(row, column_Reference, reference);
+
+                    dictionary_Row[(county_Id.Value, reference!)] = row;
                 }
 
                 IO.Modify.SetValue(row, column_Id, building2DReference.Id);
@@ -93,9 +68,10 @@ namespace DiGi.GIS.PostgreSQL
 
         /// <summary>
         /// Updates the occupancy data in the specified table based on the provided collection of building occupancy records.
+        /// <para>The occupancy table holds one row per stored object rather than one per building, so a reference can arrive here several times. The first record of a given county and reference is the one that is written and the rest are stepped over, which means the collection has to reach this method in the caller's order of preference - the converter returns the newest record first, so passing its result straight through stores the newest.</para>
         /// </summary>
         /// <param name="table">The PostgreSQL table to be updated.</param>
-        /// <param name="building2DOccupancyDatas">A collection of <see cref="Building2DOccupancyData"/> objects containing the new occupancy information.</param>
+        /// <param name="building2DOccupancyDatas">A collection of <see cref="Building2DOccupancyData"/> objects containing the new occupancy information, most preferred record first.</param>
         public static void Update_Occupancy(this Table? table, IEnumerable<Building2DOccupancyData>? building2DOccupancyDatas)
         {
             if (table is null || building2DOccupancyDatas is null)
@@ -117,32 +93,9 @@ namespace DiGi.GIS.PostgreSQL
 
             Column? column_Occupancy = table.UpdateColumn<Column>(IO.Constants.Column.CalculatedOccupancy);
 
-            List<Tuple<Row, int, string>> tuples = [];
+            Dictionary<(int, string), Row> dictionary_Row = Query.RowsByCountyIdAndReference(table, column_CountyId, column_Reference);
 
-            int count = table.RowCount;
-            if (count != 0)
-            {
-                for (int i = count - 1; i >= 0; i--)
-                {
-                    Row? row = table.GetRow(i);
-                    if (row is null)
-                    {
-                        continue;
-                    }
-
-                    if (!row.TryGetValue(column_CountyId.Index, out int countyId_Row))
-                    {
-                        continue;
-                    }
-
-                    if (!row.TryGetValue(column_Reference.Index, out string? reference_Row) || string.IsNullOrWhiteSpace(reference_Row))
-                    {
-                        continue;
-                    }
-
-                    tuples.Add(new Tuple<Row, int, string>(row, countyId_Row, reference_Row));
-                }
-            }
+            HashSet<(int, string)> written = [];
 
             foreach (Building2DOccupancyData building2DOccupancyData in building2DOccupancyDatas)
             {
@@ -158,18 +111,24 @@ namespace DiGi.GIS.PostgreSQL
                     continue;
                 }
 
+                if (!written.Add((county_Id.Value, reference!)))
+                {
+                    continue;
+                }
+
                 if (building2DOccupancyData.ToDiGi() is not OccupancyData occupancyData)
                 {
                     continue;
                 }
 
-                Row? row = tuples.Find(x => x.Item2 == county_Id && x.Item3 == reference)?.Item1;
-                if (row is null)
+                if (!dictionary_Row.TryGetValue((county_Id.Value, reference!), out Row? row) || row is null)
                 {
                     row = table.AddRow();
 
                     IO.Modify.SetValue(row, column_CountyId, county_Id);
                     IO.Modify.SetValue(row, column_Reference, reference);
+
+                    dictionary_Row[(county_Id.Value, reference!)] = row;
                 }
 
                 IO.Modify.SetValue(row, column_Occupancy, occupancyData.Occupancy);

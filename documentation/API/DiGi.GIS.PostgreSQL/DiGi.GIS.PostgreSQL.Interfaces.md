@@ -108,6 +108,7 @@ Derived
 ↳ [AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')  
 ↳ [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')  
 ↳ [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')  
+↳ [BuildingDataCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult')  
 ↳ [OrtoDatasCountyResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCountyResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCountyResult')  
 ↳ [OrtoDatasQueueResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasQueueResult')  
 ↳ [OrtoDatasSubdivisionResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasSubdivisionResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasSubdivisionResult')  

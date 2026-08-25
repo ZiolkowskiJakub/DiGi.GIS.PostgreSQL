@@ -262,6 +262,55 @@ public static class Create
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Create
 ### Methods
 
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken)'></a>
+
+## Create\.BuildingDataCoverageResultAsync\(this BuildingDataPostgreSQLConverter, Building2DPostgreSQLConverter, int, int, CancellationToken\) Method
+
+Asynchronously measures what one county's building data holds against the buildings that county actually has\.
+
+The comparison is made on references read from each side rather than by a join, because the two tables are in different databases - `building_2d` in the main one and `building_data` in the storage one.
+
+Three statements, one per side plus the unresolved subdivision count, each on its own connection and run one after another. Nothing here fans out per building or per subdivision: a coverage read that opened a connection per item is what exhausted the pool the last time this shape was written.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult?> BuildingDataCoverageResultAsync(this DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).buildingDataPostgreSQLConverter'></a>
+
+`buildingDataPostgreSQLConverter` [BuildingDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
+
+The converter reading the building data side\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter reading the building side\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county to measure\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.BuildingDataCoverageResultAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[BuildingDataCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the coverage, or null when either converter is missing or either side could not be read\.
+
 <a name='DiGi.GIS.PostgreSQL.Create.GISPostgreSQLConverterManager()'></a>
 
 ## Create\.GISPostgreSQLConverterManager\(\) Method
@@ -969,6 +1018,8 @@ The building2DReferences to use for updating
 
 Updates the occupancy data in the specified table based on the provided collection of building occupancy records\.
 
+The occupancy table holds one row per stored object rather than one per building, so a reference can arrive here several times. The first record of a given county and reference is the one that is written and the rest are stepped over, which means the collection has to reach this method in the caller's order of preference - the converter returns the newest record first, so passing its result straight through stores the newest.
+
 ```csharp
 public static void Update_Occupancy(this DiGi.Core.IO.Table.Classes.Table? table, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData>? building2DOccupancyDatas);
 ```
@@ -984,7 +1035,7 @@ The PostgreSQL table to be updated\.
 
 `building2DOccupancyDatas` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Building2DOccupancyData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyData')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
-A collection of [Building2DOccupancyData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyData') objects containing the new occupancy information\.
+A collection of [Building2DOccupancyData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyData') objects containing the new occupancy information, most preferred record first\.
 
 <a name='DiGi.GIS.PostgreSQL.Query'></a>
 
@@ -1435,6 +1486,41 @@ The identifier of the county row\.
 #### Returns
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')  
 The seed to draw that county's sample with\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RowsByCountyIdAndReference(thisDiGi.Core.IO.Table.Classes.Table,DiGi.Core.IO.Table.Classes.Column,DiGi.Core.IO.Table.Classes.Column)'></a>
+
+## Query\.RowsByCountyIdAndReference\(this Table, Column, Column\) Method
+
+Indexes the rows of a table by their county identifier and reference so that a caller matching a collection of items against them does not rescan the table for each one\.
+
+Rows are read from the back, so where several rows carry the same county and reference the one at the highest index wins - which is what a backwards scan stopping at its first hit did.
+
+```csharp
+public static System.Collections.Generic.Dictionary<(int,string),DiGi.Core.IO.Table.Classes.Row> RowsByCountyIdAndReference(this DiGi.Core.IO.Table.Classes.Table? table, DiGi.Core.IO.Table.Classes.Column? column_CountyId, DiGi.Core.IO.Table.Classes.Column? column_Reference);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.RowsByCountyIdAndReference(thisDiGi.Core.IO.Table.Classes.Table,DiGi.Core.IO.Table.Classes.Column,DiGi.Core.IO.Table.Classes.Column).table'></a>
+
+`table` [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')
+
+The table whose rows are indexed\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RowsByCountyIdAndReference(thisDiGi.Core.IO.Table.Classes.Table,DiGi.Core.IO.Table.Classes.Column,DiGi.Core.IO.Table.Classes.Column).column_CountyId'></a>
+
+`column_CountyId` [DiGi\.Core\.IO\.Table\.Classes\.Column](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.column 'DiGi\.Core\.IO\.Table\.Classes\.Column')
+
+The county identifier column\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RowsByCountyIdAndReference(thisDiGi.Core.IO.Table.Classes.Table,DiGi.Core.IO.Table.Classes.Column,DiGi.Core.IO.Table.Classes.Column).column_Reference'></a>
+
+`column_Reference` [DiGi\.Core\.IO\.Table\.Classes\.Column](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.column 'DiGi\.Core\.IO\.Table\.Classes\.Column')
+
+The reference column\.
+
+#### Returns
+[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Core\.IO\.Table\.Classes\.Row](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.row 'DiGi\.Core\.IO\.Table\.Classes\.Row')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
+A dictionary of rows keyed by county identifier and reference\. Rows missing either value are not included\. Never null\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.Sample_T_(thisSystem.Collections.Generic.IEnumerable_T_,int,System.Random)'></a>
 

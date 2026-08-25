@@ -1363,9 +1363,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search for buildings; may be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance used during the spatial query.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing a <see cref="List{Building2D}"/> of buildings found within the specified area.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<Building2D>?> GetBuilding2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -1410,6 +1411,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds });
@@ -1470,9 +1472,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area; can be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance for the spatial query, defaulting to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2D}"/> of buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established.</returns>
-        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<Building2D>?> GetBuilding2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D?.Center is null)
             {
@@ -1482,7 +1485,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Delegate the coarse spatial search to the bounding-box query: the circle's bounding box
             // expanded by the tolerance is exactly the effective search region (radius + tolerance).
             // This reuses the partition pruning and the GiST-indexed 'box && box' filter.
-            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, cancellationToken);
+            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, commandTimeout, cancellationToken);
             if (building2Ds is null || building2Ds.Count == 0)
             {
                 return building2Ds;
@@ -1507,9 +1510,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area; can be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance for the spatial query, defaulting to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{Building2DReference}"/> of references to the buildings found within the specified area, an empty list if none match, or null if the input is invalid or the connection could not be established.</returns>
-        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D?.Center is null)
             {
@@ -1519,7 +1523,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Delegate the coarse spatial search to the bounding-box query: the circle's bounding box
             // expanded by the tolerance is exactly the effective search region (radius + tolerance).
             // This reuses the partition pruning and the GiST-indexed 'box && box' filter.
-            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, cancellationToken);
+            List<Building2D>? building2Ds = await GetBuilding2DsByBoundingBox2DAsync(circle2D.GetBoundingBox(), tolerance, commandTimeout, cancellationToken);
             if (building2Ds is null)
             {
                 return null;
@@ -2378,6 +2382,57 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetReferenceUniquenessSummaryAsync(npgsqlConnection, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously counts the buildings of one county whose subdivision has not been resolved.
+        /// <para>These buildings belong to no subdivision, so anything driven by subdivisions - the building data update among them - never visits them. The figure is therefore the part of a coverage shortfall that no run can currently close.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county to count.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the count, or -1 when no connection could be built.</returns>
+        public async Task<long> GetCountWithoutSubdivisionAsync(int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountWithoutSubdivisionAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously counts the buildings of one county whose subdivision has not been resolved, over the given connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the query. This value can be null.</param>
+        /// <param name="countyId">The identifier of the county to count.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the count, or -1 when the connection is null.</returns>
+        public static async Task<long> GetCountWithoutSubdivisionAsync(NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            string commandText = $@"
+                SELECT COUNT(*)
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId
+                  AND subdivision_id IS NULL;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+
+            object? @object = await npgsqlCommand.ExecuteScalarAsync(cancellationToken);
+
+            return @object is long @long ? @long : -1;
         }
     }
 }
