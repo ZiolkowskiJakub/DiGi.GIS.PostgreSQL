@@ -1020,6 +1020,148 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return result;
         }
+
+        /// <summary>
+        /// Asynchronously retrieves the building references that hold more than one record, optionally filtered by county identifier, ordered by count descending.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the query.</param>
+        /// <param name="countyId">The optional unique identifier of the county to filter by; if null, searches across all counties.</param>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the list of duplicate references, an empty list if none are found, or null if the connection is null.</returns>
+        public async Task<List<Building2DReferenceDuplicate>?> GetBuilding2DReferenceDuplicatesAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || limit <= 0 || commandTimeout < 0)
+            {
+                return null;
+            }
+
+            string commandText = $@"
+                SELECT reference, COUNT(*) AS count, ARRAY_AGG(DISTINCT county_id ORDER BY county_id) AS county_ids
+                FROM {TableName}
+                WHERE (@countyId IS NULL OR county_id = @countyId)
+                  AND reference IS NOT NULL
+                GROUP BY reference
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC, reference ASC
+                LIMIT @limit;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("limit", NpgsqlDbType.Integer) { Value = limit });
+
+            List<Building2DReferenceDuplicate> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                string? reference = npgsqlDataReader.IsDBNull(0) ? null : npgsqlDataReader.GetString(0);
+                long count = npgsqlDataReader.IsDBNull(1) ? 0 : npgsqlDataReader.GetInt64(1);
+                int[]? countyIds = npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetFieldValue<int[]>(2);
+
+                result.Add(new Building2DReferenceDuplicate(reference, count, countyIds));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the building references that hold more than one record, optionally filtered by county identifier, ordered by count descending.
+        /// </summary>
+        /// <param name="countyId">The optional unique identifier of the county to filter by; if null, searches across all counties.</param>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the list of duplicate references, an empty list if none are found, or null if the connection could not be built.</returns>
+        public async Task<List<Building2DReferenceDuplicate>?> GetBuilding2DReferenceDuplicatesAsync(int? countyId = null, int limit = 100, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (limit <= 0 || commandTimeout < 0)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuilding2DReferenceDuplicatesAsync(npgsqlConnection, countyId, limit, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the count of building references that hold more than one record, optionally filtered by county identifier.
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the query.</param>
+        /// <param name="countyId">The optional unique identifier of the county to filter by; if null, counts across all counties.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the total count of duplicate references, or -1 if the connection is null.</returns>
+        public async Task<long> GetDuplicatesCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || commandTimeout < 0)
+            {
+                return -1;
+            }
+
+            string commandText = $@"
+                SELECT COUNT(*)
+                FROM (
+                    SELECT 1
+                    FROM {TableName}
+                    WHERE (@countyId IS NULL OR county_id = @countyId)
+                      AND reference IS NOT NULL
+                    GROUP BY reference
+                    HAVING COUNT(*) > 1
+                ) sub;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+
+            object? scalarResult = await npgsqlCommand.ExecuteScalarAsync(cancellationToken);
+            if (scalarResult is long count)
+            {
+                return count;
+            }
+
+            if (scalarResult is int countInt)
+            {
+                return countInt;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the count of building references that hold more than one record, optionally filtered by county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional unique identifier of the county to filter by; if null, counts across all counties.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the total count of duplicate references, or -1 if the connection could not be built.</returns>
+        public async Task<long> GetDuplicatesCountAsync(int? countyId = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (commandTimeout < 0)
+            {
+                return -1;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return -1;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetDuplicatesCountAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
         /// <summary>
         /// Creates a new instance of a building referenced object using the specified identification and metadata.
         /// </summary>
