@@ -655,13 +655,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously retrieves and claims a batch of building 2D references from the update queue.
         /// <para>Rows are atomically claimed by updating <c>claimed_at</c> to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within <paramref name="claimTimeoutMinutes"/> minutes, the rows automatically become available for subsequent claims.</para>
+        /// <para>Never-claimed rows are handed out before rows whose claim expired, and each group in the order it was queued. Ordering on the queuing time alone put an expired claim back at the head of the queue, ahead of everything that had never been attempted, so a run failing on the rows it reached first could re-attempt those forever without ever seeing the rest. The ordering matches the index the table carries for it.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="count">The maximum number of <see cref="Building2DReference"/> objects to retrieve.</param>
         /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of claimed <see cref="Building2DReference"/> objects, or null if the table does not exist or an error occurs.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of claimed <see cref="Building2DReference"/> objects, empty when the queue holds nothing claimable, or null when the queue could not be reached at all.</returns>
         public static async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, int count = 100, int claimTimeoutMinutes = 30, int commandTimeout = 60, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || count <= 0)
@@ -669,7 +670,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update))
+            // The DDL rather than a mere existence check, because a queue table created before claiming
+            // existed has no claimed_at column and answering "the table is there" is not enough to claim
+            // from it. Every statement in it is conditional - CREATE TABLE IF NOT EXISTS, ADD COLUMN IF
+            // NOT EXISTS, CREATE INDEX IF NOT EXISTS - so running it on every claim costs a catalog lookup
+            // and is what the enqueue path already does.
+            if (!await Create.TableAsync_Building2DReference(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, commandTimeout, cancellationToken))
             {
                 return null;
             }
@@ -680,7 +686,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE id IN (
                     SELECT id FROM {TableName.OrtoDatas_Building2DReference_Update}
                     WHERE claimed_at IS NULL OR claimed_at < now() - (@claimTimeoutMinutes * interval '1 minute')
-                    ORDER BY created_at ASC
+                    ORDER BY claimed_at ASC NULLS FIRST, created_at ASC
                     FOR UPDATE SKIP LOCKED
                     LIMIT @count
                 )
@@ -762,9 +768,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return 0;
             }
 
-            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update))
+            // The DDL rather than a mere existence check, for the same reason the claim runs it: a queue
+            // table predating the claim column has to be brought up to the current shape by whichever path
+            // reaches it first. Every statement in it is conditional, so this is a catalog lookup.
+            if (!await Create.TableAsync_Building2DReference(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, commandTimeout, cancellationToken))
             {
-                return 0;
+                return -1;
             }
 
             string commandText = $@"
