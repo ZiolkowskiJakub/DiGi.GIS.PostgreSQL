@@ -1262,7 +1262,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         min_y = EXCLUDED.min_y,
                         max_x = EXCLUDED.max_x,
                         max_y = EXCLUDED.max_y,
-                        subdivision_id = EXCLUDED.subdivision_id,
+                        subdivision_id = COALESCE(EXCLUDED.subdivision_id, {TableName.OrtoDatas}.subdivision_id),
                         object = EXCLUDED.object
                     RETURNING id;");
 

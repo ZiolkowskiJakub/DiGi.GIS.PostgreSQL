@@ -13,6 +13,18 @@ namespace DiGi.GIS.PostgreSQL
         /// <returns>A new PostgreSQL-compatible <see cref="OrtoDatas"/> instance, or null if the input is null.</returns>
         public static OrtoDatas? ToPostgreSQL(this GIS.Classes.OrtoDatas? ortoDatas, int? countyId)
         {
+            return ToPostgreSQL(ortoDatas, countyId, null);
+        }
+
+        /// <summary>
+        /// Converts a GIS OrtoDatas instance to a PostgreSQL-compatible OrtoDatas instance with a specified subdivision identifier.
+        /// </summary>
+        /// <param name="ortoDatas">The source GIS OrtoDatas object to convert.</param>
+        /// <param name="countyId">The optional county identifier associated with the data.</param>
+        /// <param name="subdivisionId">The optional subdivision identifier associated with the data.</param>
+        /// <returns>A new PostgreSQL-compatible <see cref="OrtoDatas"/> instance, or null if the input is null.</returns>
+        public static OrtoDatas? ToPostgreSQL(this GIS.Classes.OrtoDatas? ortoDatas, int? countyId, int? subdivisionId)
+        {
             if (ortoDatas is null)
             {
                 return null;
@@ -25,7 +37,8 @@ namespace DiGi.GIS.PostgreSQL
                 Reference = ortoDatas.Reference,
                 BoundingBox2D = boundingBox2D,
                 Object = ortoDatas.ToJsonObject(),
-                CountyId = countyId
+                CountyId = countyId,
+                SubdivisionId = subdivisionId
             };
 
             return result;
