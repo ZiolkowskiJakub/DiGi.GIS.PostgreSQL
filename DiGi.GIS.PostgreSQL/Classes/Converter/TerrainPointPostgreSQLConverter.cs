@@ -106,12 +106,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier for the county; if null, the estimate is read from the partitioned parent.</param>
         /// <param name="analyze">A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a <see cref="long"/>, or -1 when the table or partition does not exist.</returns>
-        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a nullable <see cref="long"/>, -1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null.</returns>
+        public static async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, bool analyze = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName(countyId), analyze, cancellationToken);
@@ -123,13 +123,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier for the county; if null, the estimate is read from the partitioned parent.</param>
         /// <param name="analyze">A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a <see cref="long"/>, or -1 when the table or partition does not exist.</returns>
-        public async Task<long> GetEstimatedCountAsync(int? countyId = null, bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a nullable <see cref="long"/>, -1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection could not be built.</returns>
+        public async Task<long?> GetEstimatedCountAsync(int? countyId = null, bool analyze = false, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
@@ -153,20 +153,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (countyIds is null)
             {
-                return await GetEstimatedCountAsync(npgsqlConnection, (int?)null, analyze, cancellationToken);
+                long? count_Parent = await GetEstimatedCountAsync(npgsqlConnection, (int?)null, analyze, cancellationToken);
+                return count_Parent ?? -1;
             }
 
             long result = 0;
             foreach (int countyId in countyIds)
             {
-                long count = await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName(countyId), analyze, cancellationToken);
+                long? count = await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName(countyId), analyze, cancellationToken);
 
-                // A county that has never been imported has no partition, and the query answers -1 for it.
-                // Added to the running total that would silently subtract one row per missing county, so a
-                // set of counties half of which are absent would report a plausible but wrong figure.
-                if (count > 0)
+                // A county that has never been imported has no partition, and the query answers null for it.
+                // An unanalysed partition answers -1. In either case, it contributes nothing to the sum rather than subtracting.
+                if (count is not null && count > 0)
                 {
-                    result += count;
+                    result += count.Value;
                 }
             }
 

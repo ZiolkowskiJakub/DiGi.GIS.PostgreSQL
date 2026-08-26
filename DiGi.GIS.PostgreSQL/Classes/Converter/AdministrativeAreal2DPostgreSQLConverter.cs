@@ -991,12 +991,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="analyze">A boolean value indicating whether to perform a table analysis before retrieving the count.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of records, or -1 if the connection is null.</returns>
-        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of records, -1 when the table exists but has not been analysed, or null if the table does not exist or connection is null.</returns>
+        public static async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
@@ -2049,13 +2049,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="analyze">A boolean value indicating whether to analyze the table before retrieving the estimate.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a <see cref="long"/>; returns -1 if the database connection cannot be established.</returns>
-        public async Task<long> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a nullable <see cref="long"/>, -1 when the table exists but has not been analysed, or null if the table does not exist or connection cannot be established.</returns>
+        public async Task<long?> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);

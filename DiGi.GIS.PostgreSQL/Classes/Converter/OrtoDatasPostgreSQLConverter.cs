@@ -57,12 +57,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier for the county; if null, the estimate is calculated across all counties.</param>
         /// <param name="analyze">A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a long integer.</returns>
-        public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a nullable long integer, -1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null.</returns>
+        public static async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             string tableName = TableName.OrtoDatas;
@@ -89,11 +89,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return -1;
             }
 
+            if (countyIds is null)
+            {
+                long? count_Single = await GetEstimatedCountAsync(npgsqlConnection, (int?)null, analyze, cancellationToken);
+                return count_Single ?? -1;
+            }
+
             long result = 0;
             foreach (int countyId in countyIds)
             {
                 string tableName = string.Format("{0}_{1}", TableName.OrtoDatas, countyId);
-                result += await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+                long? count = await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+                if (count is not null && count > 0)
+                {
+                    result += count.Value;
+                }
             }
 
             return result;
@@ -497,13 +507,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional <see cref="System.Int32"/> identifier of the county to filter the estimate; if null, the estimate is calculated for all counties.</param>
         /// <param name="analyze">A <see cref="System.Boolean"/> value indicating whether to run an analysis operation before fetching the count to improve accuracy.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a <see cref="System.Int64"/>, or -1 if an error occurs or the target does not exist.</returns>
-        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a nullable <see cref="System.Int64"/>, -1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist.</returns>
+        public async Task<long?> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);

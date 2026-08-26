@@ -531,13 +531,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="analyze">Runs an analysis before reading the estimate, which costs a scan but makes the answer current.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count, or -1 when there is no such partition or no connection could be built.</returns>
-        public async Task<long> GetEstimatedCountAsync(int? countyId, bool analyze = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count, -1 when the partition exists but has not been analysed, or null when there is no such partition or no connection could be built.</returns>
+        public async Task<long?> GetEstimatedCountAsync(int? countyId, bool analyze = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
-                return -1;
+                return null;
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);

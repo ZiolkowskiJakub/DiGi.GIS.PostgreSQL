@@ -2028,7 +2028,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of the administrative areal 2D entities from the database\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -2045,8 +2045,8 @@ A boolean value indicating whether to analyze the table before retrieving the es
 The cancellation token used to cancel the asynchronous operation\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'); returns \-1 if the database connection cannot be established\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the table exists but has not been analysed, or null if the table does not exist or connection cannot be established\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,System.Threading.CancellationToken)'></a>
 
@@ -2055,7 +2055,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of the administrative areal 2D records from the database\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -2078,8 +2078,8 @@ A boolean value indicating whether to perform a table analysis before retrieving
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to cancel the operation\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated number of records, or \-1 if the connection is null\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated number of records, \-1 when the table exists but has not been analysed, or null if the table does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(Npgsql.NpgsqlConnection,string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
@@ -2834,7 +2834,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously gets an estimated row count\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -2851,8 +2851,8 @@ A boolean indicating whether to run VACUUM ANALYZE before fetching the count\.
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a long, or \-1 if an error occurs or the table does not exist\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a nullable long, \-1 when the table exists but has not been analysed, or null if an error occurs or the table does not exist\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,System.Threading.CancellationToken)'></a>
 
@@ -2861,7 +2861,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records from the database\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -2884,8 +2884,8 @@ A boolean value indicating whether to perform an ANALYZE operation to update sta
 The cancellation token used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated number of records as a long integer\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated number of records as a nullable long, \-1 when the table exists but has not been analysed, or null if the table does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencedObjectPostgreSQLConverter_TAdministrativeAreal2DReferencedObject,TUniqueObject_.GetItemByIdAsync(int,System.Threading.CancellationToken)'></a>
 
@@ -5079,7 +5079,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated row count from the database, optionally filtered by a specific county identifier and with an optional statistics update\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -5108,8 +5108,8 @@ A boolean value indicating whether to perform an ANALYZE operation on the table 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated row count as a long integer\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -5151,7 +5151,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -5174,8 +5174,8 @@ A boolean value indicating whether to run an analysis operation before fetching 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 if an error occurs\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetPoint2DsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -6017,7 +6017,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier and with the option to update table statistics before estimation\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -6046,8 +6046,8 @@ A boolean value indicating whether an ANALYZE operation should be performed on t
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated record count as a long integer\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated record count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null if the table does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -6089,7 +6089,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -6112,8 +6112,8 @@ A boolean value indicating whether to run an analysis operation before fetching 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 if an error occurs\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemByIdAsync(long,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
@@ -7732,7 +7732,7 @@ Far cheaper than counting on a partition of millions and accurate to a few perce
 The estimate comes from `pg_class.reltuples`, which a partitioned parent carries as -1 until something analyses it - so a null [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter\.GetEstimatedCountAsync\(System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)\.countyId'), and a county partition that has never been analysed, both answer -1 rather than a number. Pass [analyze](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter\.GetEstimatedCountAsync\(System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)\.analyze') to settle it, or count instead.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -7761,8 +7761,8 @@ The timeout in seconds for the execution of the command\. A value of 0 disables 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated row count, or \-1 when there is no such partition or no connection could be built\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated row count, \-1 when the partition exists but has not been analysed, or null when there is no such partition or no connection could be built\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken)'></a>
 
@@ -9052,7 +9052,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -9081,8 +9081,8 @@ A value indicating whether to perform an ANALYZE operation on the database table
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated count as a long integer\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -9124,7 +9124,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -9147,8 +9147,8 @@ A boolean value indicating whether to run an analysis operation before fetching 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated row count as a long, or \-1 if an error occurs\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable long, \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,double)'></a>
 
@@ -10078,7 +10078,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10107,8 +10107,8 @@ A value indicating whether to perform an ANALYZE operation on the database table
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated count as a long integer\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -10150,7 +10150,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -10173,8 +10173,8 @@ A [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 if an error occurs or the target does not exist\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetExistingBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_,bool,bool,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -16586,7 +16586,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -16615,8 +16615,8 @@ A value indicating whether to perform an ANALYZE operation on the database table
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -16658,7 +16658,7 @@ A task that represents the asynchronous operation\. The task result contains the
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -16681,8 +16681,8 @@ A value indicating whether to perform an ANALYZE operation on the database table
 The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') used to propagate notification that the operation should be canceled\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), or \-1 when the table or partition does not exist\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection could not be built\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,int,System.Threading.CancellationToken)'></a>
 
