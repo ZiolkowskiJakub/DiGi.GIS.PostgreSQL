@@ -14,7 +14,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that fills the building data table from Building2D and the other stored data sources.
     /// <para>The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to <see cref="PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes"/>, derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.</para>
-    /// <para>A building whose <c>subdivision_id</c> has not been resolved belongs to no subdivision and is therefore never reached by a run. That is a known gap rather than a property of the options.</para>
+    /// <para>Buildings whose <c>subdivision_id</c> has not been resolved are updated in a final per-county pass, deriving their shape, occupancy, database identifier and radial ratios without subdivision-specific administrative attributes.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
@@ -56,6 +56,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long SkippedSubdivisionCount { get; private set; }
 
         /// <summary>
+        /// Gets the number of buildings without a subdivision (<c>subdivision_id IS NULL</c>) that were processed during the last run.
+        /// </summary>
+        public long UnassignedSubdivisionBuildingCount { get; private set; }
+
+        /// <summary>
         /// Gets the number of building data rows written during the last run.
         /// <para>Rows rather than buildings: a building reached under more than one update type is written once, but the same building is counted again on a later run.</para>
         /// </summary>
@@ -72,6 +77,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             FailedSubdivisionCount = 0;
             ProcessedSubdivisionCount = 0;
             SkippedSubdivisionCount = 0;
+            UnassignedSubdivisionBuildingCount = 0;
             UpdatedRowCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
@@ -143,6 +149,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             HashSet<int>? countyIds = PostgreSQLBuildingDataUpdateOptions.CountyIds;
+            HashSet<int> processedCountyIds = [];
 
             Serilog.Modify.Log(
                 "{Type}: starting over {SubdivisionCount} subdivisions, counties {CountyScope}, update types {UpdateTypes}",
@@ -166,6 +173,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     continue;
                 }
+
+                processedCountyIds.Add(countyId);
 
                 // The references were queried by AdministrativeArealType.Subdivision, so Id is the subdivision id.
                 int subdivisionId = administrativeAreal2DReference.Id;
@@ -327,10 +336,140 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 progress.Report(UpdatedRowCount);
             }
 
+            IEnumerable<int> unassignedCountyScope = countyIds ?? processedCountyIds;
+            foreach (int countyId in unassignedCountyScope)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<Building2D>? building2Ds_Unassigned;
+                try
+                {
+                    building2Ds_Unassigned = await building2DPostgreSQLConverter.GetBuilding2DsWithoutSubdivisionAsync(countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    FailedSubdivisionCount++;
+                    Serilog.Modify.Log(exception, "Building data unassigned buildings query failed - county {CountyId}", countyId);
+                    continue;
+                }
+
+                if (building2Ds_Unassigned is null || building2Ds_Unassigned.Count == 0)
+                {
+                    continue;
+                }
+
+                List<GIS.Classes.Building2D> building2Ds_Unassigned_GIS = convert_Building2Ds ? [.. building2Ds_Unassigned.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()] : [];
+
+                Table table = new();
+
+                try
+                {
+                    if (update_General)
+                    {
+                        IO.Modify.Update_Building2D(table, countyId, building2Ds_Unassigned_GIS);
+                    }
+
+                    if (update_Occupancy)
+                    {
+                        if (!update_General)
+                        {
+                            IO.Modify.Update_Building2D_Occupancy(table, countyId, building2Ds_Unassigned_GIS);
+                        }
+
+                        if (building2DOccupancyDataPostgreSQLConverter is not null)
+                        {
+                            List<string> references = [.. building2Ds_Unassigned.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+                            List<Building2DOccupancyData>? building2DOccupancyDatas = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                            if (building2DOccupancyDatas is not null)
+                            {
+                                Modify.Update_Occupancy(table, building2DOccupancyDatas);
+                            }
+                        }
+                    }
+
+                    if (update_Database)
+                    {
+                        Modify.Update_Id(table, [.. building2Ds_Unassigned.Select(x => new Building2DReference(x))]);
+                    }
+
+                    if (update_RadialRatios)
+                    {
+                        List<BoundingBox2D> boundingBox2Ds = [.. building2Ds_Unassigned_GIS.Select(x => x.PolygonalFace2D?.GetBoundingBox()).OfType<BoundingBox2D>()];
+
+                        if (boundingBox2Ds.Count == 0)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured for unassigned buildings - county {CountyId}, none of its {BuildingCount} unassigned buildings carries an outline", countyId, building2Ds_Unassigned.Count);
+                        }
+                        else
+                        {
+                            BoundingBox2D boundingBox2D = new(boundingBox2Ds);
+                            boundingBox2D.Offset(radius_Max);
+
+                            List<Building2D>? building2Ds_Neighbour = await building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(boundingBox2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                            if (building2Ds_Neighbour is null)
+                            {
+                                throw new InvalidOperationException($"The buildings surrounding unassigned buildings of county {countyId} could not be read.");
+                            }
+
+                            List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
+
+                            IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2Ds_Unassigned_GIS, building2Ds_Neighbour_GIS);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    FailedSubdivisionCount++;
+                    Serilog.Modify.Log(exception, "Building data unassigned building rows build failed - county {CountyId}, {BuildingCount} buildings read could not be turned into rows", countyId, building2Ds_Unassigned.Count);
+                    continue;
+                }
+
+                if (table.RowCount == 0)
+                {
+                    continue;
+                }
+
+                bool updated;
+                try
+                {
+                    updated = await buildingDataPostgreSQLConverter.PushAsync(table, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    FailedSubdivisionCount++;
+                    Serilog.Modify.Log(exception, "Building data unassigned buildings write failed - county {CountyId}, {RowCount} rows built could not be written", countyId, table.RowCount);
+                    continue;
+                }
+
+                if (!updated)
+                {
+                    FailedSubdivisionCount++;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data unassigned buildings write failed - county {CountyId}, write of {RowCount} rows was rolled back", countyId, table.RowCount);
+                    continue;
+                }
+
+                UnassignedSubdivisionBuildingCount += table.RowCount;
+                UpdatedRowCount += table.RowCount;
+                progress.Report(UpdatedRowCount);
+            }
+
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {RowCount} rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
+                UnassignedSubdivisionBuildingCount,
                 UpdatedRowCount,
                 FailedSubdivisionCount,
                 SkippedSubdivisionCount);

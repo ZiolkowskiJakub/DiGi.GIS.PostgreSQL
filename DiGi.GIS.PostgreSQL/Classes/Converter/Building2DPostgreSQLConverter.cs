@@ -2460,5 +2460,54 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return @object is long @long ? @long : -1;
         }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building2D"/> objects for a specified county identifier whose subdivision has not been resolved.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county used to filter the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects if matches are found; otherwise, null.</returns>
+        public async Task<List<Building2D>?> GetBuilding2DsWithoutSubdivisionAsync(int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuilding2DsWithoutSubdivisionAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="Building2D"/> objects for a specified county identifier whose subdivision has not been resolved, over the given connection.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command. This value can be null.</param>
+        /// <param name="countyId">The integer identifier of the county used to filter the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects if matches are found; otherwise, null.</returns>
+        public static async Task<List<Building2D>?> GetBuilding2DsWithoutSubdivisionAsync(NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string commandText = $@"
+                SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId AND subdivision_id IS NULL;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+
+            return await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+        }
     }
 }
