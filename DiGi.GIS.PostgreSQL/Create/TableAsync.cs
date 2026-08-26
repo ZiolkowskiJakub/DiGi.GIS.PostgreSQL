@@ -331,14 +331,20 @@ namespace DiGi.GIS.PostgreSQL
                     reference TEXT NOT NULL,
                     subdivision_id INT,
                     created_at timestamptz DEFAULT now(),
+                    claimed_at timestamptz,
                     PRIMARY KEY (id, county_id)
                 );
+
+                ALTER TABLE {tableName} ADD COLUMN IF NOT EXISTS claimed_at timestamptz;
 
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
                     ON {tableName} (county_id, reference);
 
                 CREATE INDEX IF NOT EXISTS idx_{tableName}_created_at
                     ON {tableName} (created_at ASC);
+
+                CREATE INDEX IF NOT EXISTS idx_{tableName}_claimed_at
+                    ON {tableName} (claimed_at ASC NULLS FIRST, created_at ASC);
                 ";
 
             try
