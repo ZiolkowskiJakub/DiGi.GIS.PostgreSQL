@@ -10179,6 +10179,153 @@ public long WithSubdivisionIdCount { get; }
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult'></a>
+
+## OrtoDatasCoverageResult Class
+
+How much of one subdivision's buildings the orthophoto store holds, measured over that subdivision's own buildings rather than over its county's\.
+
+The figure the estimated county-level counts cannot give. `orto_datas` and `building_2d` are partitioned by `county_id`, so a partition estimate describes a whole county and says nothing about any area inside it; this is counted, not estimated.
+
+Counted from the building side alone. `orto_datas` carries a `subdivision_id` column of its own, but it has never been written - not one of the 8 384 055 rows stored across 225 counties carries a value - so grouping the orthophoto side by it answers zero for every subdivision in the country. `building_2d` is the side that knows which subdivision a building belongs to, and it is the side this is measured from.
+
+```csharp
+public class OrtoDatasCoverageResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → OrtoDatasCoverageResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult)'></a>
+
+## OrtoDatasCoverageResult\(OrtoDatasCoverageResult\) Constructor
+
+Initializes a new instance of the [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') class by copying an existing one\.
+
+```csharp
+public OrtoDatasCoverageResult(DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult? ortoDatasCoverageResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult).ortoDatasCoverageResult'></a>
+
+`ortoDatasCoverageResult` [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult')
+
+The [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long)'></a>
+
+## OrtoDatasCoverageResult\(int, Nullable\<int\>, long, long\) Constructor
+
+Initializes a new instance of the [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') class\.
+
+```csharp
+public OrtoDatasCoverageResult(int countyId, System.Nullable<int> subdivisionId, long building2DCount, long ortoDatasCount);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county the coverage was measured in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).subdivisionId'></a>
+
+`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The identifier of the subdivision the coverage describes, or null for the county's buildings that name no subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).building2DCount'></a>
+
+`building2DCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of buildings the subdivision holds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).ortoDatasCount'></a>
+
+`ortoDatasCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of those buildings that have an orthophoto row\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## OrtoDatasCoverageResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public OrtoDatasCoverageResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.Building2DCount'></a>
+
+## OrtoDatasCoverageResult\.Building2DCount Property
+
+Gets the number of buildings the subdivision holds\. The denominator of the coverage\.
+
+```csharp
+public long Building2DCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.CountyId'></a>
+
+## OrtoDatasCoverageResult\.CountyId Property
+
+Gets the identifier of the county the coverage was measured in\.
+
+One polygon part, not a code - a multi-part county is measured a part at a time, because that is how both tables are partitioned.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCount'></a>
+
+## OrtoDatasCoverageResult\.OrtoDatasCount Property
+
+Gets the number of the subdivision's buildings that have an orthophoto row\. The numerator of the coverage\.
+
+Counted on references present in `orto_datas` for the same county, not on that table's own subdivision column, which has never been written.
+
+```csharp
+public long OrtoDatasCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.SubdivisionId'></a>
+
+## OrtoDatasCoverageResult\.SubdivisionId Property
+
+Gets the identifier of the subdivision the coverage describes\.
+
+Null is not a missing value: it is the county's buildings that name no subdivision. Those belong to no subdivision and to no municipality, so nothing below county level should ever count them, and they are kept apart rather than folded into a neighbour.
+
+```csharp
+public System.Nullable<int> SubdivisionId { get; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter'></a>
 
 ## OrtoDatasPostgreSQLConverter Class
@@ -10837,6 +10984,8 @@ Asynchronously retrieves and claims a batch of building 2D references from the u
 
 Rows are atomically claimed by updating `claimed_at` to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within [claimTimeoutMinutes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(Npgsql\.NpgsqlConnection, int, int, int, System\.Threading\.CancellationToken\)\.claimTimeoutMinutes') minutes, the rows automatically become available for subsequent claims.
 
+Never-claimed rows are handed out before rows whose claim expired, and each group in the order it was queued. Ordering on the queuing time alone put an expired claim back at the head of the queue, ahead of everything that had never been attempted, so a run failing on the rows it reached first could re-attempt those forever without ever seeing the rest. The ordering matches the index the table carries for it.
+
 ```csharp
 public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int count=100, int claimTimeoutMinutes=30, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -10874,7 +11023,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains a list of claimed [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if the table does not exist or an error occurs\.
+A task that represents the asynchronous operation\. The task result contains a list of claimed [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, empty when the queue holds nothing claimable, or null when the queue could not be reached at all\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetOrtoDatasByBuilding2DReferenceAsync(DiGi.GIS.PostgreSQL.Classes.Building2DReference,bool,System.Threading.CancellationToken)'></a>
 
