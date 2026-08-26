@@ -5256,7 +5256,7 @@ A task representing the asynchronous operation, returning a [Building2DReference
 Asynchronously refreshes the 2D building data in the PostgreSQL database\.
 
 ```csharp
-public System.Threading.Tasks.Task<bool> RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions=null, System.IProgress<long>? progress=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult?> RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions=null, System.IProgress<long>? progress=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -5270,7 +5270,7 @@ The options to configure the refresh process for PostgreSQL 2D buildings\. Can b
 
 `progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
 
-The progress reporter used to report the current progress as a long value\. Can be null if no progress reporting is required\.
+The progress reporter used to report the current progress as a long value representing the count of updated buildings\. Can be null if no progress reporting is required\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions,System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5279,8 +5279,8 @@ The progress reporter used to report the current progress as a long value\. Can 
 The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result is true if the refresh succeeded; otherwise, false\.
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result carries a [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') with details of the operation, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the database connection could not be established\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken)'></a>
 
@@ -12163,6 +12163,19 @@ public bool OverrideExistingSubdivisionIds { get; set; }
 #### Property Value
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.StartId'></a>
+
+## PostgreSQLBuilding2DRefreshOptions\.StartId Property
+
+Gets or sets the starting building identifier anchor for keyset pagination\.
+
+```csharp
+public long StartId { get; set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.Tolerance'></a>
 
 ## PostgreSQLBuilding2DRefreshOptions\.Tolerance Property
@@ -12175,6 +12188,164 @@ public double Tolerance { get; set; }
 
 #### Property Value
 [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult'></a>
+
+## PostgreSQLBuilding2DRefreshResult Class
+
+Represents the outcome of a PostgreSQL 2D building refresh operation\.
+
+Contains tallies of processed records, updated subdivision identifiers, failed batches, the last processed ID anchor, and cancellation status.
+
+```csharp
+public class PostgreSQLBuilding2DRefreshResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PostgreSQLBuilding2DRefreshResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult)'></a>
+
+## PostgreSQLBuilding2DRefreshResult\(PostgreSQLBuilding2DRefreshResult\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') class by copying an existing instance\.
+
+```csharp
+public PostgreSQLBuilding2DRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult? postgreSQLBuilding2DRefreshResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult).postgreSQLBuilding2DRefreshResult'></a>
+
+`postgreSQLBuilding2DRefreshResult` [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult')
+
+The [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') instance to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool)'></a>
+
+## PostgreSQLBuilding2DRefreshResult\(long, long, long, long, bool\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') class\.
+
+```csharp
+public PostgreSQLBuilding2DRefreshResult(long readCount, long updatedCount, long failedBatchCount, long lastProcessedId, bool cancelled);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool).readCount'></a>
+
+`readCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building records read out of the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool).updatedCount'></a>
+
+`updatedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building records that had a subdivision identifier updated\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool).failedBatchCount'></a>
+
+`failedBatchCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of batch iterations that failed and were stepped over\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool).lastProcessedId'></a>
+
+`lastProcessedId` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The last building identifier anchor processed in keyset pagination\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(long,long,long,long,bool).cancelled'></a>
+
+`cancelled` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether the refresh operation was cancelled before completing all rows\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuilding2DRefreshResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PostgreSQLBuilding2DRefreshResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.PostgreSQLBuilding2DRefreshResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing serialized properties\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.Cancelled'></a>
+
+## PostgreSQLBuilding2DRefreshResult\.Cancelled Property
+
+Gets a value indicating whether the refresh operation was cancelled before reaching the end of the records\.
+
+```csharp
+public bool Cancelled { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.FailedBatchCount'></a>
+
+## PostgreSQLBuilding2DRefreshResult\.FailedBatchCount Property
+
+Gets the number of batch iterations that encountered an error and were stepped over\.
+
+```csharp
+public long FailedBatchCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.LastProcessedId'></a>
+
+## PostgreSQLBuilding2DRefreshResult\.LastProcessedId Property
+
+Gets the last building identifier anchor reached during keyset pagination\.
+
+```csharp
+public long LastProcessedId { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.ReadCount'></a>
+
+## PostgreSQLBuilding2DRefreshResult\.ReadCount Property
+
+Gets the total number of building records read from the database\.
+
+```csharp
+public long ReadCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult.UpdatedCount'></a>
+
+## PostgreSQLBuilding2DRefreshResult\.UpdatedCount Property
+
+Gets the total number of building records whose subdivision identifier was updated\.
+
+```csharp
+public long UpdatedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask'></a>
 
@@ -12223,6 +12394,32 @@ private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter;
 [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
 ### Properties
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.FailedBatchCount'></a>
+
+## PostgreSQLBuilding2DRefreshTask\.FailedBatchCount Property
+
+Gets the number of batch iterations that failed and were stepped over during the last run\.
+
+```csharp
+public long FailedBatchCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.LastProcessedId'></a>
+
+## PostgreSQLBuilding2DRefreshTask\.LastProcessedId Property
+
+Gets the last building identifier anchor processed in keyset pagination during the last run\.
+
+```csharp
+public long LastProcessedId { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.PostgreSQLBuilding2DRefreshOptions'></a>
 
 ## PostgreSQLBuilding2DRefreshTask\.PostgreSQLBuilding2DRefreshOptions Property
@@ -12236,6 +12433,32 @@ public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions PostgreSQL
 
 #### Property Value
 [PostgreSQLBuilding2DRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.ReadCount'></a>
+
+## PostgreSQLBuilding2DRefreshTask\.ReadCount Property
+
+Gets the total number of building records read out of the database during the last run\.
+
+```csharp
+public long ReadCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.UpdatedCount'></a>
+
+## PostgreSQLBuilding2DRefreshTask\.UpdatedCount Property
+
+Gets the total number of building records that had a subdivision identifier written to them during the last run\.
+
+```csharp
+public long UpdatedCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 ### Methods
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>

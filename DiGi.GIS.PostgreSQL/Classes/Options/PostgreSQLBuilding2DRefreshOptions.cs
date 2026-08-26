@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
@@ -38,6 +38,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 BatchSize = postgreSQLBuilding2DRefreshOptions.BatchSize;
                 Tolerance = postgreSQLBuilding2DRefreshOptions.Tolerance;
                 OverrideExistingSubdivisionIds = postgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds;
+                StartId = postgreSQLBuilding2DRefreshOptions.StartId;
             }
         }
 
@@ -52,6 +53,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonInclude, JsonPropertyName("OverrideExistingSubdivisionIds")]
         public bool OverrideExistingSubdivisionIds { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the starting building identifier anchor for keyset pagination.
+        /// </summary>
+        [JsonInclude, JsonPropertyName("StartId")]
+        public long StartId { get; set; } = 0;
 
         /// <summary>
         /// Gets or sets the distance tolerance used for processing building data.

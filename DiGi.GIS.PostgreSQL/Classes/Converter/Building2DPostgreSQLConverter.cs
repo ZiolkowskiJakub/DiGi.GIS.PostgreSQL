@@ -1649,23 +1649,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously refreshes the 2D building data in the PostgreSQL database.
         /// </summary>
         /// <param name="postgreSQLBuilding2DRefreshOptions">The options to configure the refresh process for PostgreSQL 2D buildings. Can be null to use default settings.</param>
-        /// <param name="progress">The progress reporter used to report the current progress as a long value. Can be null if no progress reporting is required.</param>
+        /// <param name="progress">The progress reporter used to report the current progress as a long value representing the count of updated buildings. Can be null if no progress reporting is required.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result is true if the refresh succeeded; otherwise, false.</returns>
-        public async Task<bool> RefreshAsync(PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result carries a <see cref="PostgreSQLBuilding2DRefreshResult"/> with details of the operation, or <see langword="null"/> if the database connection could not be established.</returns>
+        public async Task<PostgreSQLBuilding2DRefreshResult?> RefreshAsync(PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
         {
             postgreSQLBuilding2DRefreshOptions ??= new PostgreSQLBuilding2DRefreshOptions();
 
-            int totalUpdated = 0;
-            // We use -1 or 0 as the initial anchor point for Keyset Pagination
-            long lastProcessedId = 0;
+            int batchSize = postgreSQLBuilding2DRefreshOptions.BatchSize < 1 ? 1 : postgreSQLBuilding2DRefreshOptions.BatchSize;
+            double tolerance = postgreSQLBuilding2DRefreshOptions.Tolerance;
+            bool overrideExistingSubdivisionIds = postgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds;
+            long lastProcessedId = postgreSQLBuilding2DRefreshOptions.StartId;
+
+            long readCount = 0;
+            long updatedCount = 0;
+            long failedBatchCount = 0;
+            bool cancelled = false;
+
+            Serilog.Modify.Log(
+                "{Type} refresh started: batch size {BatchSize}, start ID {StartId}, override existing subdivision IDs {OverrideExistingSubdivisionIds}, tolerance {Tolerance}",
+                nameof(Building2DPostgreSQLConverter), batchSize, lastProcessedId, overrideExistingSubdivisionIds, tolerance);
 
             while (!cancellationToken.IsCancellationRequested)
             {
                 await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
                 if (npgsqlConnection is null)
                 {
-                    return false;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type} refresh failed: unable to create database connection", nameof(Building2DPostgreSQLConverter));
+                    return null;
                 }
 
                 await npgsqlConnection.OpenAsync(cancellationToken);
@@ -1675,7 +1686,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 // We combine the ID anchor with the optional NULL check.
                 // This ensures we always move forward in the table, regardless of update success.
-                string filterClause = postgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds
+                string filterClause = overrideExistingSubdivisionIds
                     ? "id > @lastId"
                     : "id > @lastId AND subdivision_id IS NULL";
 
@@ -1693,7 +1704,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
                     {
-                        npgsqlCommand.Parameters.AddWithValue("batchSize", postgreSQLBuilding2DRefreshOptions.BatchSize);
+                        npgsqlCommand.Parameters.AddWithValue("batchSize", batchSize);
                         npgsqlCommand.Parameters.AddWithValue("lastId", lastProcessedId);
 
                         await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
@@ -1709,18 +1720,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         break;
                     }
 
+                    readCount += records.Count;
+
                     List<(long Id, int CountyId, int SubdivisionId)> updates = [];
 
                     foreach ((long Id, int CountyId, string Json) in records)
                     {
                         if (cancellationToken.IsCancellationRequested) break;
-
-                        // CRITICAL: Always update the anchor to the current ID.
-                        // This prevents the loop from getting stuck on records that fail processing.
-                        if (Id > lastProcessedId)
-                        {
-                            lastProcessedId = Id;
-                        }
 
                         GIS.Classes.Building2D? building = Core.Convert.ToDiGi<GIS.Classes.Building2D>(Json)?.FirstOrDefault();
                         if (building is null)
@@ -1728,7 +1734,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             continue;
                         }
 
-                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, postgreSQLBuilding2DRefreshOptions.Tolerance);
+                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, tolerance);
                         if (subdivisionId.HasValue)
                         {
                             updates.Add((Id, CountyId, subdivisionId.Value));
@@ -1739,25 +1745,45 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     if (updates.Count > 0 && !cancellationToken.IsCancellationRequested)
                     {
                         await ExecuteUpdateBatchAsync(npgsqlConnection, npgsqlTransaction, updates, cancellationToken);
-                        totalUpdated += updates.Count;
-                        progress?.Report(totalUpdated);
+                        updatedCount += updates.Count;
+                        progress?.Report(updatedCount);
                     }
 
                     // Commit releases the locks and confirms the batch processing
                     await npgsqlTransaction.CommitAsync(cancellationToken);
+
+                    // Update anchor after successful batch transaction
+                    lastProcessedId = records[^1].Id;
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
-                    return false;
+                    cancelled = true;
+                    break;
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    // Log exception here
-                    throw;
+                    failedBatchCount++;
+                    Serilog.Modify.Log(exception, "{Type} refresh batch failed around last ID {LastId}", nameof(Building2DPostgreSQLConverter), lastProcessedId);
+
+                    if (records.Count > 0)
+                    {
+                        lastProcessedId = records[^1].Id;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
-            return !cancellationToken.IsCancellationRequested;
+            cancelled = cancelled || cancellationToken.IsCancellationRequested;
+
+            Serilog.Modify.Log(
+                cancelled || failedBatchCount != 0 ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
+                "{Type} refresh finished{Cancelled}: {ReadCount} records read, {UpdatedCount} subdivision IDs written, {FailedBatchCount} batches stepped over, last ID {LastId}",
+                nameof(Building2DPostgreSQLConverter), cancelled ? " after being cancelled" : string.Empty, readCount, updatedCount, failedBatchCount, lastProcessedId);
+
+            return new PostgreSQLBuilding2DRefreshResult(readCount, updatedCount, failedBatchCount, lastProcessedId, cancelled);
 
             async static Task ExecuteUpdateBatchAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, List<(long Id, int CountyId, int SubdivisionId)> updates, CancellationToken cancellationToken)
             {

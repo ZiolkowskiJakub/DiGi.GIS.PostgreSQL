@@ -112,6 +112,7 @@ Derived
 ↳ [OrtoDatasCountyResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCountyResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCountyResult')  
 ↳ [OrtoDatasQueueResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasQueueResult')  
 ↳ [OrtoDatasSubdivisionResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasSubdivisionResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasSubdivisionResult')  
+↳ [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult')  
 ↳ [PostgreSQLOrtoDatasRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasRefreshResult')  
 ↳ [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')  
 ↳ [Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')  
