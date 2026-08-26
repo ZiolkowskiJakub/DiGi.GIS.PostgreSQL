@@ -76,9 +76,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the count.</param>
         /// <param name="analyze">A boolean value indicating whether an ANALYZE operation should be performed on the table to update statistics for a more accurate estimate.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated record count as a nullable long integer, -1 when the partition exists but has not been analysed, or null if the table does not exist or connection is null.</returns>
-        public async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        public async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -91,7 +92,50 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 tableName = string.Format("{0}_{1}", tableName, countyId.Value);
             }
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county.
+        /// <para>A county is absent from the result when it has no partition, and carries <c>-1</c> when its partition exists but has never been analysed - the same two cases the singular overload reports as <c>null</c> and <c>-1</c>.</para>
+        /// <para>Setting <paramref name="analyze"/> costs one <c>VACUUM ANALYZE</c> statement per existing partition. That work cannot be batched, so it grows with the size of <paramref name="countyIds"/>.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> to use for the query.</param>
+        /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
+        /// <param name="analyze">A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates.</param>
+        /// <param name="batchSize">The maximum number of partition names sent in a single catalog query.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null.</returns>
+        public async Task<Dictionary<int, long>?> GetEstimatedCountsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, bool analyze = false, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || countyIds is null)
+            {
+                return null;
+            }
+
+            Dictionary<string, int> countyIds_ByTableName = [];
+            foreach (int countyId in countyIds)
+            {
+                countyIds_ByTableName[string.Format("{0}_{1}", TableName, countyId)] = countyId;
+            }
+
+            Dictionary<string, long>? counts_ByTableName = await DiGi.PostgreSQL.Query.EstimatedCountsAsync(npgsqlConnection, countyIds_ByTableName.Keys, analyze, batchSize, commandTimeout, cancellationToken);
+            if (counts_ByTableName is null)
+            {
+                return null;
+            }
+
+            Dictionary<int, long> result = [];
+            foreach (KeyValuePair<string, long> keyValuePair in counts_ByTableName)
+            {
+                if (countyIds_ByTableName.TryGetValue(keyValuePair.Key, out int countyId))
+                {
+                    result[countyId] = keyValuePair.Value;
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -100,23 +144,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> to use for the query.</param>
         /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
         /// <param name="analyze">A boolean indicating whether to run a vacuum analyze operation before fetching the count.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of rows as a long, or -1 if an error occurs.</returns>
-        public async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        public async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return -1;
             }
 
-            long result = 0;
-            foreach (int countyId in countyIds)
+            // Alone among the sibling converters this overload used to walk countyIds with no null check,
+            // so a null argument threw NullReferenceException instead of answering -1 like the rest.
+            Dictionary<int, long>? counts = await GetEstimatedCountsAsync(npgsqlConnection, countyIds, analyze, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            if (counts is null)
             {
-                string tableName = string.Format("{0}_{1}", TableName, countyId);
-                long? count = await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
-                if (count is not null && count > 0)
+                return -1;
+            }
+
+            long result = 0;
+            foreach (long count in counts.Values)
+            {
+                // A county that has never been imported has no partition and is absent from the dictionary.
+                // An unanalysed partition answers -1. In either case it contributes nothing to the sum rather
+                // than subtracting. Reporting that distinction instead of absorbing it is a wire change and is
+                // being decided in ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
+                if (count > 0)
                 {
-                    result += count.Value;
+                    result += count;
                 }
             }
 
@@ -128,9 +183,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the estimate.</param>
         /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated row count as a nullable <see cref="System.Int64"/>, -1 when the partition exists but has not been analysed, or null if an error occurs.</returns>
-        public async Task<long?> GetEstimatedCountAsync(int? countyId, bool analyze = false, CancellationToken cancellationToken = default)
+        public async Task<long?> GetEstimatedCountAsync(int? countyId, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -140,7 +196,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetEstimatedCountAsync(npgsqlConnection, countyId, analyze, cancellationToken);
+            return await GetEstimatedCountAsync(npgsqlConnection, countyId, analyze, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county.
+        /// <para>A county is absent from the result when it has no partition, and carries <c>-1</c> when its partition exists but has never been analysed.</para>
+        /// </summary>
+        /// <param name="countyIds">A collection of integers representing the county identifiers to estimate counts for.</param>
+        /// <param name="analyze">A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates.</param>
+        /// <param name="batchSize">The maximum number of partition names sent in a single catalog query.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null.</returns>
+        public async Task<Dictionary<int, long>?> GetEstimatedCountsAsync(IEnumerable<int>? countyIds, bool analyze = false, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetEstimatedCountsAsync(npgsqlConnection, countyIds, analyze, batchSize, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -148,9 +227,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyIds">A collection of integers representing the unique identifiers of the counties to be counted.</param>
         /// <param name="analyze">A boolean value indicating whether to perform a database analysis operation before retrieving the estimate.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 if an error occurs.</returns>
-        public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, CancellationToken cancellationToken = default)
+        public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -160,7 +240,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, cancellationToken);
+            return await GetEstimatedCountAsync(npgsqlConnection, countyIds, analyze, commandTimeout, cancellationToken);
         }
 
         /// <summary>

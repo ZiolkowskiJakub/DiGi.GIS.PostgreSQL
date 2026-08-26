@@ -548,7 +548,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 tableName = string.Format("{0}_{1}", tableName, countyId.Value);
             }
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, tableName, analyze, commandTimeout, cancellationToken);
         }
 
         /// <summary>

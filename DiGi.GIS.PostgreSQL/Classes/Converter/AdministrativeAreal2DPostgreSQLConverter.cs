@@ -999,7 +999,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -2060,7 +2060,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken: cancellationToken);
         }
 
         /// <summary>

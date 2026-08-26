@@ -5033,36 +5033,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate') instances if any duplicates exist; otherwise, null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously gets the estimated row count across specified counties in a PostgreSQL database\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run an analysis before fetching the estimated count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -5072,36 +5078,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count from the database, optionally filtered by a specific county identifier and with an optional statistics update\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county for which the count is estimated; if null, the estimate may be calculated across all counties\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to perform an ANALYZE operation on the table before retrieving the count to ensure statistics are current\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -5111,30 +5123,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified collection of county identifiers\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the IDs of the counties to be counted\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to run a database analysis before fetching the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -5144,30 +5162,36 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county to filter the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -5176,6 +5200,108 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetEstimatedCountsAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed - the same two cases the singular overload reports as `null` and `-1`.
+
+Setting [analyze](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.analyze') costs one `VACUUM ANALYZE` statement per existing partition. That work cannot be batched, so it grows with the size of [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.countyIds').
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetEstimatedCountsAsync\(IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetPoint2DsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
 
@@ -5971,36 +6097,42 @@ The cancellation token used to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. The task result contains the total count of duplicate references, or \-1 if the connection could not be built\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously gets the estimated row count for the specified county identifiers in the PostgreSQL database\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers to estimate counts for\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run a vacuum analyze operation before fetching the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -6010,36 +6142,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier and with the option to update table statistics before estimation\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county used to filter the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether an ANALYZE operation should be performed on the table to update statistics for a more accurate estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -6049,30 +6187,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated record count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null if the table does not exist or connection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified collection of county identifiers\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the unique identifiers of the counties to be counted\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to perform a database analysis operation before retrieving the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -6082,30 +6226,36 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountAsync\(Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county to filter the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -6114,6 +6264,108 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountsAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed - the same two cases the singular overload reports as `null` and `-1`.
+
+Setting [analyze](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.analyze') costs one `VACUUM ANALYZE` statement per existing partition. That work cannot be batched, so it grows with the size of [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.countyIds').
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetEstimatedCountsAsync\(IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemByIdAsync(long,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
@@ -9006,36 +9258,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total row count as a long\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers to estimate counts for\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run an analysis operation before fetching the estimated count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -9045,36 +9303,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier for the county; if null, the estimate is calculated across all counties\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -9084,30 +9348,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified collection of county identifiers\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the unique identifiers of the counties to be counted\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to perform a database analysis operation before retrieving the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -9117,30 +9387,36 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+## BuildingPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county to filter the estimate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to run an analysis operation before fetching the count to ensure higher accuracy\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -9149,6 +9425,108 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated row count as a nullable long, \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingPostgreSQLConverter\.GetEstimatedCountsAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed - the same two cases the singular overload reports as `null` and `-1`.
+
+Setting [analyze](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.analyze') costs one `VACUUM ANALYZE` statement per existing partition. That work cannot be batched, so it grows with the size of [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.countyIds').
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingPostgreSQLConverter\.GetEstimatedCountsAsync\(IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,double)'></a>
 
@@ -10032,36 +10410,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total row count as a long\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers to estimate counts for\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run an analysis operation before fetching the estimated count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -10071,36 +10455,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier for the county; if null, the estimate is calculated across all counties\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -10110,30 +10500,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable long integer, \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count for the specified collection of county identifiers\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int> countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the IDs of the counties to estimate counts for\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean value indicating whether to perform a database analysis before fetching the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -10143,30 +10539,36 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated row count, optionally filtered by a specific county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32') identifier of the county to filter the estimate; if null, the estimate is calculated for all counties\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean') value indicating whether to run an analysis operation before fetching the count to improve accuracy\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -10175,6 +10577,108 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null if an error occurs or the target does not exist\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountsAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed - the same two cases the singular overload reports as `null` and `-1`.
+
+Setting [analyze](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.analyze') costs one `VACUUM ANALYZE` statement per existing partition. That work cannot be batched, so it grows with the size of [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.countyIds').
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasPostgreSQLConverter\.GetEstimatedCountsAsync\(IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetExistingBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_,bool,bool,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -16540,36 +17044,42 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the input is unusable or the area and the lattice together exceed [maximumNodeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)\.maximumNodeCount')\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, CancellationToken\) Method
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database\.
 
 ```csharp
-public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<long> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers to estimate counts for\. When null, the estimate is read from the partitioned parent instead\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run an analysis operation before fetching the estimated count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -16579,36 +17089,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\. Counties with no partition contribute nothing rather than subtracting from the total\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, CancellationToken\) Method
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier\.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId=null, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier for the county; if null, the estimate is read from the partitioned parent\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -16618,30 +17134,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, CancellationToken\) Method
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(IEnumerable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves the estimated row count for the specified county identifiers in the PostgreSQL database, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<long> GetEstimatedCountAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 A collection of integers representing the county identifiers to estimate counts for\. When null, the estimate is read from the partitioned parent instead\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A boolean indicating whether to run an analysis operation before fetching the estimated count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -16651,30 +17173,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
-## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, CancellationToken\) Method
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountAsync\(Nullable\<int\>, bool, int, CancellationToken\) Method
 
 Asynchronously retrieves an estimated count of records, optionally filtered by a specific county identifier, automatically managing the connection\.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId=null, bool analyze=false, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(System.Nullable<int> countyId=null, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier for the county; if null, the estimate is read from the partitioned parent\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).analyze'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).analyze'></a>
 
 `analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 A value indicating whether to perform an ANALYZE operation on the database table to update statistics before retrieving the count\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -16683,6 +17211,108 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated count as a nullable [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64'), \-1 when the partition exists but has not been analysed, or null when the table or partition does not exist or connection could not be built\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountsAsync\(NpgsqlConnection, IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions, reading them all in a single catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed - the same two cases the singular overload reports as `null` and `-1`.
+
+Unlike the summing overload this one has no partitioned-parent fallback: a null [countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetEstimatedCountsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)\.countyIds') yields null rather than the parent estimate, because there is no county identifier to key the parent figure under.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') to use for the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when the connection or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetEstimatedCountsAsync\(IEnumerable\<int\>, bool, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the estimated row count for each of the specified county partitions on a single connection, reading them all in one catalog query rather than one query per county\.
+
+A county is absent from the result when it has no partition, and carries `-1` when its partition exists but has never been analysed.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,long>?> GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, bool analyze=false, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the county identifiers to estimate counts for\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A boolean indicating whether to run VACUUM ANALYZE on each existing partition before reading the estimates\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of partition names sent in a single catalog query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to every command executed\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,int,System.Nullable_int_,double,int,System.Threading.CancellationToken)'></a>
 
