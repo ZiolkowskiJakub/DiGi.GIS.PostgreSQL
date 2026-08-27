@@ -254,7 +254,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="analyze">A boolean indicating whether to run an analysis before fetching the estimated count.</param>
         /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 if an error occurs.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 when an error occurs or any named county has no partition or has never been analysed.</returns>
         public static async Task<long> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> countyIds, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -274,18 +274,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return -1;
             }
 
-            long result = 0;
+            // A county named twice in countyIds is one county, so the sum walks the distinct counties -
+            // the same set the dictionary always held.
+            HashSet<int> countyIds_Temp = [.. countyIds];
 
-            foreach (long count in counts.Values)
+            long result = 0;
+            foreach (int countyId in countyIds_Temp)
             {
                 // A county that has never been imported has no partition and is absent from the dictionary.
-                // An unanalysed partition answers -1. In either case it contributes nothing to the sum rather
-                // than subtracting. Reporting that distinction instead of absorbing it is a wire change and is
-                // being decided in ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
-                if (count > 0)
+                // An unanalysed partition answers -1. In either case the sum would be a lower bound, not a
+                // measurement of the counties named, so the overload answers -1 instead (decided in
+                // ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44).
+                if (!counts.TryGetValue(countyId, out long count) || count < 0)
                 {
-                    result += count;
+                    return -1;
                 }
+
+                result += count;
             }
 
             return result;
@@ -1684,7 +1689,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="analyze">A boolean value indicating whether to run a database analysis before fetching the estimate.</param>
         /// <param name="commandTimeout">The timeout in seconds applied to every command executed. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 if an error occurs.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the estimated total row count as a long, or -1 when an error occurs or any named county has no partition or has never been analysed.</returns>
         public async Task<long> GetEstimatedCountAsync(IEnumerable<int> countyIds, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);

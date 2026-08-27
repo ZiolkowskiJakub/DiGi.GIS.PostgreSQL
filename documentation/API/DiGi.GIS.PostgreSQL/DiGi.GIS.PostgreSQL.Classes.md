@@ -5112,7 +5112,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -5196,7 +5196,7 @@ The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -6188,7 +6188,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated number of rows as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -6272,7 +6272,7 @@ The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -9361,7 +9361,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -9445,7 +9445,7 @@ The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -10672,7 +10672,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -10756,7 +10756,7 @@ The cancellation token to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 if an error occurs\.
+A task that represents the asynchronous operation\. The task result contains the estimated total row count as a long, or \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -17320,7 +17320,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\. Counties with no partition contribute nothing rather than subtracting from the total\.
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\. The result is \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -17404,7 +17404,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\.
+A task that represents the asynchronous operation\. The task result contains the total estimated row count as a [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')\. The result is \-1 when an error occurs or any named county has no partition or has never been analysed\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
