@@ -289,16 +289,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
 
                 HashSet<int> parentIds_AdministrativeArealType = [];
+                List<string> codes = grouping.Select(x => x.Code).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList()!;
+                Dictionary<string, HashSet<int>>? siblingIdsByCode = codes.Count > 0
+                    ? await GetIdsByCodesAsync(npgsqlConnection, codes, administrativeArealType_Parent, cancellationToken: cancellationToken)
+                    : null;
+
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference in grouping)
                 {
-                    if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
+                    if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code)
+                        && siblingIdsByCode is not null
+                        && siblingIdsByCode.TryGetValue(administrativeAreal2DReference.Code, out HashSet<int>? siblingIds)
+                        && siblingIds.Count > 0)
                     {
-                        HashSet<int>? siblingIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
-                        if (siblingIds is not null && siblingIds.Count > 0)
-                        {
-                            parentIds_AdministrativeArealType.UnionWith(siblingIds);
-                            continue;
-                        }
+                        parentIds_AdministrativeArealType.UnionWith(siblingIds);
+                        continue;
                     }
 
                     parentIds_AdministrativeArealType.Add(administrativeAreal2DReference.Id);
@@ -1089,6 +1093,71 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 if (!await npgsqlDataReader.IsDBNullAsync(0, cancellationToken))
                 {
                     results.Add(npgsqlDataReader.GetInt32(0));
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a mapping of administrative area codes to sets of identifiers matching those codes and administrative area type.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="codes">A collection of code strings to query.</param>
+        /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the records.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary mapping code strings to sets of integer identifiers if found; otherwise, null.</returns>
+        public static async Task<Dictionary<string, HashSet<int>>?> GetIdsByCodesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? codes, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || codes is null)
+            {
+                return null;
+            }
+
+            List<string> codes_List = codes.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+            if (codes_List.Count == 0)
+            {
+                return [];
+            }
+
+            string commandText = $@"
+                SELECT id, code
+                FROM {TableName.AdministrativeAreal2D}
+                WHERE (@typeId IS NULL OR type_id = @typeId)
+                  AND code = ANY(@codes)
+                ORDER BY id ASC;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+
+            object typeValue = administrativeArealType is not null ? (short)administrativeArealType.Value : DBNull.Value;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint)
+            {
+                Value = typeValue
+            });
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Text)
+            {
+                Value = codes_List.ToArray()
+            });
+
+            Dictionary<string, HashSet<int>> results = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (!await npgsqlDataReader.IsDBNullAsync(0, cancellationToken) && !await npgsqlDataReader.IsDBNullAsync(1, cancellationToken))
+                {
+                    int id = npgsqlDataReader.GetInt32(0);
+                    string code = npgsqlDataReader.GetString(1);
+                    if (!results.TryGetValue(code, out HashSet<int>? idSet))
+                    {
+                        idSet = [];
+                        results[code] = idSet;
+                    }
+
+                    idSet.Add(id);
                 }
             }
 
@@ -2180,6 +2249,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a mapping of administrative area codes to sets of identifiers matching those codes and administrative area type.
+        /// </summary>
+        /// <param name="codes">A collection of code strings to query.</param>
+        /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the records.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary mapping code strings to sets of integer identifiers if found; otherwise, null.</returns>
+        public async Task<Dictionary<string, HashSet<int>>?> GetIdsByCodesAsync(IEnumerable<string>? codes, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (codes is null || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetIdsByCodesAsync(npgsqlConnection, codes, administrativeArealType, commandTimeout, cancellationToken);
         }
         /// <summary>
         /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database, excluding the exact code match.
