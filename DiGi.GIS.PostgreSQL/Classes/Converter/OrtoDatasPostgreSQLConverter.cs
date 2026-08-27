@@ -317,12 +317,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas" /> objects, or null if the connection is null or no matching data is found.</returns>
-        public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(
-            NpgsqlConnection? npgsqlConnection,
-            IEnumerable<string>? references,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -400,12 +395,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback check without county filtering for references not matched by county.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
-        public async Task<HashSet<string>?> ContainsByReferencesAsync(
-            IEnumerable<string> references,
-            int? countyId,
-            bool inverted = false,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -828,11 +818,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatas"/> object if found; otherwise, null.</returns>
-        public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(
-            string reference,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
@@ -850,11 +836,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas"/> objects, or null if no matching data is found.</returns>
-        public async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(
-            IEnumerable<string>? references,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -1039,12 +1021,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null or input references are null.</returns>
-        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(
-            NpgsqlConnection? npgsqlConnection,
-            IEnumerable<string>? references,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -1100,11 +1077,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if references are null or connection fails.</returns>
-        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(
-            IEnumerable<string>? references,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -1130,11 +1103,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> if found; otherwise, null.</returns>
-        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByReferenceAsync(
-            string reference,
-            int? countyId,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {

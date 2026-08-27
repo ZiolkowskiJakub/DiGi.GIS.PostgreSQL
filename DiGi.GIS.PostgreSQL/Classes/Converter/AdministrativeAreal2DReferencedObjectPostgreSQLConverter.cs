@@ -446,13 +446,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>An instance of <seeref name="TAdministrativeAreal2DReferencedObject"/> populated with data from the reader.</returns>
         protected override TAdministrativeAreal2DReferencedObject Create(NpgsqlDataReader npgsqlDataReader)
         {
-            return Create(
-                npgsqlDataReader.GetInt32(0),
-                npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetString(1),
-                npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
-                JsonNode.Parse(npgsqlDataReader.GetString(3)) as JsonObject,
-                npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDateTime(4)
-                );
+            return Create(npgsqlDataReader.GetInt32(0), npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetString(1), npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2), JsonNode.Parse(npgsqlDataReader.GetString(3)) as JsonObject, npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDateTime(4));
         }
     }
 }

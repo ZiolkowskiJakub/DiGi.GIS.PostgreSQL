@@ -370,14 +370,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TBuilding2DReferencedObject}" /> of matching items, or null if the connection or references are null.</returns>
-        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(
-            NpgsqlConnection? npgsqlConnection,
-            IEnumerable<string>? references,
-            int? countyId,
-            long? limit = null,
-            bool fallbackByReference = false,
-            int commandTimeout = 30,
-            CancellationToken cancellationToken = default)
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, long? limit = null, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -1265,14 +1258,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A new instance of <seeref name="TBuilding2DReferencedObject"/> populated with data from the reader.</returns>
         protected override TBuilding2DReferencedObject Create(NpgsqlDataReader npgsqlDataReader)
         {
-            return Create(
-                npgsqlDataReader.GetInt64(0),
-                npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1),
-                npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2),
-                npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetString(3),
-                JsonNode.Parse(npgsqlDataReader.GetString(4)) as JsonObject,
-                npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetDateTime(5)
-                );
+            return Create(npgsqlDataReader.GetInt64(0), npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetInt32(1), npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetString(2), npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetString(3), JsonNode.Parse(npgsqlDataReader.GetString(4)) as JsonObject, npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetDateTime(5));
         }
     }
 }

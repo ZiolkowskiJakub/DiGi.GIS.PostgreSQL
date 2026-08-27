@@ -321,12 +321,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback check without county filtering for references not matched by county.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
-        public async Task<HashSet<string>?> ContainsByReferencesAsync(
-            IEnumerable<string> references,
-            int? countyId,
-            bool inverted = false,
-            bool fallbackByReference = false,
-            CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
