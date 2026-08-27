@@ -658,12 +658,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="count">The maximum number of <see cref="Building2DReference"/> objects to retrieve.</param>
         /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
+        /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Defaults to 5.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of claimed <see cref="Building2DReference"/> objects, empty when the queue holds nothing claimable, or null when the queue could not be reached at all.</returns>
-        public static async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, int count = 100, int claimTimeoutMinutes = 30, int commandTimeout = 60, CancellationToken cancellationToken = default)
+        public static async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(
+            NpgsqlConnection? npgsqlConnection,
+            int count = 100,
+            int claimTimeoutMinutes = 30,
+            int maxAttempts = 5,
+            int commandTimeout = 60,
+            CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null || count <= 0)
+            if (npgsqlConnection is null || count <= 0 || maxAttempts <= 0)
             {
                 return null;
             }
@@ -678,12 +685,47 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
+            string retireCommandText = $@"
+                DELETE FROM {TableName.OrtoDatas_Building2DReference_Update}
+                WHERE COALESCE(attempts, 0) >= @maxAttempts
+                RETURNING id, county_id, reference;";
+
+            try
+            {
+                await using NpgsqlCommand retireCommand = new(retireCommandText, npgsqlConnection);
+                retireCommand.CommandTimeout = commandTimeout;
+                retireCommand.Parameters.Add(new NpgsqlParameter("maxAttempts", NpgsqlDbType.Integer) { Value = maxAttempts });
+
+                await using NpgsqlDataReader retireReader = await retireCommand.ExecuteReaderAsync(cancellationToken);
+                while (await retireReader.ReadAsync(cancellationToken))
+                {
+                    long retiredId = retireReader.GetInt64(0);
+                    int? retiredCountyId = retireReader.IsDBNull(1) ? null : (int?)retireReader.GetInt32(1);
+                    string? retiredReference = retireReader.IsDBNull(2) ? null : retireReader.GetString(2);
+
+                    Serilog.Modify.Log(
+                        Serilog.Enums.LogEventLevel.Error,
+                        "Retired poison queue entry {Id} (County: {CountyId}, Reference: {Reference}) after reaching {MaxAttempts} attempts",
+                        retiredId,
+                        retiredCountyId?.ToString() ?? "Unknown",
+                        retiredReference ?? "Unknown",
+                        maxAttempts);
+                }
+            }
+            catch (NpgsqlException npgsqlException)
+            {
+                Serilog.Modify.Log(npgsqlException, "{Method} failed while retiring poison references", nameof(GetNextBuilding2DReferencesAsync));
+                return null;
+            }
+
             string commandText = $@"
                 UPDATE {TableName.OrtoDatas_Building2DReference_Update}
-                SET claimed_at = now()
+                SET claimed_at = now(),
+                    attempts = COALESCE(attempts, 0) + 1
                 WHERE id IN (
                     SELECT id FROM {TableName.OrtoDatas_Building2DReference_Update}
-                    WHERE claimed_at IS NULL OR claimed_at < now() - (@claimTimeoutMinutes * interval '1 minute')
+                    WHERE (claimed_at IS NULL OR claimed_at < now() - (@claimTimeoutMinutes * interval '1 minute'))
+                      AND COALESCE(attempts, 0) < @maxAttempts
                     ORDER BY claimed_at ASC NULLS FIRST, created_at ASC
                     FOR UPDATE SKIP LOCKED
                     LIMIT @count
@@ -698,6 +740,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 command.CommandTimeout = commandTimeout;
                 command.Parameters.Add(new NpgsqlParameter("count", NpgsqlDbType.Integer) { Value = count });
                 command.Parameters.Add(new NpgsqlParameter("claimTimeoutMinutes", NpgsqlDbType.Integer) { Value = claimTimeoutMinutes });
+                command.Parameters.Add(new NpgsqlParameter("maxAttempts", NpgsqlDbType.Integer) { Value = maxAttempts });
 
                 await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -729,10 +772,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="count">The maximum number of <see cref="Building2DReference"/> objects to retrieve.</param>
         /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
+        /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Defaults to 5.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of claimed <see cref="Building2DReference"/> objects, or null if the table does not exist or an error occurs.</returns>
-        public async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(int count = 100, int claimTimeoutMinutes = 30, int commandTimeout = 60, CancellationToken cancellationToken = default)
+        public async Task<List<Building2DReference>?> GetNextBuilding2DReferencesAsync(
+            int count = 100,
+            int claimTimeoutMinutes = 30,
+            int maxAttempts = 5,
+            int commandTimeout = 60,
+            CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -742,7 +791,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetNextBuilding2DReferencesAsync(npgsqlConnection, count, claimTimeoutMinutes, commandTimeout, cancellationToken);
+            return await GetNextBuilding2DReferencesAsync(npgsqlConnection, count, claimTimeoutMinutes, maxAttempts, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1946,7 +1995,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously reports what each of the named counties still has waiting in the download queue.
-        /// <para>Reads the queue without claiming anything from it, unlike <see cref="GetNextBuilding2DReferencesAsync(NpgsqlConnection?, int, int, int, CancellationToken)"/>, which claims the rows it returns. It is the only way to see what a refresh queued.</para>
+        /// <para>Reads the queue without claiming anything from it, unlike <see cref="GetNextBuilding2DReferencesAsync(NpgsqlConnection?, int, int, int, int, CancellationToken)"/>, which claims the rows it returns. It is the only way to see what a refresh queued.</para>
         /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
@@ -1975,6 +2024,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     county_id,
                     COUNT(*),
                     COUNT(*) FILTER (WHERE subdivision_id IS NOT NULL),
+                    COUNT(*) FILTER (WHERE COALESCE(attempts, 0) > 0),
                     MIN(created_at), MAX(created_at)
                 FROM {TableName.OrtoDatas_Building2DReference_Update}
                 {WhereCountyIds(countyIds_Array)}
@@ -1994,8 +2044,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     npgsqlDataReader.GetInt32(0),
                     npgsqlDataReader.GetInt64(1),
                     npgsqlDataReader.GetInt64(2),
-                    npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(3),
-                    npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(4)));
+                    npgsqlDataReader.GetInt64(3),
+                    npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(4),
+                    npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetFieldValue<DateTimeOffset>(5)));
             }
 
             return result;

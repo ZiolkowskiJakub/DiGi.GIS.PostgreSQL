@@ -332,10 +332,12 @@ namespace DiGi.GIS.PostgreSQL
                     subdivision_id INT,
                     created_at timestamptz DEFAULT now(),
                     claimed_at timestamptz,
+                    attempts INT NOT NULL DEFAULT 0,
                     PRIMARY KEY (id, county_id)
                 );
 
                 ALTER TABLE {tableName} ADD COLUMN IF NOT EXISTS claimed_at timestamptz;
+                ALTER TABLE {tableName} ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0;
 
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_{tableName}_county_id_reference
                     ON {tableName} (county_id, reference);

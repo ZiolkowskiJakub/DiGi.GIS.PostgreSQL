@@ -11091,38 +11091,44 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [System\.Collections\.Generic\.List&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1') of matching references, or null if the input collection is null\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(int, int, int, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(int, int, int, int, CancellationToken\) Method
 
 Asynchronously retrieves and claims a batch of building 2D references from the update queue\.
 
-Rows are atomically claimed by updating `claimed_at` to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within [claimTimeoutMinutes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(int, int, int, System\.Threading\.CancellationToken\)\.claimTimeoutMinutes') minutes, the rows automatically become available for subsequent claims.
+Rows are atomically claimed by updating `claimed_at` to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within [claimTimeoutMinutes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(int, int, int, int, System\.Threading\.CancellationToken\)\.claimTimeoutMinutes') minutes, the rows automatically become available for subsequent claims.
 
 ```csharp
-public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetNextBuilding2DReferencesAsync(int count=100, int claimTimeoutMinutes=30, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetNextBuilding2DReferencesAsync(int count=100, int claimTimeoutMinutes=30, int maxAttempts=5, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).count'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).count'></a>
 
 `count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects to retrieve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
 
 `claimTimeoutMinutes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The duration in minutes before an unacknowledged claim expires and returns to the queue\. Defaults to 30\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).maxAttempts'></a>
+
+`maxAttempts` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of claim attempts before a reference is retired as a poison row\. Defaults to 5\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -11132,46 +11138,52 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of claimed [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if the table does not exist or an error occurs\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(NpgsqlConnection, int, int, int, CancellationToken\) Method
+## OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(NpgsqlConnection, int, int, int, int, CancellationToken\) Method
 
 Asynchronously retrieves and claims a batch of building 2D references from the update queue\.
 
-Rows are atomically claimed by updating `claimed_at` to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within [claimTimeoutMinutes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(Npgsql\.NpgsqlConnection, int, int, int, System\.Threading\.CancellationToken\)\.claimTimeoutMinutes') minutes, the rows automatically become available for subsequent claims.
+Rows are atomically claimed by updating `claimed_at` to the current timestamp rather than deleting them immediately. If the claim is not acknowledged within [claimTimeoutMinutes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(Npgsql\.NpgsqlConnection, int, int, int, int, System\.Threading\.CancellationToken\)\.claimTimeoutMinutes') minutes, the rows automatically become available for subsequent claims.
 
 Never-claimed rows are handed out before rows whose claim expired, and each group in the order it was queued. Ordering on the queuing time alone put an expired claim back at the head of the queue, ahead of everything that had never been attempted, so a run failing on the rows it reached first could re-attempt those forever without ever seeing the rest. The ordering matches the index the table carries for it.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int count=100, int claimTimeoutMinutes=30, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int count=100, int claimTimeoutMinutes=30, int maxAttempts=5, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).count'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).count'></a>
 
 `count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects to retrieve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
 
 `claimTimeoutMinutes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The duration in minutes before an unacknowledged claim expires and returns to the queue\. Defaults to 30\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).maxAttempts'></a>
+
+`maxAttempts` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of claim attempts before a reference is retired as a poison row\. Defaults to 5\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -11748,7 +11760,7 @@ A task that represents the asynchronous operation\. The task result contains a l
 
 Asynchronously reports what each of the named counties still has waiting in the download queue\.
 
-Reads the queue without claiming anything from it, unlike [GetNextBuilding2DReferencesAsync\(NpgsqlConnection, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(Npgsql\.NpgsqlConnection, int, int, int, System\.Threading\.CancellationToken\)'), which claims the rows it returns. It is the only way to see what a refresh queued.
+Reads the queue without claiming anything from it, unlike [GetNextBuilding2DReferencesAsync\(NpgsqlConnection, int, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(Npgsql.NpgsqlConnection,int,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetNextBuilding2DReferencesAsync\(Npgsql\.NpgsqlConnection, int, int, int, int, System\.Threading\.CancellationToken\)'), which claims the rows it returns. It is the only way to see what a refresh queued.
 
 Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero.
 
@@ -12160,6 +12172,53 @@ public OrtoDatasQueueResult(DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult? or
 
 The [OrtoDatasQueueResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasQueueResult') to copy from\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_)'></a>
+
+## OrtoDatasQueueResult\(int, long, long, long, Nullable\<DateTimeOffset\>, Nullable\<DateTimeOffset\>\) Constructor
+
+Initializes a new instance of the [OrtoDatasQueueResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasQueueResult') class\.
+
+```csharp
+public OrtoDatasQueueResult(int countyId, long count, long withSubdivisionIdCount, long attemptedCount, System.Nullable<System.DateTimeOffset> createdAt_First, System.Nullable<System.DateTimeOffset> createdAt_Last);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county the queued entries belong to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+How many entries are waiting\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).withSubdivisionIdCount'></a>
+
+`withSubdivisionIdCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+How many of them name a subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).attemptedCount'></a>
+
+`attemptedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+How many of the waiting entries have been attempted at least once\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).createdAt_First'></a>
+
+`createdAt_First` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.DateTimeOffset](https://learn.microsoft.com/en-us/dotnet/api/system.datetimeoffset 'System\.DateTimeOffset')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+When the oldest waiting entry was queued, or null when none are\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_).createdAt_Last'></a>
+
+`createdAt_Last` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.DateTimeOffset](https://learn.microsoft.com/en-us/dotnet/api/system.datetimeoffset 'System\.DateTimeOffset')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+When the newest waiting entry was queued, or null when none are\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.OrtoDatasQueueResult(int,long,long,System.Nullable_System.DateTimeOffset_,System.Nullable_System.DateTimeOffset_)'></a>
 
 ## OrtoDatasQueueResult\(int, long, long, Nullable\<DateTimeOffset\>, Nullable\<DateTimeOffset\>\) Constructor
@@ -12218,6 +12277,19 @@ public OrtoDatasQueueResult(System.Text.Json.Nodes.JsonObject? jsonObject);
 
 The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
 ### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.AttemptedCount'></a>
+
+## OrtoDatasQueueResult\.AttemptedCount Property
+
+Gets how many of the waiting entries have been attempted at least once\.
+
+```csharp
+public long AttemptedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult.Count'></a>
 

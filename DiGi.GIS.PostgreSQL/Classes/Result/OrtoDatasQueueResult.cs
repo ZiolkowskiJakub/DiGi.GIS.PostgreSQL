@@ -13,6 +13,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// </summary>
     public class OrtoDatasQueueResult : SerializableResult, IGISPostgreSQLSerializableObject
     {
+        [JsonInclude, JsonPropertyName(nameof(AttemptedCount))]
+        private readonly long attemptedCount;
+
         [JsonInclude, JsonPropertyName(nameof(Count))]
         private readonly long count;
 
@@ -37,10 +40,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="createdAt_First">When the oldest waiting entry was queued, or null when none are.</param>
         /// <param name="createdAt_Last">When the newest waiting entry was queued, or null when none are.</param>
         public OrtoDatasQueueResult(int countyId, long count, long withSubdivisionIdCount, DateTimeOffset? createdAt_First, DateTimeOffset? createdAt_Last)
+            : this(countyId, count, withSubdivisionIdCount, 0, createdAt_First, createdAt_Last)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OrtoDatasQueueResult"/> class.
+        /// </summary>
+        /// <param name="countyId">The identifier of the county the queued entries belong to.</param>
+        /// <param name="count">How many entries are waiting.</param>
+        /// <param name="withSubdivisionIdCount">How many of them name a subdivision.</param>
+        /// <param name="attemptedCount">How many of the waiting entries have been attempted at least once.</param>
+        /// <param name="createdAt_First">When the oldest waiting entry was queued, or null when none are.</param>
+        /// <param name="createdAt_Last">When the newest waiting entry was queued, or null when none are.</param>
+        public OrtoDatasQueueResult(
+            int countyId,
+            long count,
+            long withSubdivisionIdCount,
+            long attemptedCount,
+            DateTimeOffset? createdAt_First,
+            DateTimeOffset? createdAt_Last)
         {
             this.countyId = countyId;
             this.count = count;
             this.withSubdivisionIdCount = withSubdivisionIdCount;
+            this.attemptedCount = attemptedCount;
             this.createdAt_First = createdAt_First;
             this.createdAt_Last = createdAt_Last;
         }
@@ -57,6 +81,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 countyId = ortoDatasQueueResult.countyId;
                 count = ortoDatasQueueResult.count;
                 withSubdivisionIdCount = ortoDatasQueueResult.withSubdivisionIdCount;
+                attemptedCount = ortoDatasQueueResult.attemptedCount;
                 createdAt_First = ortoDatasQueueResult.createdAt_First;
                 createdAt_Last = ortoDatasQueueResult.createdAt_Last;
             }
@@ -70,6 +95,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
             : base(jsonObject)
         {
         }
+
+        /// <summary>
+        /// Gets how many of the waiting entries have been attempted at least once.
+        /// </summary>
+        [JsonIgnore]
+        public long AttemptedCount => attemptedCount;
 
         /// <summary>
         /// Gets how many entries are waiting for this county.
