@@ -159,9 +159,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the count command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token that can be used by other methods as part of cooperating cancellation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer.</returns>
-        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, CancellationToken cancellationToken = default)
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int? countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -174,7 +175,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 tableName = string.Format("{0}_{1}", tableName, countyId.Value);
             }
 
-            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -1610,9 +1611,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the count of records, optionally filtered by a specific county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the results; if null, the total count is retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the count command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total row count as a long.</returns>
-        public async Task<long> GetCountAsync(int? countyId, CancellationToken cancellationToken = default)
+        public async Task<long> GetCountAsync(int? countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1628,7 +1630,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 tableName = string.Format("{0}_{1}", tableName, countyId.Value);
             }
 
-            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, cancellationToken);
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, tableName, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>

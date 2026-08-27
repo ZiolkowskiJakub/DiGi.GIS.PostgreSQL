@@ -31,24 +31,26 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the total count of records from the database.
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the count command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total count as a long integer.</returns>
-        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        public static async Task<long> GetCountAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return -1;
             }
 
-            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, cancellationToken);
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves the total count of records.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds applied to the count command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the total record count as a long integer.</returns>
-        public async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
+        public async Task<long> GetCountAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -58,7 +60,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, cancellationToken);
+            return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, Constants.TableName.AdministrativeAreal2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
