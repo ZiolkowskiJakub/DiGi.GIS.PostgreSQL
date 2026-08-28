@@ -2091,6 +2091,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return "WHERE county_id = ANY(@countyIds)";
         }
+        
         private static OrtoDatas Create_OrtoDatas(NpgsqlDataReader npgsqlDataReader)
         {
             return new OrtoDatas
