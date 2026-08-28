@@ -6884,6 +6884,8 @@ Only the identifier column is read. It is the counterpart of `GetItemsByReferenc
 
 This is the read half of replacing what a building holds. Take the identifiers first, write the new rows, then delete the identifiers taken here with `RemoveByUniqueIdsAsync(uniqueIds, countyId)`. Ordered that way round a run interrupted between the write and the delete leaves the building holding both its old and its new object, which is recoverable, rather than holding neither.
 
+A table that does not exist answers an empty set rather than throwing: nothing is stored, so nothing can be superseded, and the write that follows is what creates it.
+
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> GetUniqueIdsByReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, System.Nullable<int> countyId, bool fallbackByReference=false, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -6927,7 +6929,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the unique identifiers held for the references, or null when no references were given or the connection is null\.
+A task that represents the asynchronous operation\. The task result contains the unique identifiers held for the references, an empty set when the table does not exist, or null when no references were given or the connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
@@ -6976,7 +6978,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains the unique identifiers held for the references, or null when no references were given or the connection could not be created\.
+A task that represents the asynchronous operation\. The task result contains the unique identifiers held for the references, an empty set when the table does not exist, or null when no references were given or the connection could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
 

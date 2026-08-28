@@ -542,6 +542,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the unique identifiers of every row held for the given references under an optional county identifier.
         /// <para>Only the identifier column is read. It is the counterpart of <c>GetItemsByReferencesAsync</c> for a caller that wants to address the rows rather than the objects inside them - reading the objects to reach one column would move every stored object across the connection, which on a table of building models is gigabytes fetched for a value a few characters long.</para>
         /// <para>This is the read half of replacing what a building holds. Take the identifiers first, write the new rows, then delete the identifiers taken here with <c>RemoveByUniqueIdsAsync(uniqueIds, countyId)</c>. Ordered that way round a run interrupted between the write and the delete leaves the building holding both its old and its new object, which is recoverable, rather than holding neither.</para>
+        /// <para>A table that does not exist answers an empty set rather than throwing: nothing is stored, so nothing can be superseded, and the write that follows is what creates it.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="references">The references whose rows are to be identified.</param>
@@ -549,7 +550,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, or null when no references were given or the connection is null.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, an empty set when the table does not exist, or null when no references were given or the connection is null.</returns>
         public async Task<HashSet<string>?> GetUniqueIdsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
@@ -559,6 +560,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             string[] references_Array = [.. references];
             if (references_Array.Length == 0)
+            {
+                return [];
+            }
+
+            // Nothing of this type has ever been stored, so nothing can be superseded by the write
+            // that follows - and that write is what creates the table. Failing here instead leaves a
+            // storage database whose table was dropped to regenerate it from scratch impossible to
+            // write to at all: the read refuses, the caller answers 500, and the DDL is never reached.
+            // Creating the table here would be the wrong half of the fix. It belongs to the write
+            // path, and TableAsync_Building2DReferencedObject carries the [ReferencedObjectIndexes]
+            // migration, which can spend minutes building an index across every partition - work a
+            // read has no business triggering.
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName, cancellationToken: cancellationToken);
+            if (!exists)
             {
                 return [];
             }
@@ -622,7 +637,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, or null when no references were given or the connection could not be created.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifiers held for the references, an empty set when the table does not exist, or null when no references were given or the connection could not be created.</returns>
         public async Task<HashSet<string>?> GetUniqueIdsByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
