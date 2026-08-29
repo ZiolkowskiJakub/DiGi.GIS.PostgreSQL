@@ -19,8 +19,9 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
+        public static async Task<bool> TableAsync_AdministrativeArea2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -77,7 +78,7 @@ namespace DiGi.GIS.PostgreSQL
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException)
@@ -93,8 +94,9 @@ namespace DiGi.GIS.PostgreSQL
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="tableName">The name of the table associated with the administrative area 2D referenced object.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600)
+        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -123,7 +125,7 @@ namespace DiGi.GIS.PostgreSQL
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
@@ -138,8 +140,10 @@ namespace DiGi.GIS.PostgreSQL
         /// Asynchronously creates the partitioned <see cref="Building"/> table along with its supporting composite index, if it does not already exist.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_Building(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -188,8 +192,9 @@ namespace DiGi.GIS.PostgreSQL
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
@@ -205,8 +210,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        public static async Task<bool> TableAsync_Building_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -219,8 +226,9 @@ namespace DiGi.GIS.PostgreSQL
                 ";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            await npgsqlCommand.ExecuteNonQueryAsync();
+            await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
 
             return true;
         }
@@ -230,8 +238,9 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The Npgsql connection instance used to execute the command.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30)
+        public static async Task<bool> TableAsync_Building2D(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -275,7 +284,7 @@ namespace DiGi.GIS.PostgreSQL
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException)
@@ -289,8 +298,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="countyId">The integer identifier of the county for which the partition is being created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the Building2D partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2D_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        public static async Task<bool> TableAsync_Building2D_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -303,8 +314,9 @@ namespace DiGi.GIS.PostgreSQL
                 ";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            await npgsqlCommand.ExecuteNonQueryAsync();
+            await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
 
             return true;
         }
@@ -374,8 +386,9 @@ namespace DiGi.GIS.PostgreSQL
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index across every partition before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600)
+        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -419,7 +432,7 @@ namespace DiGi.GIS.PostgreSQL
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
@@ -436,8 +449,10 @@ namespace DiGi.GIS.PostgreSQL
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="tableName">The name of the parent table that is being partitioned.</param>
         /// <param name="countyId">The integer identifier of the county for which the partition is created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2DReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId)
+        public static async Task<bool> TableAsync_Building2DReferencedObject_Partition(this NpgsqlConnection? npgsqlConnection, string tableName, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -450,8 +465,9 @@ namespace DiGi.GIS.PostgreSQL
                 ";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            await npgsqlCommand.ExecuteNonQueryAsync();
+            await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
 
             return true;
         }
@@ -460,8 +476,10 @@ namespace DiGi.GIS.PostgreSQL
         /// Asynchronously creates the epw_file table in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_EPWFile(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_EPWFile(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -484,7 +502,9 @@ namespace DiGi.GIS.PostgreSQL
             try
             {
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                npgsqlCommand.CommandTimeout = commandTimeout;
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
@@ -498,8 +518,10 @@ namespace DiGi.GIS.PostgreSQL
         /// Asynchronously creates the OrtoDatas table in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the OrtoDatas table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection)
+        public static async Task<bool> TableAsync_OrtoDatas(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -537,8 +559,9 @@ namespace DiGi.GIS.PostgreSQL
             {
                 // Explicitly using NpgsqlCommand type instead of implicit typing
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
-                await npgsqlCommand.ExecuteNonQueryAsync();
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;
             }
             catch (NpgsqlException ex)
@@ -554,8 +577,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="countyId">The unique identifier of the county for which the partition is being created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_OrtoDatas_Partition(this NpgsqlConnection? npgsqlConnection, int countyId)
+        public static async Task<bool> TableAsync_OrtoDatas_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -568,8 +593,9 @@ namespace DiGi.GIS.PostgreSQL
                 ";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            await npgsqlCommand.ExecuteNonQueryAsync();
+            await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
 
             return true;
         }
@@ -631,9 +657,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="countyId">The integer identifier of the county for which the partition is created.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the partition was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_TerrainPoint_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, CancellationToken cancellationToken = default)
+        public static async Task<bool> TableAsync_TerrainPoint_Partition(this NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -648,6 +675,7 @@ namespace DiGi.GIS.PostgreSQL
             try
             {
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
                 return true;

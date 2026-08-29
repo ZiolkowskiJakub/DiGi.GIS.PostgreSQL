@@ -167,7 +167,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // Identifiers rather than codes: a county held in several pieces is one row per piece, each with its own
             // subdivisions, so walking the identifiers reaches all of its territory exactly once.
             HashSet<int>? countyIds = PostgreSQLTerrainPointFillGapsOptions.CountyIds;
-            countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken);
+            countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken: cancellationToken);
             if (countyIds is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: the counties could not be read - the run cannot be scoped", nameof(PostgreSQLTerrainPointFillGapsTask));
@@ -207,7 +207,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         await npgsqlConnection.OpenAsync(cancellationToken);
 
-                        administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivision, countyId, cancellationToken);
+                        administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivision, countyId, cancellationToken: cancellationToken);
                     }
 
                     if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)

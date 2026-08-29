@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
 using System.Threading;
@@ -41,7 +41,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             // We pass the token to your C# DLL to ensure the
             // PostgreSQL command can be aborted mid-execution.
-            return await administrativeAreal2DPostgreSQLConverter.RefreshAsync(PostgreSQLAdministrativeAreal2DRefreshOptions, progress, cancellationToken);
+            return await administrativeAreal2DPostgreSQLConverter.RefreshAsync(PostgreSQLAdministrativeAreal2DRefreshOptions, progress, cancellationToken: cancellationToken);
         }
     }
 }

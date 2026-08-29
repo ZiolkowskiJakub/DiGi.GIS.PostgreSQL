@@ -25,7 +25,7 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId: null, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (building2DReferences is null)
             {
                 return null;

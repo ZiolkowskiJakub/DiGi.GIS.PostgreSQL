@@ -322,9 +322,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of strings representing the references to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" /> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas" /> objects, or null if the connection is null or no matching data is found.</returns>
-        public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -337,16 +338,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                 FROM {TableName.OrtoDatas}
-                WHERE reference = ANY(@references)
-                  AND (@countyId IS NULL OR county_id = @countyId);";
+                WHERE county_id = @countyId
+                  AND reference = ANY(@references);" : $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                FROM {TableName.OrtoDatas}
+                WHERE reference = ANY(@references);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
 
             List<OrtoDatas>? result = await ReadAsync_OrtoDatas(npgsqlCommand, cancellationToken);
             if (result is null)
@@ -361,7 +369,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (missingReferences.Length > 0)
                 {
-                    List<OrtoDatas>? fallbackItems = await GetOrtoDatasByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    List<OrtoDatas>? fallbackItems = await GetOrtoDatasByReferencesAsync(npgsqlConnection, missingReferences, null, false, commandTimeout, cancellationToken);
                     if (fallbackItems is not null && fallbackItems.Count > 0)
                     {
                         result.AddRange(fallbackItems);
@@ -375,9 +383,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously clears all data and restarts the identity sequence.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -387,8 +396,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas, cancellationToken: cancellationToken);
-            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, cancellationToken: cancellationToken);
+            bool result_1 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            bool result_2 = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.OrtoDatas_Building2DReference_Update, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
             return result_1 || result_2;
         }
@@ -400,9 +409,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier for the county; if null, the search is not filtered by county.</param>
         /// <param name="inverted">A boolean value indicating whether to return the set of references that do not exist (true) or those that do exist (false).</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback check without county filtering for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
-        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -423,11 +433,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string> result = [];
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT input_ref
                 FROM UNNEST(@refs) AS input_ref
                 LEFT JOIN {TableName.OrtoDatas} u ON u.reference = input_ref
-                    AND (@county_id IS NULL OR u.county_id = @county_id)
+                    AND u.county_id = @county_id
+                WHERE
+                    (@inverted = false AND u.reference IS NOT NULL)
+                    OR
+                    (@inverted = true AND u.reference IS NULL);" : $@"
+                SELECT input_ref
+                FROM UNNEST(@refs) AS input_ref
+                LEFT JOIN {TableName.OrtoDatas} u ON u.reference = input_ref
                 WHERE
                     (@inverted = false AND u.reference IS NOT NULL)
                     OR
@@ -438,9 +455,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await npgsqlConnection.OpenAsync(cancellationToken);
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+                if (countyId.HasValue)
+                {
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId.Value });
+                }
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
 
                 await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
@@ -471,6 +492,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
+                            fallbackCommand.CommandTimeout = commandTimeout;
                             fallbackCommand.Parameters.Add(new NpgsqlParameter("missingRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = missingReferences });
 
                             await using NpgsqlDataReader fallbackReader = await fallbackCommand.ExecuteReaderAsync(cancellationToken);
@@ -501,6 +523,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand checkCommand = new(checkExistCommandText, npgsqlConnection);
+                            checkCommand.CommandTimeout = commandTimeout;
                             checkCommand.Parameters.Add(new NpgsqlParameter("candidateRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = candidateReferences });
 
                             await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync(cancellationToken);
@@ -873,16 +896,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="reference">The string reference used to identify the orthodata.</param>
         /// <param name="countyId">The optional integer identifier of the county.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatas"/> object if found; otherwise, null.</returns>
-        public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatas?> GetOrtoDatasByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetOrtoDatasByReferencesAsync([reference], countyId, fallbackByReference, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetOrtoDatasByReferencesAsync([reference], countyId, fallbackByReference, commandTimeout, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         /// <summary>
@@ -891,9 +915,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">An optional collection of strings representing the references to filter by.</param>
         /// <param name="countyId">An optional integer representing the unique identifier of the county.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas"/> objects, or null if no matching data is found.</returns>
-        public async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatas>?> GetOrtoDatasByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -908,7 +933,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetOrtoDatasByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, cancellationToken);
+            return await GetOrtoDatasByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -917,9 +942,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas"/> objects, or null if the connection is null or no matching data is found.</returns>
-        public static async Task<List<OrtoDatas>?> GetOrtoDatasByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatas>?> GetOrtoDatasByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || building2DReferences is null)
             {
@@ -944,6 +970,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using (NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection))
             {
+                npgsqlCommand.CommandTimeout = commandTimeout;
                 npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
                 npgsqlCommand.Parameters.AddWithValue("refs", references);
 
@@ -962,7 +989,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (missingReferences.Length > 0)
                 {
-                    List<OrtoDatas>? fallbackItems = await GetOrtoDatasByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    List<OrtoDatas>? fallbackItems = await GetOrtoDatasByReferencesAsync(npgsqlConnection, missingReferences, null, false, commandTimeout, cancellationToken);
                     if (fallbackItems is not null && fallbackItems.Count > 0)
                     {
                         result.AddRange(fallbackItems);
@@ -978,9 +1005,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatas"/> objects, or null if no matching data is found.</returns>
-        public async Task<List<OrtoDatas>?> GetOrtoDatasByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatas>?> GetOrtoDatasByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReferences is null)
             {
@@ -995,7 +1023,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetOrtoDatasByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, fallbackByReference, cancellationToken);
+            return await GetOrtoDatasByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1003,16 +1031,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2DReference">The <see cref="Building2DReference"/> used to identify the orthodata.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions if not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatas"/> object if found; otherwise, null.</returns>
-        public async Task<OrtoDatas?> GetOrtoDatasByBuilding2DReferenceAsync(Building2DReference? building2DReference, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatas?> GetOrtoDatasByBuilding2DReferenceAsync(Building2DReference? building2DReference, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReference is null || string.IsNullOrWhiteSpace(building2DReference.Reference))
             {
                 return null;
             }
 
-            List<OrtoDatas>? results = await GetOrtoDatasByBuilding2DReferencesAsync([building2DReference], fallbackByReference, cancellationToken);
+            List<OrtoDatas>? results = await GetOrtoDatasByBuilding2DReferencesAsync([building2DReference], fallbackByReference, commandTimeout, cancellationToken);
             return results?.FirstOrDefault();
         }
 
@@ -1022,9 +1051,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null.</returns>
-        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -1040,6 +1070,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE county_id = @county_id{(hasSubdivisionIds ? " AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)" : "")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
             if (hasSubdivisionIds)
             {
@@ -1054,9 +1085,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="countyId">The integer identifier of the county.</param>
         /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if connection fails.</returns>
-        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(int countyId, IEnumerable<int>? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByCountyIdAsync(int countyId, IEnumerable<int>? subdivisionIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1066,7 +1098,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetOrtoDatasReferencesByCountyIdAsync(npgsqlConnection, countyId, subdivisionIds, cancellationToken);
+            return await GetOrtoDatasReferencesByCountyIdAsync(npgsqlConnection, countyId, subdivisionIds, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1076,9 +1108,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of strings representing the references to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null or input references are null.</returns>
-        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -1091,16 +1124,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, created_at
                 FROM {TableName.OrtoDatas}
-                WHERE reference = ANY(@references)
-                  AND (@countyId IS NULL OR county_id = @countyId);";
+                WHERE county_id = @countyId
+                  AND reference = ANY(@references);" : $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y, subdivision_id, created_at
+                FROM {TableName.OrtoDatas}
+                WHERE reference = ANY(@references);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId as object ?? DBNull.Value);
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
 
             List<OrtoDatasReference>? result = await ReadAsync_OrtoDatasReference(npgsqlCommand, cancellationToken);
             if (result is null)
@@ -1115,7 +1155,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (missingReferences.Length > 0)
                 {
-                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, commandTimeout, cancellationToken);
                     if (fallbackItems is not null && fallbackItems.Count > 0)
                     {
                         result.AddRange(fallbackItems);
@@ -1132,9 +1172,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">An optional collection of strings representing the references to filter by.</param>
         /// <param name="countyId">An optional integer representing the unique identifier of the county.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if references are null or connection fails.</returns>
-        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -1149,7 +1190,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, cancellationToken);
+            return await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1158,16 +1199,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="reference">The reference string to search for.</param>
         /// <param name="countyId">An optional integer representing the unique identifier of the county.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> if found; otherwise, null.</returns>
-        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetOrtoDatasReferencesByReferencesAsync([reference], countyId, fallbackByReference, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
+            return await GetOrtoDatasReferencesByReferencesAsync([reference], countyId, fallbackByReference, commandTimeout, cancellationToken).ContinueWith(t => t.Result?.FirstOrDefault(), cancellationToken);
         }
 
         /// <summary>
@@ -1176,9 +1218,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if the connection is null or input references are null.</returns>
-        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public static async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || building2DReferences is null)
             {
@@ -1203,6 +1246,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await using (NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection))
             {
+                npgsqlCommand.CommandTimeout = commandTimeout;
                 npgsqlCommand.Parameters.AddWithValue("counties", countyIds);
                 npgsqlCommand.Parameters.AddWithValue("refs", references);
 
@@ -1221,7 +1265,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (missingReferences.Length > 0)
                 {
-                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    List<OrtoDatasReference>? fallbackItems = await GetOrtoDatasReferencesByReferencesAsync(npgsqlConnection, missingReferences, null, false, commandTimeout, cancellationToken);
                     if (fallbackItems is not null && fallbackItems.Count > 0)
                     {
                         result.AddRange(fallbackItems);
@@ -1237,9 +1281,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2DReferences">A collection of <see cref="Building2DReference"/> objects to search for.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="OrtoDatasReference"/> objects, or null if no matching data is found.</returns>
-        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<OrtoDatasReference>?> GetOrtoDatasReferencesByBuilding2DReferencesAsync(IEnumerable<Building2DReference>? building2DReferences, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReferences is null)
             {
@@ -1254,7 +1299,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetOrtoDatasReferencesByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, fallbackByReference, cancellationToken);
+            return await GetOrtoDatasReferencesByBuilding2DReferencesAsync(npgsqlConnection, building2DReferences, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1262,16 +1307,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="building2DReference">The <see cref="Building2DReference"/> used to identify the orthodata reference.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone across all partitions if not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> object if found; otherwise, null.</returns>
-        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByBuilding2DReferenceAsync(Building2DReference? building2DReference, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByBuilding2DReferenceAsync(Building2DReference? building2DReference, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReference is null || string.IsNullOrWhiteSpace(building2DReference.Reference))
             {
                 return null;
             }
 
-            List<OrtoDatasReference>? results = await GetOrtoDatasReferencesByBuilding2DReferencesAsync([building2DReference], fallbackByReference, cancellationToken);
+            List<OrtoDatasReference>? results = await GetOrtoDatasReferencesByBuilding2DReferencesAsync([building2DReference], fallbackByReference, commandTimeout, cancellationToken);
             return results?.FirstOrDefault();
         }
 
@@ -1280,9 +1326,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="id">The unique ID of the orthodata record.</param>
         /// <param name="countyId">The optional county identifier used to narrow the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="OrtoDatasReference"/> if found; otherwise, null.</returns>
-        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByIdAsync(long id, int? countyId = null, CancellationToken cancellationToken = default)
+        public async Task<OrtoDatasReference?> GetOrtoDatasReferenceByIdAsync(long id, int? countyId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (id <= 0)
             {
@@ -1303,6 +1350,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE id = @id{(countyId is null ? "" : " AND county_id = @countyId")};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.AddWithValue("id", id);
             if (countyId is not null)
             {
@@ -1315,14 +1363,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously updates the data based on the provided orthodata and tolerance.
-        /// <para>An entry that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{OrtoDatas}, IEnumerable{int}, double)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
+        /// <para>An entry that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{OrtoDatas}, IEnumerable{int}, double, int, CancellationToken)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
         /// </summary>
         /// <param name="ortoDatas">A nullable enumerable collection of <see cref="OrtoDatas"/> to be processed for the update.</param>
         /// <param name="tolerance">A double-precision floating-point number representing the distance tolerance used during the update process. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
-        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
-            return await UpdateAsync(ortoDatas, (IEnumerable<int>?)null, tolerance);
+            return await UpdateAsync(ortoDatas, (IEnumerable<int>?)null, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1335,8 +1385,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="ortoDatas">A nullable enumerable collection of <see cref="OrtoDatas"/> to be processed for the update.</param>
         /// <param name="countyIds">The candidate county rows an entry with no county of its own may be filed under. Null or empty searches every county overlapping the entry instead.</param>
         /// <param name="tolerance">A double-precision floating-point number representing the distance tolerance used during the update process. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
-        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<OrtoDatas>? ortoDatas, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (ortoDatas is null)
             {
@@ -1349,9 +1401,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool succeded = await Create.TableAsync_OrtoDatas(npgsqlConnection);
+            bool succeded = await Create.TableAsync_OrtoDatas(npgsqlConnection, commandTimeout, cancellationToken);
             if (!succeded)
             {
                 return null;
@@ -1373,7 +1425,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_ByCountyId = null;
             if (countyIds_Candidate.Count > 1)
             {
-                polygonal2Ds_ByCountyId = (await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Candidate)).Polygonal2DsByCountyId();
+                polygonal2Ds_ByCountyId = (await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Candidate, commandTimeout, cancellationToken)).Polygonal2DsByCountyId();
             }
 
             Dictionary<int, List<OrtoDatas>> dictionary_OrtoDatas = [];
@@ -1417,7 +1469,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         {
                             // The bounding box path answers a different candidate set per entry, so there is
                             // nothing to cache across them.
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance, commandTimeout, cancellationToken);
                             if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
                             {
                                 // A single overlapping county is taken as it stands: the bounding box search
@@ -1437,22 +1489,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                if (!dictionary_OrtoDatas.TryGetValue(countyId.Value, out List<OrtoDatas>? OrtoDatas_CountyId) || OrtoDatas_CountyId is null)
+                if (!dictionary_OrtoDatas.TryGetValue(countyId.Value, out List<OrtoDatas>? ortoDatas_CountyId) || ortoDatas_CountyId is null)
                 {
-                    OrtoDatas_CountyId = [];
-                    dictionary_OrtoDatas[countyId.Value] = OrtoDatas_CountyId;
+                    ortoDatas_CountyId = [];
+                    dictionary_OrtoDatas[countyId.Value] = ortoDatas_CountyId;
                 }
 
-                OrtoDatas_CountyId.Add(ortoDatas_Temp);
+                ortoDatas_CountyId.Add(ortoDatas_Temp);
             }
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             foreach (KeyValuePair<int, List<OrtoDatas>> keyValuePair in dictionary_OrtoDatas)
             {
                 int countyId = keyValuePair.Key;
 
-                succeded = await Create.TableAsync_OrtoDatas_Partition(npgsqlConnection, countyId);
+                succeded = await Create.TableAsync_OrtoDatas_Partition(npgsqlConnection, countyId, commandTimeout, cancellationToken);
                 if (!succeded)
                 {
                     // A whole county's worth of rows disappears here, and it is the one drop that is never
@@ -1512,18 +1565,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             // Execute batch and collect IDs
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
 
             do
             {
-                while (await npgsqlDataReader.ReadAsync())
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
                 {
                     // The RETURNING id works for both INSERT and UPDATE cases
                     long id = npgsqlDataReader.GetInt64(0);
                     ids.Add(id);
                 }
             }
-            while (await npgsqlDataReader.NextResultAsync());
+            while (await npgsqlDataReader.NextResultAsync(cancellationToken));
 
             return new PostgreSQLUpdateResult(ids, rejections);
         }

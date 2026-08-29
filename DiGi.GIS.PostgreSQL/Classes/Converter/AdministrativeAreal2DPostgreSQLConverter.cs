@@ -18,7 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// Provides functionality to convert and manage <see cref="AdministrativeAreal2D"/> entities within a PostgreSQL database, implementing the <see cref="IGISPostgreSQLConverter{T}"/> interface.
     /// <para><b>A code is not a key.</b> The table is loaded from BDOT10k, which stores an administrative unit whose territory is disconnected as one <c>OT_ADJA_A</c> feature per polygon part, and every feature becomes its own row. 18 of Poland's 380 counties are multi-part, so <c>type_id = 2</c> holds 406 rows for 380 codes, up to four rows sharing one code. The row count for a code always equals the feature count in that code's source package - none of this is a re-import artifact, and the extra rows carry real territory (for code <c>2412</c> the largest polygon is only 52% of the county), so they must never be deduplicated away.</para>
     /// <para><b>Every part carries its own ancestor chain.</b> <c>type_id = 0</c> and <c>type_id = 1</c> also hold 406 rows each - one country and one voivodeship per county part - so <c>country_id</c> and <c>voivodeship_id</c> on a county row point into that county's own private chain and differ between two rows of the same county. A county row's own <c>county_id</c> is null; its identity is <c>id</c>.</para>
-    /// <para><b>Consequences for callers.</b> Resolve by <c>id</c> wherever possible. <see cref="GetIdByCodeAsync(NpgsqlConnection, string, AdministrativeArealType?, CancellationToken)"/> collapses a code to the lowest matching row and reports nothing; <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, int?, AdministrativeArealType?, CancellationToken)"/> returns every part and is the one to use when ambiguity matters. Any new <c>LIMIT</c> or <c>FirstOrDefault</c> over this table needs an explicit <c>ORDER BY</c> - without one the row returned changes with the query plan, a vacuum or heap ordering, which is exactly how building models came to be filed under one part while its siblings read back empty.</para>
+    /// <para><b>Consequences for callers.</b> Resolve by <c>id</c> wherever possible. <see cref="GetIdByCodeAsync(NpgsqlConnection, string, AdministrativeArealType?, int, CancellationToken)"/> collapses a code to the lowest matching row and reports nothing; <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, int?, AdministrativeArealType?, int, CancellationToken)"/> returns every part and is the one to use when ambiguity matters. Any new <c>LIMIT</c> or <c>FirstOrDefault</c> over this table needs an explicit <c>ORDER BY</c> - without one the row returned changes with the query plan, a vacuum or heap ordering, which is exactly how building models came to be filed under one part while its siblings read back empty.</para>
     /// <para>Full analysis: https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/1</para>
     /// </summary>
     public class AdministrativeAreal2DPostgreSQLConverter : PostgreSQLConverter<AdministrativeAreal2D>, IGISPostgreSQLConverter<AdministrativeAreal2D>
@@ -70,16 +70,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="id">The unique identifier of the administrative areal 2D reference to retrieve.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReference"/> if found; otherwise, null.</returns>
-        public static async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByIdAsync(NpgsqlConnection? npgsqlConnection, int id, CancellationToken cancellationToken = default)
+        public static async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByIdAsync(NpgsqlConnection? npgsqlConnection, int id, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, [id], cancellationToken))?.FirstOrDefault();
+            return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, [id], commandTimeout, cancellationToken))?.FirstOrDefault();
         }
 
         /// <summary>
@@ -87,9 +88,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="administrativeAreal2DReference">The <see cref="AdministrativeAreal2DReference"/> for which the reference path is retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReferencePath"/> if found; otherwise, null.</returns>
-        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, AdministrativeAreal2DReference administrativeAreal2DReference, CancellationToken cancellationToken = default)
+        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, AdministrativeAreal2DReference administrativeAreal2DReference, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || administrativeAreal2DReference is null)
             {
@@ -102,7 +104,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 return null;
@@ -116,22 +118,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="id">The unique identifier of the administrative areal 2D entity.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReferencePath"/> if found; otherwise, null.</returns>
-        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, int id, CancellationToken cancellationToken = default)
+        public static async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(NpgsqlConnection? npgsqlConnection, int id, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, cancellationToken);
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, commandTimeout, cancellationToken);
             if (administrativeAreal2DReference is null)
             {
                 return null;
             }
 
-            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -139,9 +142,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="administrativeAreal2DReferences">The collection of <see cref="AdministrativeAreal2DReference"/> objects for which paths are retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReferencePath"/> objects if successful; otherwise, null.</returns>
-        public static async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<AdministrativeAreal2DReference> administrativeAreal2DReferences, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<AdministrativeAreal2DReference> administrativeAreal2DReferences, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || administrativeAreal2DReferences is null)
             {
@@ -180,7 +184,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (ids_Temp.Count != 0)
             {
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids_Temp, cancellationToken);
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids_Temp, commandTimeout, cancellationToken);
                 if (administrativeAreal2DReferences_Temp is not null)
                 {
                     foreach (AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_Temp)
@@ -225,22 +229,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">Existing Npgsql connection.</param>
         /// <param name="text">The text to search for within the name column.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A list of AdministrativeAreal2DReferencePath objects matching the search criteria.</returns>
-        public static async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(NpgsqlConnection? npgsqlConnection, string text, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(NpgsqlConnection? npgsqlConnection, string text, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(text))
             {
                 return null;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, commandTimeout, cancellationToken);
             if (administrativeAreal2DReferences is null)
             {
                 return null;
             }
 
-            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -250,16 +255,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="administrativeArealType">The target <see cref="AdministrativeArealType"/> of the references to be retrieved.</param>
         /// <param name="parentIds">A collection of integer identifiers for the parent administrative areas.</param>
         /// <param name="uniqueCode">A boolean value indicating whether a unique code should be used during retrieval.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if successful; otherwise, null.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, IEnumerable<int> parentIds, bool uniqueCode = false, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, IEnumerable<int> parentIds, bool uniqueCode = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || parentIds is null)
             {
                 return null;
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, parentIds, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, parentIds, commandTimeout, cancellationToken);
             if (administrativeAreal2DReferences is null)
             {
                 return null;
@@ -292,7 +298,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 HashSet<int> parentIds_AdministrativeArealType = [];
                 List<string> codes = grouping.Select(x => x.Code).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList()!;
                 Dictionary<string, HashSet<int>>? siblingIdsByCode = codes.Count > 0
-                    ? await GetIdsByCodesAsync(npgsqlConnection, codes, administrativeArealType_Parent, cancellationToken: cancellationToken)
+                    ? await GetIdsByCodesAsync(npgsqlConnection, codes, administrativeArealType_Parent, commandTimeout: commandTimeout, cancellationToken: cancellationToken)
                     : null;
 
                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference in grouping)
@@ -328,6 +334,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {orderByClause};";
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("parentIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = parentIds_AdministrativeArealType!.ToArray() });
@@ -370,7 +377,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (parentId.HasValue)
             {
-                AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, parentId.Value, cancellationToken);
+                AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, parentId.Value, commandTimeout, cancellationToken);
 
                 if (administrativeAreal2DReference is null)
                 {
@@ -396,7 +403,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
                     {
-                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
+                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, commandTimeout, cancellationToken);
                     }
 
                     if (parentIds is null || parentIds.Count == 0)
@@ -444,11 +451,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="code">The identification code used to search for the administrative areal 2D references.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if found; otherwise, null or an empty list.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, commandTimeout, cancellationToken);
             if (ids is null)
             {
                 return null;
@@ -459,7 +467,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -468,16 +476,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="code">The identification code used to search for the administrative areal 2D references.</param>
         /// <param name="administrativeArealType">The type of administrative areal to filter by.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if found; otherwise, null or an empty list.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, AdministrativeArealType administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code) || npgsqlConnection is null)
             {
                 return null;
             }
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, commandTimeout, cancellationToken);
             if (ids is null)
             {
                 return null;
@@ -488,7 +497,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -498,16 +507,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="parentCode">The identification code of the parent administrative areal.</param>
         /// <param name="administrativeArealType">The target child <see cref="AdministrativeArealType"/> to filter the results by.</param>
         /// <param name="parentType">An optional parent <see cref="AdministrativeArealType"/> used to filter the parent administrative area.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if found; otherwise, null or an empty list.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(NpgsqlConnection? npgsqlConnection, string parentCode, AdministrativeArealType administrativeArealType, AdministrativeArealType? parentType = null, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(NpgsqlConnection? npgsqlConnection, string parentCode, AdministrativeArealType administrativeArealType, AdministrativeArealType? parentType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(parentCode) || npgsqlConnection is null)
             {
                 return null;
             }
 
-            HashSet<int>? parentIds = await GetIdsByCodeAsync(npgsqlConnection, parentCode, null, parentType, cancellationToken);
+            HashSet<int>? parentIds = await GetIdsByCodeAsync(npgsqlConnection, parentCode, null, parentType, commandTimeout, cancellationToken);
             if (parentIds is null)
             {
                 return null;
@@ -518,7 +528,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, parentIds, false, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, administrativeArealType, parentIds, false, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -526,9 +536,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="ids">A collection of integer identifiers for the records to be retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if successful; otherwise, null if the connection is null.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> ids, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -551,6 +562,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Using strongly typed parameter to prevent SQL injection and ensure correct DB type mapping
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = ids!.ToArray() });
@@ -563,9 +575,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">Existing Npgsql connection.</param>
         /// <param name="text">The text to search for within the name column.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A list of AdministrativeAreal2DReference objects matching the search criteria.</returns>
-        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(NpgsqlConnection? npgsqlConnection, string text, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(NpgsqlConnection? npgsqlConnection, string text, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(text))
             {
@@ -589,6 +602,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY name ASC, id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding wildcards to the parameter value to match text at any position
             string formattedSearch = $"%{text}%";
@@ -603,9 +617,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> of the entities to be retrieved.</param>
         /// <param name="parentId">The optional unique identifier of the parent administrative areal entity.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{AdministrativeAreal2D}"/> of matching entities, or null if the connection is null or no valid entities are found based on the provided criteria.</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(NpgsqlConnection? npgsqlConnection, AdministrativeArealType administrativeArealType, int? parentId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -617,7 +632,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             if (parentId.HasValue)
             {
-                AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, parentId.Value, cancellationToken);
+                AdministrativeAreal2DReference? administrativeAreal2DReference = await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, parentId.Value, commandTimeout, cancellationToken);
 
                 if (administrativeAreal2DReference is null)
                 {
@@ -644,7 +659,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     if (!string.IsNullOrWhiteSpace(administrativeAreal2DReference.Code))
                     {
-                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, cancellationToken);
+                        parentIds = await GetIdsByCodeAsync(npgsqlConnection, administrativeAreal2DReference.Code, null, administrativeArealType_Parent, commandTimeout, cancellationToken);
                     }
 
                     if (parentIds is null || parentIds.Count == 0)
@@ -664,6 +679,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Explicit typing for parameters
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
@@ -683,9 +699,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">BoundingBox2D</param>
         /// <param name="administrativeArealType">AdministrativeArealType</param>
         /// <param name="tolerance">Tolerance</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -706,6 +723,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))");
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -725,9 +743,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">BoundingBox2D</param>
         /// <param name="administrativeArealTypes">AdministrativeArealTypes</param>
         /// <param name="tolerance">Tolerance</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>AdministrativeAreal2D list</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -773,6 +792,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     administrativeArealType_Parent,
                     parentIds,
                     excludedIds,
+                    commandTimeout,
                     cancellationToken);
 
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
@@ -815,7 +835,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await PopulateObjectsAsync(npgsqlConnection, candidates, cancellationToken);
+            await PopulateObjectsAsync(npgsqlConnection, candidates, commandTimeout, cancellationToken);
 
             List<AdministrativeAreal2D>? result = [];
             foreach (AdministrativeAreal2D candidate in candidates)
@@ -841,11 +861,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="code">The string code used to identify the administrative areal 2D objects.</param>
         /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the results by a specific type.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{T}"/> of <see cref="AdministrativeAreal2D"/> objects if successful; otherwise, null.</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodeAsync(NpgsqlConnection? npgsqlConnection, string code, AdministrativeArealType? administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, commandTimeout, cancellationToken);
             if (ids is null)
             {
                 return null;
@@ -856,7 +877,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, ids, cancellationToken: cancellationToken);
+            return await GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -901,8 +922,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="point2D">The <see cref="Point2D"/> coordinates used to filter the administrative areals.</param>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> specifying the category of administrative areal to retrieve.</param>
         /// <param name="tolerance">The double value representing the distance tolerance applied to the bounding box check. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects if found; otherwise, an empty list or null.</returns>
-        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || point2D is null)
             {
@@ -920,9 +943,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 SELECT id, reference, code, name, type_id, min_x, min_y, max_x, max_y, country_id, voivodeship_id, county_id, municipality_id, object, created_at
                 FROM {TableName.AdministrativeAreal2D}
                 WHERE type_id = @typeId
-                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));");
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))");
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -930,16 +954,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously calculates the overall 2D bounding box enclosing country administrative areal entities in the PostgreSQL database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the calculated <see cref="BoundingBox2D"/> enclosing the country administrative areals, or null if no valid geometries exist or connection is null.</returns>
-        public static async Task<BoundingBox2D?> GetBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        public static async Task<BoundingBox2D?> GetBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -956,6 +981,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND max_y IS NOT NULL AND max_y <> 'NaN'::float8;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)AdministrativeArealType.Country });
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
@@ -1003,16 +1029,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="analyze">A boolean value indicating whether to perform a table analysis before retrieving the count.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated number of records, -1 when the table exists but has not been analysed, or null if the table does not exist or connection is null.</returns>
-        public static async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, CancellationToken cancellationToken = default)
+        public static async Task<long?> GetEstimatedCountAsync(NpgsqlConnection? npgsqlConnection, bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken: cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -1021,17 +1048,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="code">The string code identifying the administrative areal.</param>
         /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> to filter the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifier of the administrative areal if found; otherwise, null.</returns>
-        /// <remarks>A code can match several rows - a multi-part county holds one row per polygon part - and this method collapses them to the lowest identifier. Callers that need to know a code was ambiguous, or that need every part, must use <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, int?, AdministrativeArealType?, CancellationToken)"/> instead.</remarks>
-        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        /// <remarks>A code can match several rows - a multi-part county holds one row per polygon part - and this method collapses them to the lowest identifier. Callers that need to know a code was ambiguous, or that need every part, must use <see cref="GetIdsByCodeAsync(NpgsqlConnection, string, int?, AdministrativeArealType?, int, CancellationToken)"/> instead.</remarks>
+        public static async Task<int?> GetIdByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, commandTimeout, cancellationToken);
             if (ids is null || ids.Count == 0)
             {
                 return null;
@@ -1049,9 +1077,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="code">The string code used to filter the administrative areals.</param>
         /// <param name="limit">An optional integer specifying the maximum number of identifiers to retrieve.</param>
         /// <param name="administrativeArealType">An optional <see cref="AdministrativeArealType"/> used to further filter the results by type.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of integers representing the IDs if found; otherwise, null.</returns>
-        public static async Task<HashSet<int>?> GetIdsByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, int? limit = null, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        public static async Task<HashSet<int>?> GetIdsByCodeAsync(NpgsqlConnection? npgsqlConnection, string? code, int? limit = null, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || string.IsNullOrWhiteSpace(code))
             {
@@ -1077,6 +1106,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Handling the nullable parameter for the SQL query
             object typeValue = administrativeArealType is not null ? (short)administrativeArealType.Value : DBNull.Value;
@@ -1177,9 +1207,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="code">The parent code or prefix used to filter and identify the associated sub-codes.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the matching sub-codes, or <c>null</c> if the connection is null.</returns>
-        public static async Task<HashSet<string>?> GetSubCodesAsync(NpgsqlConnection? npgsqlConnection, string? code, CancellationToken cancellationToken = default)
+        public static async Task<HashSet<string>?> GetSubCodesAsync(NpgsqlConnection? npgsqlConnection, string? code, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -1200,6 +1231,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                   AND code <> @code;";
 
             await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("prefix", NpgsqlDbType.Text)
             {
@@ -1228,9 +1260,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously clears all data from the administrative areal 2D table in the PostgreSQL database.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains <see langword="true"/> if the table was cleared successfully; otherwise, <see langword="false"/>.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1240,15 +1273,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.AdministrativeAreal2D, cancellationToken: cancellationToken);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.AdministrativeAreal2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously creates the PostgreSQL table for administrative areal 2D data and performs an analysis on the created table.
         /// </summary>
         /// <param name="commandTimeout">The time interval, in seconds, to wait for the command to complete before timing out.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains <see langword="true"/> if the table was created successfully; otherwise, <see langword="false"/>.</returns>
-        public async Task<bool> CreateTableAsync(int commandTimeout = 30)
+        public async Task<bool> CreateTableAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1256,9 +1290,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool result = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection, commandTimeout);
+            bool result = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection, commandTimeout, cancellationToken);
             if (result)
             {
                 await DiGi.PostgreSQL.Modify.Analyze(npgsqlConnection, TableName.AdministrativeAreal2D, commandTimeout);
@@ -1272,11 +1306,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="code">The unique string code of the administrative areal 2D.</param>
         /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the search results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2D"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, commandTimeout, cancellationToken);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;
@@ -1290,8 +1325,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="id">The unique integer identifier of the administrative areal 2D.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2D"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(int id, int commandTimeout = 30)
+        public async Task<AdministrativeAreal2D?> GetAdministrativeAreal2DByIdAsync(int id, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1299,9 +1335,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DByIdAsync(npgsqlConnection, id, commandTimeout: commandTimeout);
+            return await GetAdministrativeAreal2DByIdAsync(npgsqlConnection, id, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -1309,9 +1345,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="code">The unique code of the administrative areal 2D.</param>
         /// <param name="administrativeArealType">The optional <see cref="AdministrativeArealType"/> used to filter the search results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReference"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByCodeAsync(string code, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -1326,22 +1363,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, 1, administrativeArealType, commandTimeout, cancellationToken);
             if (ids is null || ids.Count == 0)
             {
                 return null;
             }
 
-            return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken))?.FirstOrDefault();
+            return (await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken))?.FirstOrDefault();
         }
 
         /// <summary>
         /// Asynchronously retrieves an <see cref="AdministrativeAreal2DReference"/> by its unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the administrative areal 2D reference to retrieve.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReference"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2DReference?> GetAdministrativeAreal2DReferenceByIdAsync(int id, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1351,16 +1389,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, cancellationToken);
+            return await GetAdministrativeAreal2DReferenceByIdAsync(npgsqlConnection, id, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves the administrative areal 2D reference path for the specified administrative areal 2D reference.
         /// </summary>
         /// <param name="administrativeAreal2DReference">The administrative areal 2D reference used to retrieve the corresponding path.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReferencePath"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(AdministrativeAreal2DReference administrativeAreal2DReference, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(AdministrativeAreal2DReference administrativeAreal2DReference, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (administrativeAreal2DReference is null)
             {
@@ -1375,16 +1414,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, administrativeAreal2DReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves an administrative areal 2D reference path by its unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the administrative areal 2D reference path.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AdministrativeAreal2DReferencePath"/> if found; otherwise, null.</returns>
-        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<AdministrativeAreal2DReferencePath?> GetAdministrativeAreal2DReferencePathAsync(int id, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1394,16 +1434,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, id, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathAsync(npgsqlConnection, id, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a list of reference paths for the specified collection of administrative areal 2D references.
         /// </summary>
         /// <param name="administrativeAreal2DReferences">The collection of <see cref="AdministrativeAreal2DReference"/> objects for which paths are retrieved.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReferencePath"/> objects if successful; otherwise, null.</returns>
-        public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsAsync(IEnumerable<AdministrativeAreal2DReference> administrativeAreal2DReferences, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsAsync(IEnumerable<AdministrativeAreal2DReference> administrativeAreal2DReferences, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (administrativeAreal2DReferences is null)
             {
@@ -1418,16 +1459,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Searches for administrative area reference paths by name (case-insensitive and diacritic-insensitive) and returns a list of reference paths.
         /// </summary>
         /// <param name="text">The text to search for within the name column.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A list of AdministrativeAreal2DReferencePath objects matching the search criteria.</returns>
-        public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(string text, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReferencePath>?> GetAdministrativeAreal2DReferencePathsByNameAsync(string text, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1442,13 +1484,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, commandTimeout, cancellationToken);
             if (administrativeAreal2DReferences is null)
             {
                 return null;
             }
 
-            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            return await GetAdministrativeAreal2DReferencePathsAsync(npgsqlConnection, administrativeAreal2DReferences, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1487,9 +1529,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves a list of administrative areal 2D references associated with the specified code.
         /// </summary>
         /// <param name="code">The string code used to identify the administrative areals.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if found; otherwise, null or an empty list.</returns>
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -1504,7 +1547,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, cancellationToken);
+            HashSet<int>? ids = await GetIdsByCodeAsync(npgsqlConnection, code, null, null, commandTimeout, cancellationToken);
             if (ids is null)
             {
                 return null;
@@ -1515,7 +1558,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1523,9 +1566,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="code">The string code used to identify the administrative areals.</param>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> specifying the category of the administrative areal.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if matches are found; otherwise, null or an empty list.</returns>
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByCodeAsync(string code, AdministrativeArealType administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -1540,7 +1584,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencesByCodeAsync(npgsqlConnection, code, administrativeArealType, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByCodeAsync(npgsqlConnection, code, administrativeArealType, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1549,9 +1593,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="parentCode">The identification code of the parent administrative areal.</param>
         /// <param name="administrativeArealType">The target child <see cref="AdministrativeArealType"/> to filter the results by.</param>
         /// <param name="parentType">An optional parent <see cref="AdministrativeArealType"/> used to filter the parent administrative area.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if matches are found; otherwise, null or an empty list.</returns>
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(string parentCode, AdministrativeArealType administrativeArealType, AdministrativeArealType? parentType = null, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByParentCodeAsync(string parentCode, AdministrativeArealType administrativeArealType, AdministrativeArealType? parentType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(parentCode))
             {
@@ -1566,16 +1611,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencesByParentCodeAsync(npgsqlConnection, parentCode, administrativeArealType, parentType, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByParentCodeAsync(npgsqlConnection, parentCode, administrativeArealType, parentType, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a list of administrative areal 2D references associated with the specified identifiers using the internal connection data.
         /// </summary>
         /// <param name="ids">The collection of integer identifiers used to retrieve the administrative areal 2D references.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByIdsAsync(IEnumerable<int> ids, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (ids is null)
             {
@@ -1595,16 +1641,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, ids, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a list of administrative areal 2D references that match the specified search text (case-insensitive and diacritic-insensitive) using the internal connection data.
         /// </summary>
         /// <param name="text">The search string used to filter administrative areal 2D references by their name.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2DReference"/> objects if matches are found; otherwise, null.</returns>
-        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(string text, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2DReference>?> GetAdministrativeAreal2DReferencesByNameAsync(string text, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1619,7 +1666,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, cancellationToken);
+            return await GetAdministrativeAreal2DReferencesByNameAsync(npgsqlConnection, text, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1627,9 +1674,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> used to filter the administrative areal objects.</param>
         /// <param name="parentId">The optional unique identifier of the parent administrative areal object.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects if successful; otherwise, null.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType administrativeArealType, int? parentId = null, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType administrativeArealType, int? parentId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -1649,15 +1697,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, administrativeArealType, parentId, cancellationToken);
+            return await GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, administrativeArealType, parentId, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a list of administrative areal 2D objects filtered by the specified administrative areal type.
         /// </summary>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> used to filter the administrative areal objects.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects if successful; otherwise, null or an empty list.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(AdministrativeArealType administrativeArealType)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(AdministrativeArealType administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -1671,7 +1721,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             // Simple, high-performance query filtering only by type_id
             const string commandText = $@"
@@ -1681,11 +1731,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // Adding the mandatory parameter
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
@@ -1694,8 +1745,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area. If this value is null, the method returns null.</param>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> used to filter the administrative areal objects.</param>
         /// <param name="tolerance">A double value representing the distance tolerance used for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the bounding box is null or the administrative areal type is undefined.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -1708,9 +1761,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, [administrativeArealType], tolerance);
+            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, [administrativeArealType], tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1719,9 +1772,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area. If this value is null, the method returns null.</param>
         /// <param name="administrativeArealTypes">A collection of <see cref="AdministrativeArealType"/> values used to filter the administrative areal objects.</param>
         /// <param name="tolerance">A double value representing the distance tolerance used for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the bounding box is null.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (boundingBox2D is null)
             {
@@ -1736,7 +1790,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance, cancellationToken);
+            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealTypes, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1744,10 +1798,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area. If this value is null, an empty list may be returned.</param>
         /// <param name="tolerance">A double value representing the distance tolerance used for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the retrieval fails.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, null, tolerance);
+            return await GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, null, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1756,15 +1812,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area. If this value is null, an empty list is returned.</param>
         /// <param name="administrativeArealTypes">A collection of <see cref="AdministrativeArealType"/> values used to filter the administrative areal objects.</param>
         /// <param name="tolerance">A double value representing the distance tolerance added to the circle's radius for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the retrieval fails.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D is null)
             {
                 return [];
             }
 
-            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealTypes, circle2D.Radius + tolerance);
+            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealTypes, circle2D.Radius + tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1773,15 +1831,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area. If this value is null, an empty list is returned.</param>
         /// <param name="administrativeArealType">The <see cref="AdministrativeArealType"/> used to filter the administrative areal objects.</param>
         /// <param name="tolerance">A double value representing the distance tolerance added to the circle's radius for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the retrieval fails.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D is null)
             {
                 return [];
             }
 
-            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealType, circle2D.Radius + tolerance);
+            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, administrativeArealType, circle2D.Radius + tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1789,15 +1849,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="circle2D">The <see cref="Circle2D"/> defining the search area. If this value is null, an empty list is returned.</param>
         /// <param name="tolerance">A double value representing the distance tolerance added to the circle's radius for the search operation.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the retrieval fails.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCircle2DAsync(Circle2D? circle2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (circle2D is null)
             {
                 return [];
             }
 
-            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, circle2D.Radius + tolerance);
+            return await GetAdministrativeAreal2DsByPoint2DAsync(circle2D.Center, circle2D.Radius + tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1805,9 +1867,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="code">The string representation of the code used to filter the administrative areal records.</param>
         /// <param name="administrativeArealType">An optional <see cref="AdministrativeArealType"/> used to further refine the search results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the database connection could not be established.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodeAsync(string code, AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodeAsync(string code, AdministrativeArealType? administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1817,7 +1880,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByCodeAsync(npgsqlConnection, code, administrativeArealType, cancellationToken);
+            return await GetAdministrativeAreal2DsByCodeAsync(npgsqlConnection, code, administrativeArealType, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1825,8 +1888,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <para>If the codes collection is null or empty, all records from the table are retrieved.</para>
         /// </summary>
         /// <param name="codes">An optional collection of strings representing the codes used to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="AdministrativeAreal2D"/> objects, or null if the database connection could not be established.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodesAsync(IEnumerable<string>? codes = null)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByCodesAsync(IEnumerable<string>? codes = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -1834,7 +1899,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             List<AdministrativeAreal2D> result = [];
 
@@ -1849,6 +1914,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 ORDER BY id ASC;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             if (!noFilter)
             {
@@ -1859,7 +1925,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 });
             }
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
         /// <summary>
@@ -1909,8 +1975,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="point2D">The 2D point used to search for administrative areas. If this value is null, the method returns null.</param>
         /// <param name="administrativeArealType">The type of administrative area to retrieve. If this value is <see cref="AdministrativeArealType.Undefined"/>, the method returns null.</param>
         /// <param name="tolerance">The distance tolerance used for the spatial query. The default value is <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of matching <see cref="AdministrativeAreal2D"/> objects, or null if the provided point is null or the administrative area type is undefined.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, AdministrativeArealType administrativeArealType, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (point2D is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -1923,9 +1991,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, [administrativeArealType], tolerance);
+            return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, [administrativeArealType], tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -1933,21 +2001,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="point2D">The 2D point used to search for administrative areas. If this value is null, the method returns null.</param>
         /// <param name="tolerance">The distance tolerance used for the spatial query. The default value is <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of matching <see cref="AdministrativeAreal2D"/> objects, or null if the provided point is null.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, null, tolerance);
+            return await GetAdministrativeAreal2DsByPoint2DAsync(point2D, null, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves a list of administrative areas that contain or are near the specified 2D point, filtered by the provided administrative area types and within the given tolerance.
-        /// <para>Levels are searched from Country downwards, each narrowed to the children of the last level that answered. <b>An empty level does not end the search</b> - see <see cref="GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection, BoundingBox2D, IEnumerable{AdministrativeArealType}, double, CancellationToken)"/> for why m. Poznan makes that necessary.</para>
+        /// <para>Levels are searched from Country downwards, each narrowed to the children of the last level that answered. <b>An empty level does not end the search</b> - see <see cref="GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection, BoundingBox2D, IEnumerable{AdministrativeArealType}, double, int, CancellationToken)"/> for why m. Poznan makes that necessary.</para>
         /// </summary>
         /// <param name="point2D">The 2D point used to search for administrative areas. If this value is null, the method returns null.</param>
         /// <param name="administrativeArealTypes">An optional collection of administrative area types to filter the results.</param>
         /// <param name="tolerance">The distance tolerance used for the spatial query. The default value is <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of matching <see cref="AdministrativeAreal2D"/> objects, or null if the provided point is null.</returns>
-        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(Point2D? point2D, IEnumerable<AdministrativeArealType>? administrativeArealTypes, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
@@ -1960,7 +2032,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             HashSet<AdministrativeArealType>? administrativeArealTypes_HashSet = administrativeArealTypes?.ToHashSet();
 
@@ -1996,7 +2068,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     administrativeArealType,
                     administrativeArealType_Parent,
                     parentIds,
-                    excludedIds);
+                    excludedIds,
+                    commandTimeout,
+                    cancellationToken);
 
                 if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
                 {
@@ -2035,7 +2109,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            await PopulateObjectsAsync(npgsqlConnection, candidates);
+            await PopulateObjectsAsync(npgsqlConnection, candidates, commandTimeout, cancellationToken);
 
             List<AdministrativeAreal2D> result = [];
             foreach (AdministrativeAreal2D candidate in candidates)
@@ -2058,9 +2132,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously calculates the overall 2D bounding box enclosing country administrative areal entities in the PostgreSQL database.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the calculated <see cref="BoundingBox2D"/> enclosing the country administrative areals, or null if no valid geometries exist or connection is null.</returns>
-        public async Task<BoundingBox2D?> GetBoundingBox2DAsync(CancellationToken cancellationToken = default)
+        public async Task<BoundingBox2D?> GetBoundingBox2DAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -2070,14 +2145,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetBoundingBox2DAsync(npgsqlConnection, cancellationToken);
+            return await GetBoundingBox2DAsync(npgsqlConnection, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves all codes of administrative areal 2D entities from the database.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings representing the codes, or <see langword="null"/> if the database connection cannot be established.</returns>
-        public async Task<HashSet<string>?> GetCodesAsync()
+        public async Task<HashSet<string>?> GetCodesAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -2085,7 +2162,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             HashSet<string> codes = [];
 
@@ -2093,9 +2170,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             const string commandText = $"SELECT code FROM {TableName.AdministrativeAreal2D};";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(cancellationToken))
             {
                 // Reading only the first column (index 0)
                 string code = reader.GetString(0);
@@ -2128,9 +2206,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves an estimated count of the administrative areal 2D entities from the database.
         /// </summary>
         /// <param name="analyze">A boolean value indicating whether to analyze the table before retrieving the estimate.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the estimated count as a nullable <see cref="long"/>, -1 when the table exists but has not been analysed, or null if the table does not exist or connection cannot be established.</returns>
-        public async Task<long?> GetEstimatedCountAsync(bool analyze = false, CancellationToken cancellationToken = default)
+        public async Task<long?> GetEstimatedCountAsync(bool analyze = false, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -2140,7 +2219,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, cancellationToken: cancellationToken);
+            return await DiGi.PostgreSQL.Query.EstimatedCountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, analyze, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -2148,8 +2227,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="code">The identification code of the administrative areal entity.</param>
         /// <param name="administrativeArealType">The type of the administrative areal entity.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the identifier as an <see cref="int"/> if found; otherwise, <c>null</c>.</returns>
-        public async Task<int?> GetIdByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null)
+        public async Task<int?> GetIdByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -2162,16 +2243,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetIdByCodeAsync(npgsqlConnection, code, administrativeArealType);
+            return await GetIdByCodeAsync(npgsqlConnection, code, administrativeArealType, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves all identifiers for administrative areal 2D entities from the database.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of integers containing the IDs, or <c>null</c> if the database connection could not be established.</returns>
-        public async Task<HashSet<int>?> GetIdsAsync()
+        public async Task<HashSet<int>?> GetIdsAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -2179,7 +2262,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             HashSet<int> ids = [];
 
@@ -2187,9 +2270,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string query = $"SELECT id FROM {TableName.AdministrativeAreal2D};";
 
             await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
-            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync();
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(cancellationToken))
             {
                 // Reading only the first column (index 0)
                 int id = reader.GetInt32(0);
@@ -2203,9 +2287,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves a set of identifiers for administrative areal entities of the specified type from the database.
         /// </summary>
         /// <param name="administrativeArealType">The type of administrative areal used to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by other objects to signal that the asynchronous operation should be canceled.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of integers containing the IDs, or <c>null</c> if the database connection could not be established.</returns>
-        public async Task<HashSet<int>?> GetIdsAsync(AdministrativeArealType administrativeArealType, CancellationToken cancellationToken = default)
+        public async Task<HashSet<int>?> GetIdsAsync(AdministrativeArealType administrativeArealType, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -2221,6 +2306,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             string query = $"SELECT id FROM {TableName.AdministrativeAreal2D} WHERE type_id = @typeId;";
 
             await using NpgsqlCommand npgsqlCommand = new(query, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)administrativeArealType });
             await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
 
@@ -2236,13 +2322,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves every administrative areal 2D identifier matching the specified code and type.
-        /// <para>A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than <see cref="GetIdByCodeAsync(string, AdministrativeArealType?)"/>, which silently collapses the match to the lowest identifier.</para>
+        /// <para>A county code matches one row per polygon part of a multi-part county, so this returns several identifiers for such a county. Use it wherever an ambiguous code has to be detected or every part has to be visited, rather than <see cref="GetIdByCodeAsync(string, AdministrativeArealType?, int, CancellationToken)"/>, which silently collapses the match to the lowest identifier.</para>
         /// </summary>
         /// <param name="code">The identification code of the administrative areal entity.</param>
         /// <param name="administrativeArealType">The type of the administrative areal entity.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the matching identifiers, an empty set when the code matches nothing, or <c>null</c> when the connection could not be established.</returns>
-        public async Task<HashSet<int>?> GetIdsByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        public async Task<HashSet<int>?> GetIdsByCodeAsync(string? code, AdministrativeArealType? administrativeArealType = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (code is null || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -2257,7 +2344,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, cancellationToken);
+            return await GetIdsByCodeAsync(npgsqlConnection, code, null, administrativeArealType, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -2289,9 +2376,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves a collection of sub-codes that start with the specified code prefix from the database, excluding the exact code match.
         /// </summary>
         /// <param name="code">The parent code or prefix used to filter and identify the associated sub-codes.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notification that the operation should be canceled.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the matching sub-codes, or <c>null</c> if the database connection could not be established.</returns>
-        public async Task<HashSet<string>?> GetSubCodesAsync(string? code, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> GetSubCodesAsync(string? code, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -2306,7 +2394,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetSubCodesAsync(npgsqlConnection, code, cancellationToken);
+            return await GetSubCodesAsync(npgsqlConnection, code, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -2317,9 +2405,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="postgreSQLAdministrativeAreal2DRefreshOptions">The options used to configure the refresh process. If null, a new instance of <see cref="PostgreSQLAdministrativeAreal2DRefreshOptions"/> is initialized.</param>
         /// <param name="progress">The provider for reporting the progress of the refresh operation as a long value.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while carrying out the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains true if the refresh was successful; otherwise, false.</returns>
-        public async Task<bool> RefreshAsync(PostgreSQLAdministrativeAreal2DRefreshOptions? postgreSQLAdministrativeAreal2DRefreshOptions = default, IProgress<long>? progress = default, CancellationToken cancellationToken = default)
+        public async Task<bool> RefreshAsync(PostgreSQLAdministrativeAreal2DRefreshOptions? postgreSQLAdministrativeAreal2DRefreshOptions = default, IProgress<long>? progress = default, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             postgreSQLAdministrativeAreal2DRefreshOptions ??= new PostgreSQLAdministrativeAreal2DRefreshOptions();
 
@@ -2341,7 +2430,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 AdministrativeArealType administrativeArealType = administrativeArealTypes[i];
 
-                List<AdministrativeAreal2D>? administrativeAreal2Ds_Current = await GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(administrativeArealType);
+                List<AdministrativeAreal2D>? administrativeAreal2Ds_Current = await GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(administrativeArealType, commandTimeout, cancellationToken);
                 administrativeAreal2Ds_Current?.RemoveAll(x => x.BoundingBox2D == null);
 
                 if (administrativeAreal2Ds_Current != null && administrativeAreal2Ds_Current.Count != 0)
@@ -2447,7 +2536,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            HashSet<int>? indexes = await UpdateAsync(administrativeAreal2Ds);
+            HashSet<int>? indexes = await UpdateAsync(administrativeAreal2Ds, commandTimeout, cancellationToken);
 
             return indexes is not null && indexes.Count != 0;
         }
@@ -2456,8 +2545,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously removes administrative areal 2D records from the database based on the provided identifiers.
         /// </summary>
         /// <param name="ids">An optional collection of integer identifiers for the records to be removed.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of IDs that were successfully deleted, or null if the input was null or a database connection could not be established.</returns>
-        public async Task<HashSet<int>?> RemoveAsync(IEnumerable<int>? ids)
+        public async Task<HashSet<int>?> RemoveAsync(IEnumerable<int>? ids, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (ids is null)
             {
@@ -2471,7 +2562,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
             HashSet<int> result = [];
 
@@ -2481,6 +2572,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             foreach (int id in ids)
             {
@@ -2496,18 +2588,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             // Execute the batch
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
 
             do
             {
-                while (await npgsqlDataReader.ReadAsync())
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
                 {
                     // If the record existed and was deleted, its ID is returned here
                     int id = npgsqlDataReader.GetInt32(0);
                     result.Add(id);
                 }
             }
-            while (await npgsqlDataReader.NextResultAsync());
+            while (await npgsqlDataReader.NextResultAsync(cancellationToken));
 
             return result;
         }
@@ -2516,8 +2608,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously updates a collection of administrative areal 2D records in the PostgreSQL database.
         /// </summary>
         /// <param name="administrativeAreal2Ds">The collection of <see cref="AdministrativeAreal2D"/> objects to be updated. This value can be null.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of integers representing the IDs of the records that were processed, or null if the update process failed or the input was null.</returns>
-        public async Task<HashSet<int>?> UpdateAsync(IEnumerable<AdministrativeAreal2D>? administrativeAreal2Ds)
+        public async Task<HashSet<int>?> UpdateAsync(IEnumerable<AdministrativeAreal2D>? administrativeAreal2Ds, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (administrativeAreal2Ds is null)
             {
@@ -2530,9 +2624,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool succeded = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection);
+            bool succeded = await Create.TableAsync_AdministrativeArea2D(npgsqlConnection, commandTimeout, cancellationToken);
             if (!succeded)
             {
                 return null;
@@ -2546,6 +2640,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
             {
@@ -2600,18 +2695,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             // Execute batch and collect IDs
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
 
             do
             {
-                while (await npgsqlDataReader.ReadAsync())
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
                 {
                     // The RETURNING id works for both INSERT and UPDATE cases
                     int id = npgsqlDataReader.GetInt32(0);
                     result.Add(id);
                 }
             }
-            while (await npgsqlDataReader.NextResultAsync());
+            while (await npgsqlDataReader.NextResultAsync(cancellationToken));
 
             return result;
         }
@@ -2682,6 +2777,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             AdministrativeArealType administrativeArealType_Parent,
             HashSet<int> parentIds,
             HashSet<int> excludedIds,
+            int commandTimeout = 30,
             CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -2708,6 +2804,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -2743,6 +2840,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand2 = new(commandText2, npgsqlConnection);
+            npgsqlCommand2.CommandTimeout = commandTimeout;
 
             npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -2759,7 +2857,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand2, cancellationToken);
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance, CancellationToken cancellationToken = default)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             // Check if point2D or the list of IDs is null/empty
             if (npgsqlConnection is null || boundingBox2D is null)
@@ -2779,7 +2877,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return [];
                 }
 
-                return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, tolerance, cancellationToken);
+                return await GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, administrativeArealType, tolerance, commandTimeout, cancellationToken);
             }
 
             if (parentIds is null || parentIds.Count == 0)
@@ -2808,6 +2906,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -2840,6 +2939,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             AdministrativeArealType administrativeArealType_Parent,
             HashSet<int> parentIds,
             HashSet<int> excludedIds,
+            int commandTimeout = 30,
             CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
@@ -2866,6 +2966,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -2901,6 +3002,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand2 = new(commandText2, npgsqlConnection);
+            npgsqlCommand2.CommandTimeout = commandTimeout;
 
             npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand2.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
@@ -2917,7 +3019,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             return await ReadAsync_AdministrativeAreal2D_NoObject(npgsqlCommand2, cancellationToken);
         }
 
-        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        private static async Task<List<AdministrativeAreal2D>?> GetAdministrativeAreal2DsByPoint2DAsync(NpgsqlConnection? npgsqlConnection, Point2D? point2D, AdministrativeArealType administrativeArealType, HashSet<int> parentIds, HashSet<int> excludedIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             // Check if point2D or the list of IDs is null/empty
             if (npgsqlConnection is null || point2D is null)
@@ -2937,7 +3039,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return [];
                 }
 
-                return await GetAdministrativeAreal2DsByPoint2DAsync(npgsqlConnection, point2D, administrativeArealType, tolerance);
+                return await GetAdministrativeAreal2DsByPoint2DAsync(npgsqlConnection, point2D, administrativeArealType, tolerance, commandTimeout, cancellationToken);
             }
 
             if (parentIds is null || parentIds.Count == 0)
@@ -2972,6 +3074,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY));";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             // 3. Add parameters - we only add excludedIds if it's actually used in the query
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
@@ -2993,10 +3096,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 });
             }
 
-            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand);
+            return await ReadAsync_AdministrativeAreal2D(npgsqlCommand, cancellationToken);
         }
 
-        private static async Task PopulateObjectsAsync(NpgsqlConnection npgsqlConnection, IEnumerable<AdministrativeAreal2D> administrativeAreal2Ds, CancellationToken cancellationToken = default)
+        private static async Task PopulateObjectsAsync(NpgsqlConnection npgsqlConnection, IEnumerable<AdministrativeAreal2D> administrativeAreal2Ds, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             int[] ids = [.. administrativeAreal2Ds.Select(x => x.Id)];
             if (ids.Length == 0)
@@ -3012,6 +3115,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 WHERE id = ANY(@ids);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = ids });
 
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);

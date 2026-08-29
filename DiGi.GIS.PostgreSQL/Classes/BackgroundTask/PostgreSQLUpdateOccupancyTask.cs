@@ -112,7 +112,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    List<AdministrativeAreal2D>? countySubdivisions = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType.Subdivision, countyId, cancellationToken);
+                    List<AdministrativeAreal2D>? countySubdivisions = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType.Subdivision, countyId, cancellationToken: cancellationToken);
                     if (countySubdivisions is null || countySubdivisions.Count == 0)
                     {
                         continue;

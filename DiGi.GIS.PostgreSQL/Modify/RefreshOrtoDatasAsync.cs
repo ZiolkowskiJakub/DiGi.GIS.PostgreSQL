@@ -49,7 +49,7 @@ namespace DiGi.GIS.PostgreSQL
             // Identifiers rather than codes: a county held in several pieces is one row per piece, and each
             // piece is its own partition, so walking the identifiers reaches all of its territory exactly once.
             HashSet<int>? countyIds = postgreSQLOrtoDatasRefreshOptions.CountyIds;
-            countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken);
+            countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, commandTimeout, cancellationToken);
             if (countyIds is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Method}: the counties could not be read - the run cannot be scoped", nameof(RefreshOrtoDatasAsync));

@@ -34,25 +34,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="countyId">The optional integer identifier of the county partition to clear. If null, the entire table is cleared.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public static async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, CancellationToken cancellationToken = default)
+        public static async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return false;
             }
 
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName(countyId), cancellationToken: cancellationToken);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName(countyId), commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously clears all records from the terrain point table or a specific county partition, automatically managing the connection.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county partition to clear. If null, the entire table is cleared.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public async Task<bool> ClearAsync(int? countyId = null, CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(int? countyId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -61,7 +63,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await ClearAsync(npgsqlConnection, countyId, cancellationToken);
+            return await ClearAsync(npgsqlConnection, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -463,7 +465,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return new TerrainPointUpdateResult(0, null);
             }
 
-            if (!await Create.TableAsync_TerrainPoint_Partition(npgsqlConnection, countyId, cancellationToken))
+            if (!await Create.TableAsync_TerrainPoint_Partition(npgsqlConnection, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken))
             {
                 return new TerrainPointUpdateResult(0, [new Rejection(countyId.ToString(), UpdateRejectionReason.PartitionUnavailable)]);
             }
@@ -603,7 +605,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             HashSet<int> countyIds_Unavailable = [];
             foreach (int countyId in countyIds_Required)
             {
-                if (!await Create.TableAsync_TerrainPoint_Partition(npgsqlConnection, countyId, cancellationToken))
+                if (!await Create.TableAsync_TerrainPoint_Partition(npgsqlConnection, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken))
                 {
                     countyIds_Unavailable.Add(countyId);
                     rejections.Add(new Rejection(countyId.ToString(), UpdateRejectionReason.PartitionUnavailable));

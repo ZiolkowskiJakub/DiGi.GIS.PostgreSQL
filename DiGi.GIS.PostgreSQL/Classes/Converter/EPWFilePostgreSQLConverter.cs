@@ -1,4 +1,4 @@
-﻿using DiGi.EPW;
+using DiGi.EPW;
 using DiGi.EPW.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Spatial.Classes;
@@ -38,16 +38,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously clears all records from the epw_file table.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public static async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, CancellationToken cancellationToken = default)
+        public static async Task<bool> ClearAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return false;
             }
 
-            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, cancellationToken: cancellationToken);
+            return await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -56,9 +57,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="x">The X coordinate (EPSG:2180 easting, in metres).</param>
         /// <param name="y">The Y coordinate (EPSG:2180 northing, in metres).</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
-        public static async Task<EPWFile?> GetEPWFileAsync(NpgsqlConnection? npgsqlConnection, double x, double y, CancellationToken cancellationToken = default)
+        public static async Task<EPWFile?> GetEPWFileAsync(NpgsqlConnection? npgsqlConnection, double x, double y, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -72,6 +74,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 LIMIT 1;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Double) { Value = x });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Double) { Value = y });
 
@@ -92,16 +95,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="point2D">The coordinate point.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
-        public static async Task<EPWFile?> GetEPWFileAsync(NpgsqlConnection? npgsqlConnection, Point2D point2D, CancellationToken cancellationToken = default)
+        public static async Task<EPWFile?> GetEPWFileAsync(NpgsqlConnection? npgsqlConnection, Point2D point2D, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
                 return null;
             }
 
-            return await GetEPWFileAsync(npgsqlConnection, point2D.X, point2D.Y, cancellationToken);
+            return await GetEPWFileAsync(npgsqlConnection, point2D.X, point2D.Y, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -109,16 +113,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="ePWFiles">The collection of EPW files to insert or update.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of database identifiers for the inserted or updated records.</returns>
-        public static async Task<List<int>> InsertAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<EPWFile> ePWFiles, CancellationToken cancellationToken = default)
+        public static async Task<List<int>> InsertAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<EPWFile> ePWFiles, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || ePWFiles is null || !ePWFiles.Any())
             {
                 return [];
             }
 
-            bool created = await Create.TableAsync_EPWFile(npgsqlConnection);
+            bool created = await Create.TableAsync_EPWFile(npgsqlConnection, commandTimeout, cancellationToken);
             if (!created)
             {
                 return [];
@@ -126,6 +131,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             List<int> ids = [];
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             foreach (EPWFile ePWFile in ePWFiles)
             {
@@ -184,9 +190,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously clears all records from the epw_file table, automatically managing the connection.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -195,7 +202,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await ClearAsync(npgsqlConnection, cancellationToken);
+            return await ClearAsync(npgsqlConnection, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -203,9 +210,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="x">The X coordinate (EPSG:2180 easting, in metres).</param>
         /// <param name="y">The Y coordinate (EPSG:2180 northing, in metres).</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
-        public async Task<EPWFile?> GetEPWFileAsync(double x, double y, CancellationToken cancellationToken = default)
+        public async Task<EPWFile?> GetEPWFileAsync(double x, double y, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -214,32 +222,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await GetEPWFileAsync(npgsqlConnection, x, y, cancellationToken);
+            return await GetEPWFileAsync(npgsqlConnection, x, y, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously retrieves the closest EPWFile to the given Point2D, automatically managing the connection.
         /// </summary>
         /// <param name="point2D">The coordinate point.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the closest <see cref="EPWFile"/>, or null if not found.</returns>
-        public async Task<EPWFile?> GetEPWFileAsync(Point2D point2D, CancellationToken cancellationToken = default)
+        public async Task<EPWFile?> GetEPWFileAsync(Point2D point2D, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (point2D is null)
             {
                 return null;
             }
 
-            return await GetEPWFileAsync(point2D.X, point2D.Y, cancellationToken);
+            return await GetEPWFileAsync(point2D.X, point2D.Y, commandTimeout, cancellationToken);
         }
 
         /// <summary>
         /// Asynchronously inserts or updates a collection of EPWFile objects in the database, automatically managing the connection.
         /// </summary>
         /// <param name="ePWFiles">The collection of EPW files to insert or update.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of database identifiers for the inserted or updated records.</returns>
-        public async Task<List<int>> InsertAsync(IEnumerable<EPWFile> ePWFiles, CancellationToken cancellationToken = default)
+        public async Task<List<int>> InsertAsync(IEnumerable<EPWFile> ePWFiles, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -248,7 +258,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await npgsqlConnection.OpenAsync(cancellationToken);
-            return await InsertAsync(npgsqlConnection, ePWFiles, cancellationToken);
+            return await InsertAsync(npgsqlConnection, ePWFiles, commandTimeout, cancellationToken);
         }
     }
 }

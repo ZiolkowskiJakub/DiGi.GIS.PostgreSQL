@@ -64,7 +64,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             FailedBatchCount = 0;
             LastProcessedId = 0;
 
-            PostgreSQLBuilding2DRefreshResult? postgreSQLBuilding2DRefreshResult = await building2DPostgreSQLConverter.RefreshAsync(PostgreSQLBuilding2DRefreshOptions, progress, cancellationToken);
+            PostgreSQLBuilding2DRefreshResult? postgreSQLBuilding2DRefreshResult = await building2DPostgreSQLConverter.RefreshAsync(PostgreSQLBuilding2DRefreshOptions, progress, cancellationToken: cancellationToken);
             if (postgreSQLBuilding2DRefreshResult is null)
             {
                 return false;

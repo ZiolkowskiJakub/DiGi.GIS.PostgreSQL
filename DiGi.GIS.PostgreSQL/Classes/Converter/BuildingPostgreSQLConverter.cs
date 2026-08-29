@@ -33,25 +33,34 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the latest <see cref="Building"/> object, or null if none is found or the connection is null.</returns>
-        public static async Task<Building?> GetBuildingByLatestCreatedAtAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, CancellationToken cancellationToken = default)
+        public static async Task<Building?> GetBuildingByLatestCreatedAtAsync(NpgsqlConnection? npgsqlConnection, int? countyId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
                 return null;
             }
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
                 FROM {TableName.Building}
-                WHERE (@countyId IS NULL OR county_id = @countyId)
+                WHERE county_id = @countyId
+                ORDER BY created_at DESC
+                LIMIT 1;" : $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
                 ORDER BY created_at DESC
                 LIMIT 1;";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
 
             List<Building>? buildings = await ReadAsync_Building(npgsqlCommand, cancellationToken);
             if (buildings is null || buildings.Count == 0)
@@ -69,9 +78,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the search area.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or the bounding box are null.</returns>
-        public static async Task<List<Building>?> GetBuildingsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int? countyId, CancellationToken cancellationToken = default)
+        public static async Task<List<Building>?> GetBuildingsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, int? countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || boundingBox2D is null)
             {
@@ -80,16 +90,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // PostgreSQL orders NaN above every other float value, so records stored without a bounding box
             // (written as NaN by UpdateAsync) have to be excluded explicitly before the overlap test.
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
                 FROM {TableName.Building}
-                WHERE (@countyId IS NULL OR county_id = @countyId)
+                WHERE county_id = @countyId
                   AND min_x <> 'NaN'::float8
+                  AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@minX, @minY), point(@maxX, @maxY));" : $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE min_x <> 'NaN'::float8
                   AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@minX, @minY), point(@maxX, @maxY));";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("minX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("minY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("maxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X });
@@ -105,9 +123,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of strings representing the references to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the connection or references are null.</returns>
-        public static async Task<List<Building>?> GetBuildingsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public static async Task<List<Building>?> GetBuildingsByReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -120,18 +139,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
                 FROM {TableName.Building}
-                WHERE reference = ANY(@references)
-                  AND (@countyId IS NULL OR county_id = @countyId);";
+                WHERE county_id = @countyId
+                  AND reference = ANY(@references);" : $@"
+                SELECT id, county_id, reference, lod, year, min_x, min_y, min_z, max_x, max_y, max_z, object, created_at
+                FROM {TableName.Building}
+                WHERE reference = ANY(@references);";
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
-            // Use an explicitly typed parameter so PostgreSQL can determine the type of the '@countyId IS NULL'
-            // branch when countyId is null; an untyped DBNull.Value fails the all-counties lookup with 42P18.
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
 
             List<Building>? result = await ReadAsync_Building(npgsqlCommand, cancellationToken);
             if (result is null)
@@ -146,7 +170,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (missingReferences.Length > 0)
                 {
-                    List<Building>? fallbackItems = await GetBuildingsByReferencesAsync(npgsqlConnection, missingReferences, null, false, cancellationToken);
+                    List<Building>? fallbackItems = await GetBuildingsByReferencesAsync(npgsqlConnection, missingReferences, null, false, commandTimeout, cancellationToken);
                     if (fallbackItems is not null && fallbackItems.Count > 0)
                     {
                         result.AddRange(fallbackItems);
@@ -302,9 +326,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously clears all data from the building table.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the operation succeeded; otherwise, false.</returns>
-        public async Task<bool> ClearAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -314,7 +339,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool result = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.Building, cancellationToken: cancellationToken);
+            bool result = await DiGi.PostgreSQL.Modify.ClearAsync(npgsqlConnection, TableName.Building, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
             return result;
         }
@@ -326,9 +351,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="countyId">The optional integer identifier for the county; if null, the search is not filtered by county.</param>
         /// <param name="inverted">A boolean value indicating whether to return the set of references that do not exist (true) or those that do exist (false).</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback check without county filtering for references not matched by county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of strings containing the filtered references, or null if the operation fails or no results are found.</returns>
-        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> ContainsByReferencesAsync(IEnumerable<string> references, int? countyId, bool inverted = false, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -349,11 +375,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<string> result = [];
 
-            const string commandText = $@"
+            string commandText = countyId.HasValue ? $@"
                 SELECT input_ref
                 FROM UNNEST(@refs) AS input_ref
                 LEFT JOIN {TableName.Building} u ON u.reference = input_ref
-                    AND (@county_id IS NULL OR u.county_id = @county_id)
+                    AND u.county_id = @county_id
+                WHERE
+                    (@inverted = false AND u.reference IS NOT NULL)
+                    OR
+                    (@inverted = true AND u.reference IS NULL);" : $@"
+                SELECT input_ref
+                FROM UNNEST(@refs) AS input_ref
+                LEFT JOIN {TableName.Building} u ON u.reference = input_ref
                 WHERE
                     (@inverted = false AND u.reference IS NOT NULL)
                     OR
@@ -364,9 +397,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 await npgsqlConnection.OpenAsync(cancellationToken);
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
 
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("refs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = referenceArray });
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = (object?)countyId ?? DBNull.Value });
+                if (countyId.HasValue)
+                {
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId.Value });
+                }
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("inverted", NpgsqlDbType.Boolean) { Value = inverted });
 
                 await using NpgsqlDataReader reader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
@@ -397,6 +434,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand fallbackCommand = new(fallbackCommandText, npgsqlConnection);
+                            fallbackCommand.CommandTimeout = commandTimeout;
                             fallbackCommand.Parameters.Add(new NpgsqlParameter("missingRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = missingReferences });
 
                             await using NpgsqlDataReader fallbackReader = await fallbackCommand.ExecuteReaderAsync(cancellationToken);
@@ -427,6 +465,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         try
                         {
                             await using NpgsqlCommand checkCommand = new(checkExistCommandText, npgsqlConnection);
+                            checkCommand.CommandTimeout = commandTimeout;
                             checkCommand.Parameters.Add(new NpgsqlParameter("candidateRefs", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = candidateReferences });
 
                             await using NpgsqlDataReader checkReader = await checkCommand.ExecuteReaderAsync(cancellationToken);
@@ -456,9 +495,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously retrieves the <see cref="Building"/> record with the latest creation timestamp.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the latest <see cref="Building"/> object, or null if none is found or the connection fails.</returns>
-        public async Task<Building?> GetBuildingByLatestCreatedAtAsync(int? countyId = null, CancellationToken cancellationToken = default)
+        public async Task<Building?> GetBuildingByLatestCreatedAtAsync(int? countyId = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
@@ -468,7 +508,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetBuildingByLatestCreatedAtAsync(npgsqlConnection, countyId, cancellationToken);
+            return await GetBuildingByLatestCreatedAtAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -482,9 +522,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="maxDistance">The distance used to inflate <paramref name="point3D"/> in X and Y into the bounding box of the spatial fallback search.</param>
         /// <param name="tolerance">The tolerance used for the closest point calculation.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search without county filtering if the reference is not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the most relevant <see cref="Building"/>, or null if none could be resolved.</returns>
-        public async Task<Building?> GetBuildingByReferenceAsync(string reference, int? countyId, Point3D? point3D, double maxDistance = 1, double tolerance = Core.Constants.Tolerance.MacroDistance, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<Building?> GetBuildingByReferenceAsync(
+            string reference,
+            int? countyId,
+            Point3D? point3D,
+            double maxDistance = 1,
+            double tolerance = Core.Constants.Tolerance.MacroDistance,
+            bool fallbackByReference = false,
+            int commandTimeout = 30,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
@@ -499,7 +548,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            List<Building>? buildings = await GetBuildingsByReferencesAsync(npgsqlConnection, [reference], countyId, fallbackByReference, cancellationToken);
+            List<Building>? buildings = await GetBuildingsByReferencesAsync(npgsqlConnection, [reference], countyId, fallbackByReference, commandTimeout, cancellationToken);
 
             Building? result = Query.Building(buildings, point3D, tolerance);
             if (result is not null)
@@ -516,7 +565,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 new Point2D(point3D.X - maxDistance, point3D.Y - maxDistance),
                 new Point2D(point3D.X + maxDistance, point3D.Y + maxDistance));
 
-            buildings = await GetBuildingsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, cancellationToken);
+            buildings = await GetBuildingsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, countyId, commandTimeout, cancellationToken);
 
             return Query.Building(buildings, point3D, tolerance);
         }
@@ -527,16 +576,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="reference">The string reference of the buildings to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering if not found in the specified county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
-        public async Task<List<Building>?> GetBuildingsByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<Building>?> GetBuildingsByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reference))
             {
                 return null;
             }
 
-            return await GetBuildingsByReferencesAsync([reference], countyId, fallbackByReference, cancellationToken);
+            return await GetBuildingsByReferencesAsync([reference], countyId, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -545,9 +595,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="references">A collection of strings representing the references to search for.</param>
         /// <param name="countyId">The optional integer identifier of the county to filter the results.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback query without county filtering for references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building"/> objects, or null if the operation fails.</returns>
-        public async Task<List<Building>?> GetBuildingsByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<List<Building>?> GetBuildingsByReferencesAsync(IEnumerable<string>? references, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -562,7 +613,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetBuildingsByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, cancellationToken);
+            return await GetBuildingsByReferencesAsync(npgsqlConnection, references, countyId, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -658,14 +709,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         
         /// <summary>
         /// Asynchronously updates a collection of <see cref="Building"/> records in the PostgreSQL database.
-        /// <para>A building that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{Building}, IEnumerable{int}, double)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
+        /// <para>A building that names no county row is resolved by geometry against every county its bounding box overlaps. When the county is known but which of its polygon parts is not, use <see cref="UpdateAsync(IEnumerable{Building}, IEnumerable{int}, double, int, CancellationToken)"/> and hand over the parts - it narrows the field before the geometry runs.</para>
         /// </summary>
         /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
         /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
-        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
-            return await UpdateAsync(buildings, (IEnumerable<int>?)null, tolerance);
+            return await UpdateAsync(buildings, (IEnumerable<int>?)null, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>
@@ -679,8 +732,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="buildings">The collection of <see cref="Building"/> records to be updated or inserted.</param>
         /// <param name="countyIds">The candidate county rows a building with no county of its own may be filed under. Null or empty searches every county overlapping the building instead.</param>
         /// <param name="tolerance">The tolerance to use for spatial classification if county ID is missing.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
-        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<Building>? buildings, IEnumerable<int>? countyIds, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (buildings is null)
             {
@@ -693,9 +748,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
-            await npgsqlConnection.OpenAsync();
+            await npgsqlConnection.OpenAsync(cancellationToken);
 
-            bool succeeded = await Create.TableAsync_Building(npgsqlConnection);
+            bool succeeded = await Create.TableAsync_Building(npgsqlConnection, commandTimeout, cancellationToken);
             if (!succeeded)
             {
                 return null;
@@ -717,7 +772,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_ByCountyId = null;
             if (countyIds_Candidate.Count > 1)
             {
-                polygonal2Ds_ByCountyId = (await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Candidate)).Polygonal2DsByCountyId();
+                polygonal2Ds_ByCountyId = (await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Candidate, commandTimeout, cancellationToken)).Polygonal2DsByCountyId();
             }
 
             Dictionary<int, List<Building>> dictionary_Buildings = [];
@@ -763,7 +818,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         {
                             // The bounding box path answers a different candidate set per building, so there
                             // is nothing to cache across them.
-                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance);
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, Enums.AdministrativeArealType.County, tolerance, commandTimeout, cancellationToken);
                             if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count != 0)
                             {
                                 // A single overlapping county is taken as it stands: the bounding box search
@@ -793,6 +848,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
+            npgsqlBatch.Timeout = commandTimeout;
 
             // Filled alongside the batch commands rather than from dictionary_Buildings afterwards. The
             // identifiers come back in batch order, and a county whose partition could not be created
@@ -804,7 +860,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 int countyId = keyValuePair.Key;
 
-                succeeded = await Create.TableAsync_Building_Partition(npgsqlConnection, countyId);
+                succeeded = await Create.TableAsync_Building_Partition(npgsqlConnection, countyId, commandTimeout, cancellationToken);
                 if (!succeeded)
                 {
                     // A whole county's worth of rows disappears here, and it is the one drop that is never
@@ -891,13 +947,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return new PostgreSQLUpdateResult(ids, rejections);
             }
 
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync();
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
 
             int buildingIndex = 0;
 
             do
             {
-                while (await npgsqlDataReader.ReadAsync())
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
                 {
                     long id = npgsqlDataReader.GetInt64(0);
                     ids.Add(id);
@@ -909,7 +965,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
                 }
             }
-            while (await npgsqlDataReader.NextResultAsync());
+            while (await npgsqlDataReader.NextResultAsync(cancellationToken));
 
             return new PostgreSQLUpdateResult(ids, rejections);
         }
