@@ -840,6 +840,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             if (string.IsNullOrWhiteSpace(path))
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Path is null or whitespace for PopulateAsync");
                 return false;
             }
 
@@ -858,52 +859,63 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             else
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Path '{Path}' does not exist as a file or directory", path);
                 return false;
             }
 
             if (filePaths.Count == 0)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No .sdcf files found in '{Path}'", path);
                 return false;
             }
 
-            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-            if (npgsqlConnection is null)
+            try
             {
+                await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+                if (npgsqlConnection is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Failed to create NpgsqlConnection from ConnectionData");
+                    return false;
+                }
+
+                await npgsqlConnection.OpenAsync(cancellationToken);
+
+                if (clear)
+                {
+                    await ClearAsync(npgsqlConnection, commandTimeout, cancellationToken);
+                }
+
+                long totalInserted = 0;
+
+                foreach (string filePath in filePaths)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using StatisticalDataCollectionFile file = new(filePath);
+                    IEnumerable<StatisticalDataCollection?>? values = file.Values;
+                    if (values is null)
+                    {
+                        continue;
+                    }
+
+                    List<StatisticalDataCollection> collections = [.. values.OfType<StatisticalDataCollection>()];
+                    if (collections.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    List<string> inserted = await InsertAsync(npgsqlConnection, collections, batchSize, commandTimeout, cancellationToken);
+                    totalInserted += inserted.Count;
+                    progress?.Report(totalInserted);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Serilog.Modify.Log(ex, "Error occurred during PopulateAsync for '{Path}'", path);
                 return false;
             }
-
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-            if (clear)
-            {
-                await ClearAsync(npgsqlConnection, commandTimeout, cancellationToken);
-            }
-
-            long totalInserted = 0;
-
-            foreach (string filePath in filePaths)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                using StatisticalDataCollectionFile file = new(filePath);
-                IEnumerable<StatisticalDataCollection?>? values = file.Values;
-                if (values is null)
-                {
-                    continue;
-                }
-
-                List<StatisticalDataCollection> collections = [.. values.OfType<StatisticalDataCollection>()];
-                if (collections.Count == 0)
-                {
-                    continue;
-                }
-
-                List<string> inserted = await InsertAsync(npgsqlConnection, collections, batchSize, commandTimeout, cancellationToken);
-                totalInserted += inserted.Count;
-                progress?.Report(totalInserted);
-            }
-
-            return true;
         }
 
         private static async Task<List<StatisticalDataCollection>?> ReadAsync_StatisticalDataCollection(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken)
