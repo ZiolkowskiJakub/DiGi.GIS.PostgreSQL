@@ -731,5 +731,41 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
         }
+
+        /// <summary>
+        /// Asynchronously creates the <see cref="Constants.TableName.StatisticalDataCollection"/> table in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_StatisticalDataCollection(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.StatisticalDataCollection} (
+                    id TEXT PRIMARY KEY,
+                    object JSONB NOT NULL,
+                    created_at timestamptz DEFAULT now()
+                );";
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_StatisticalDataCollection)}): {ex.Message}");
+                return false;
+            }
+        }
     }
 }

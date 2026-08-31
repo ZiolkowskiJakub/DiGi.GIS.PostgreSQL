@@ -74,5 +74,10 @@ namespace DiGi.GIS.PostgreSQL.Constants
         /// The name of the territorial unit table.
         /// </summary>
         public const string Unit = "unit";
+
+        /// <summary>
+        /// The name of the statistical data collection table.
+        /// </summary>
+        public const string StatisticalDataCollection = "statistical_data_collection";
     }
 }

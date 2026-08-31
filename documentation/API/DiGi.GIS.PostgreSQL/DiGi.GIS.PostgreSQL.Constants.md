@@ -185,6 +185,19 @@ public const string OrtoDatas_Building2DReference_Update = "orto_datas_building_
 #### Field Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
+<a name='DiGi.GIS.PostgreSQL.Constants.TableName.StatisticalDataCollection'></a>
+
+## TableName\.StatisticalDataCollection Field
+
+The name of the statistical data collection table\.
+
+```csharp
+public const string StatisticalDataCollection = "statistical_data_collection";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.PostgreSQL.Constants.TableName.TerrainPoint'></a>
 
 ## TableName\.TerrainPoint Field

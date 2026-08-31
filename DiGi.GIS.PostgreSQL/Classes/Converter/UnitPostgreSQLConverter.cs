@@ -9,7 +9,9 @@ using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -664,6 +666,123 @@ namespace DiGi.GIS.PostgreSQL.Classes
             progress?.Report(inserted.Count);
 
             return inserted.Count > 0 || units.Count == 0;
+        }
+
+        /// <summary>
+        /// Asynchronously populates the unit table from a local JSON file or directory containing JSON files.
+        /// </summary>
+        /// <param name="npgsqlConnection">The active <see cref="NpgsqlConnection"/>.</param>
+        /// <param name="path">The file path or directory path containing unit JSON files.</param>
+        /// <param name="clear">Whether to clear existing records before inserting.</param>
+        /// <param name="batchSize">The maximum number of units per database insert batch.</param>
+        /// <param name="progress">Progress reporter carrying the count of inserted records.</param>
+        /// <param name="commandTimeout">The timeout in seconds for database execution.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>True if population succeeded; otherwise, false.</returns>
+        public static async Task<bool> PopulateAsync(NpgsqlConnection? npgsqlConnection, string? path, bool clear = false, int batchSize = 1000, IProgress<long>? progress = null, int commandTimeout = 60, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            List<string> filePaths = [];
+            if (Directory.Exists(path))
+            {
+                string[] files = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
+                if (files is not null && files.Length > 0)
+                {
+                    filePaths.AddRange(files);
+                }
+            }
+            else if (File.Exists(path))
+            {
+                filePaths.Add(path);
+            }
+            else
+            {
+                return false;
+            }
+
+            if (filePaths.Count == 0)
+            {
+                return false;
+            }
+
+            if (clear)
+            {
+                await ClearAsync(npgsqlConnection, commandTimeout, cancellationToken);
+            }
+
+            long totalInserted = 0;
+
+            foreach (string filePath in filePaths)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string json;
+                try
+                {
+                    json = await File.ReadAllTextAsync(filePath, cancellationToken);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    continue;
+                }
+
+                List<Unit>? units;
+                try
+                {
+                    units = JsonSerializer.Deserialize<List<Unit>>(json);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (units is null || units.Count == 0)
+                {
+                    continue;
+                }
+
+                List<string> inserted = await InsertAsync(npgsqlConnection, units, batchSize, commandTimeout, cancellationToken);
+                totalInserted += inserted.Count;
+                progress?.Report(totalInserted);
+            }
+
+            return totalInserted > 0 || filePaths.Count > 0;
+        }
+
+        /// <summary>
+        /// Asynchronously populates the unit table from a local JSON file or directory containing JSON files, managing the connection.
+        /// </summary>
+        /// <param name="path">The file path or directory path containing unit JSON files.</param>
+        /// <param name="clear">Whether to clear existing records before inserting.</param>
+        /// <param name="batchSize">The maximum number of units per database insert batch.</param>
+        /// <param name="progress">Progress reporter carrying the count of inserted records.</param>
+        /// <param name="commandTimeout">The timeout in seconds for database execution.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>True if population succeeded; otherwise, false.</returns>
+        public async Task<bool> PopulateAsync(string? path, bool clear = false, int batchSize = 1000, IProgress<long>? progress = null, int commandTimeout = 60, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await PopulateAsync(npgsqlConnection, path, clear, batchSize, progress, commandTimeout, cancellationToken);
         }
 
         private static async Task<List<Unit>?> ReadAsync_Unit(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken)

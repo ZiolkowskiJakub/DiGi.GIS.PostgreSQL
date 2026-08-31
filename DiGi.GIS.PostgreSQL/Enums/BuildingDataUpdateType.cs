@@ -27,5 +27,10 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// Radial ratios (Radial Building Coverage Ratio, Radial Floor Area Ratio) update.
         /// </summary>
         [Description("Radial Ratios")] RadialRatios,
+
+        /// <summary>
+        /// Statistical demographic data update.
+        /// </summary>
+        [Description("Statistical")] Statistical,
     }
 }

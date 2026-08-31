@@ -14642,6 +14642,19 @@ public System.Collections.Generic.List<double>? Radiuses { get; set; }
 #### Property Value
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions.Years'></a>
+
+## PostgreSQLBuildingDataUpdateOptions\.Years Property
+
+Gets or sets the range of years for statistical demographic data series updates\.
+
+```csharp
+public DiGi.Core.Classes.Range<int>? Years { get; set; }
+```
+
+#### Property Value
+[DiGi\.Core\.Classes\.Range&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.range-1 'DiGi\.Core\.Classes\.Range\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.range-1 'DiGi\.Core\.Classes\.Range\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask'></a>
 
 ## PostgreSQLBuildingDataUpdateTask Class
@@ -15336,6 +15349,271 @@ A cancellation token that can be used to cancel the operation\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true unless the run could not be attempted or was cancelled; a county stepped over does not make it false, so read [FailedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasRefreshTask.FailedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasRefreshTask\.FailedCountyCount') as well\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask'></a>
+
+## PostgreSQLStatisticalDataCollectionCreateTableTask Class
+
+Represents a background task that creates the PostgreSQL table for statistical data collections\.
+
+```csharp
+public class PostgreSQLStatisticalDataCollectionCreateTableTask : DiGi.Core.Classes.BackgroundTask, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → PostgreSQLStatisticalDataCollectionCreateTableTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask.PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLStatisticalDataCollectionCreateTableTask\(GISPostgreSQLConverterManager\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionCreateTableTask') class from a manager\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask.PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS converter manager containing the statistical data collection converter\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask.PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter)'></a>
+
+## PostgreSQLStatisticalDataCollectionCreateTableTask\(StatisticalDataCollectionPostgreSQLConverter\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionCreateTableTask') class with a converter\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter statisticalDataCollectionPostgreSQLConverter);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask.PostgreSQLStatisticalDataCollectionCreateTableTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter).statisticalDataCollectionPostgreSQLConverter'></a>
+
+`statisticalDataCollectionPostgreSQLConverter` [StatisticalDataCollectionPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.StatisticalDataCollectionPostgreSQLConverter')
+
+The statistical data collection PostgreSQL converter used to create the table\.
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionCreateTableTask.ExecuteAsync()'></a>
+
+## PostgreSQLStatisticalDataCollectionCreateTableTask\.ExecuteAsync\(\) Method
+
+Executes the background task to create the statistical data collection table in PostgreSQL\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync();
+```
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true if the table was created successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions Class
+
+Options for populating statistical data collections from \.sdcf files into PostgreSQL\.
+
+```csharp
+public class PostgreSQLStatisticalDataCollectionPopulateOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLStatisticalDataCollectionPopulateOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.PostgreSQLStatisticalDataCollectionPopulateOptions()'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionPopulateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateOptions') class with default settings\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionPopulateOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.PostgreSQLStatisticalDataCollectionPopulateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions)'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\(PostgreSQLStatisticalDataCollectionPopulateOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionPopulateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionPopulateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions? postgreSQLStatisticalDataCollectionPopulateOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.PostgreSQLStatisticalDataCollectionPopulateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions).postgreSQLStatisticalDataCollectionPopulateOptions'></a>
+
+`postgreSQLStatisticalDataCollectionPopulateOptions` [PostgreSQLStatisticalDataCollectionPopulateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateOptions')
+
+The source options to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.PostgreSQLStatisticalDataCollectionPopulateOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionPopulateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionPopulateOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.PostgreSQLStatisticalDataCollectionPopulateOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object used to initialize the options\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.BatchSize'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\.BatchSize Property
+
+Gets or sets the maximum number of statistical data collections to insert or update per batch in PostgreSQL\.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.Clear'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\.Clear Property
+
+Gets or sets a value indicating whether existing statistical data collection records should be cleared before populating\.
+
+```csharp
+public bool Clear { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.CommandTimeout'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\.CommandTimeout Property
+
+Gets or sets the timeout in seconds for database commands executed during population\.
+
+```csharp
+public int CommandTimeout { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions.Path'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateOptions\.Path Property
+
+Gets or sets the file path or directory path containing \.sdcf statistical data collection files\.
+
+```csharp
+public string? Path { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateTask Class
+
+Represents a background task that populates the PostgreSQL table for statistical data collections from \.sdcf files\.
+
+```csharp
+public class PostgreSQLStatisticalDataCollectionPopulateTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLStatisticalDataCollectionPopulateTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateTask\(GISPostgreSQLConverterManager\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionPopulateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateTask') class from a manager\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS converter manager containing the statistical data collection converter\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter)'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateTask\(StatisticalDataCollectionPostgreSQLConverter\) Constructor
+
+Initializes a new instance of the [PostgreSQLStatisticalDataCollectionPopulateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateTask') class with a converter\.
+
+```csharp
+public PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter statisticalDataCollectionPostgreSQLConverter);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.PostgreSQLStatisticalDataCollectionPopulateTask(DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter).statisticalDataCollectionPostgreSQLConverter'></a>
+
+`statisticalDataCollectionPostgreSQLConverter` [StatisticalDataCollectionPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.StatisticalDataCollectionPostgreSQLConverter')
+
+The statistical data collection PostgreSQL converter used to populate the table\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.PostgreSQLStatisticalDataCollectionPopulateOptions'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateTask\.PostgreSQLStatisticalDataCollectionPopulateOptions Property
+
+Gets or sets the options used to configure the statistical data collection population process\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions PostgreSQLStatisticalDataCollectionPopulateOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLStatisticalDataCollectionPopulateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLStatisticalDataCollectionPopulateOptions')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLStatisticalDataCollectionPopulateTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task to read statistical data collections from \.sdcf files and insert them into PostgreSQL\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter for reporting the number of processed items\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLStatisticalDataCollectionPopulateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true if the population was successful; otherwise, false\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableOptions'></a>
 
@@ -16242,6 +16520,207 @@ protected override System.Threading.Tasks.Task<bool> ExecuteAsync();
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true if the table was created successfully; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions'></a>
+
+## PostgreSQLUnitInsertFromFileOptions Class
+
+Options for populating territorial units from local JSON files into PostgreSQL\.
+
+```csharp
+public class PostgreSQLUnitInsertFromFileOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLUnitInsertFromFileOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.PostgreSQLUnitInsertFromFileOptions()'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLUnitInsertFromFileOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileOptions') class with default settings\.
+
+```csharp
+public PostgreSQLUnitInsertFromFileOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.PostgreSQLUnitInsertFromFileOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions)'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\(PostgreSQLUnitInsertFromFileOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLUnitInsertFromFileOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLUnitInsertFromFileOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions? postgreSQLUnitInsertFromFileOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.PostgreSQLUnitInsertFromFileOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions).postgreSQLUnitInsertFromFileOptions'></a>
+
+`postgreSQLUnitInsertFromFileOptions` [PostgreSQLUnitInsertFromFileOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileOptions')
+
+The source options to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.PostgreSQLUnitInsertFromFileOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLUnitInsertFromFileOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLUnitInsertFromFileOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.PostgreSQLUnitInsertFromFileOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object used to initialize the options\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.BatchSize'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\.BatchSize Property
+
+Gets or sets the maximum number of territorial units to insert or update per batch in PostgreSQL\.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.Clear'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\.Clear Property
+
+Gets or sets a value indicating whether existing territorial unit records should be cleared before populating\.
+
+```csharp
+public bool Clear { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.CommandTimeout'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\.CommandTimeout Property
+
+Gets or sets the timeout in seconds for database commands executed during population\.
+
+```csharp
+public int CommandTimeout { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions.Path'></a>
+
+## PostgreSQLUnitInsertFromFileOptions\.Path Property
+
+Gets or sets the file path or directory path containing territorial unit JSON files\.
+
+```csharp
+public string? Path { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask'></a>
+
+## PostgreSQLUnitInsertFromFileTask Class
+
+Represents a background task that populates the PostgreSQL table for territorial units from local JSON files\.
+
+```csharp
+public class PostgreSQLUnitInsertFromFileTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLUnitInsertFromFileTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLUnitInsertFromFileTask\(GISPostgreSQLConverterManager\) Constructor
+
+Initializes a new instance of the [PostgreSQLUnitInsertFromFileTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileTask') class from a manager\.
+
+```csharp
+public PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS converter manager containing the unit converter\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter)'></a>
+
+## PostgreSQLUnitInsertFromFileTask\(UnitPostgreSQLConverter\) Constructor
+
+Initializes a new instance of the [PostgreSQLUnitInsertFromFileTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileTask') class with a converter\.
+
+```csharp
+public PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter unitPostgreSQLConverter);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.PostgreSQLUnitInsertFromFileTask(DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter).unitPostgreSQLConverter'></a>
+
+`unitPostgreSQLConverter` [UnitPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.UnitPostgreSQLConverter')
+
+The unit PostgreSQL converter used to populate the table\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.PostgreSQLUnitInsertFromFileOptions'></a>
+
+## PostgreSQLUnitInsertFromFileTask\.PostgreSQLUnitInsertFromFileOptions Property
+
+Gets or sets the options used to configure the file\-based unit population process\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions PostgreSQLUnitInsertFromFileOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLUnitInsertFromFileOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUnitInsertFromFileOptions')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLUnitInsertFromFileTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task to read territorial units from JSON file\(s\) and insert them into PostgreSQL\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter for reporting the number of processed items\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitInsertFromFileTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true if the population was successful; otherwise, false\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUnitPopulateOptions'></a>
 
 ## PostgreSQLUnitPopulateOptions Class
@@ -17071,6 +17550,1186 @@ public DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason UpdateRejectionReason { g
 
 #### Property Value
 [UpdateRejectionReason](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason 'DiGi\.GIS\.PostgreSQL\.Enums\.UpdateRejectionReason')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter Class
+
+Provides functionality to convert and manage [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') entities within a PostgreSQL database,
+implementing the [IGISPostgreSQLConverter](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter') interface\.
+
+```csharp
+public class StatisticalDataCollectionPostgreSQLConverter : DiGi.PostgreSQL.Classes.PostgreSQLConverter<DiGi.GIS.Classes.StatisticalDataCollection>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLConverter, DiGi.PostgreSQL.Interfaces.IPostgreSQLObject, DiGi.Core.Interfaces.IObject, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.postgresqlconverter-1 'DiGi\.PostgreSQL\.Classes\.PostgreSQLConverter\`1') → StatisticalDataCollectionPostgreSQLConverter
+
+Implements [IGISPostgreSQLConverter](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLConverter'), [DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.interfaces.ipostgresqlconverter 'DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLConverter'), [DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLObject](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.interfaces.ipostgresqlobject 'DiGi\.PostgreSQL\.Interfaces\.IPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.StatisticalDataCollectionPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\(ConnectionData\) Constructor
+
+Initializes a new instance of the [StatisticalDataCollectionPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.StatisticalDataCollectionPostgreSQLConverter') class\.
+
+```csharp
+public StatisticalDataCollectionPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData? connectionData);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.StatisticalDataCollectionPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData).connectionData'></a>
+
+`connectionData` [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData')
+
+The [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData') containing database connection settings\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.TableName'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.TableName Property
+
+Gets the name of the database table associated with statistical data collections\.
+
+```csharp
+public static string TableName { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ClearAsync\(int, CancellationToken\) Method
+
+Asynchronously clears all records from the statistical data collection table, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> ClearAsync(int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if the table was cleared successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ClearAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously clears all records from the statistical data collection table\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> ClearAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ClearAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if the table was cleared successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ContainsAsync\(StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously checks whether a statistical data collection exists for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit'), managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> ContainsAsync(DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit to check\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if a collection exists for the specified statistical unit; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ContainsAsync\(NpgsqlConnection, StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously checks whether a statistical data collection exists for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> ContainsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit to check\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if a collection exists for the specified statistical unit; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ContainsAsync\(NpgsqlConnection, string, int, CancellationToken\) Method
+
+Asynchronously checks whether a statistical data collection exists for the specified unit identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> ContainsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if a collection exists for the specified identifier; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.ContainsAsync\(string, int, CancellationToken\) Method
+
+Asynchronously checks whether a statistical data collection exists for the specified unit identifier, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> ContainsAsync(string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.ContainsAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if a collection exists for the specified identifier; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.CreateTableAsync\(int, CancellationToken\) Method
+
+Asynchronously creates the statistical data collection table in the database if it does not already exist, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> CreateTableAsync(int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if table was created successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.CreateTableAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously creates the statistical data collection table in the database if it does not already exist\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> CreateTableAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.CreateTableAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if table was created successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetCountAsync\(int, CancellationToken\) Method
+
+Asynchronously retrieves the total count of records in the statistical data collection table, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<long> GetCountAsync(int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The total count of records, or \-1 if connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetCountAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously retrieves the total count of records in the statistical data collection table\.
+
+```csharp
+public static System.Threading.Tasks.Task<long> GetCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetCountAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The total count of records, or \-1 if the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetEstimatedCountAsync\(bool, int, CancellationToken\) Method
+
+Asynchronously retrieves an estimated count of records from the database table, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether to run VACUUM ANALYZE before retrieving the estimate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The estimated count of records, \-1 when unanalysed, or null if the table does not exist or connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetEstimatedCountAsync\(NpgsqlConnection, bool, int, CancellationToken\) Method
+
+Asynchronously retrieves an estimated count of records from the database table\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Nullable<long>> GetEstimatedCountAsync(Npgsql.NpgsqlConnection? npgsqlConnection, bool analyze=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,int,System.Threading.CancellationToken).analyze'></a>
+
+`analyze` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether to run VACUUM ANALYZE before retrieving the estimate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The estimated count of records, \-1 when unanalysed, or null if the table does not exist or connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetIdsAsync\(int, CancellationToken\) Method
+
+Asynchronously retrieves all territorial unit identifiers currently stored in the statistical data collection table, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetIdsAsync(int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of unit identifiers, or null if connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetIdsAsync\(NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously retrieves all territorial unit identifiers currently stored in the statistical data collection table\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetIdsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetIdsAsync(Npgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of unit identifiers, or null if connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionAsync\(StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously retrieves the matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit'), managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.Classes.StatisticalDataCollection?> GetStatisticalDataCollectionAsync(DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit to match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionAsync\(NpgsqlConnection, StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously retrieves the matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.Classes.StatisticalDataCollection?> GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit to match\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionByIdAsync\(NpgsqlConnection, string, int, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') by its territorial unit code or identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.Classes.StatisticalDataCollection?> GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier or code\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionByIdAsync\(string, int, CancellationToken\) Method
+
+Asynchronously retrieves a [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') by its territorial unit code or identifier, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.Classes.StatisticalDataCollection?> GetStatisticalDataCollectionByIdAsync(string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier or code\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionByIdAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionDictionaryAsync\(NpgsqlConnection, IEnumerable\<StatisticalUnit\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves a dictionary mapping [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') entities to their matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') records\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<DiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.Classes.StatisticalUnit>? statisticalUnits, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).statisticalUnits'></a>
+
+`statisticalUnits` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of statistical units to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of units per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A dictionary mapping each [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') to its matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection'), or null if connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionDictionaryAsync\(IEnumerable\<StatisticalUnit\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves a dictionary mapping [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') entities to their matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') records, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<DiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.Classes.StatisticalUnit>? statisticalUnits, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).statisticalUnits'></a>
+
+`statisticalUnits` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of statistical units to query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of units per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalUnit_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A dictionary mapping each [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') to its matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection'), or null if connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionDictionaryByIdsAsync\(NpgsqlConnection, IEnumerable\<string\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves a dictionary of statistical data collections mapped by unit identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? ids, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of unit identifiers to retrieve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of identifiers to query per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A dictionary mapping unit identifier to [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection'), or null if connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionDictionaryByIdsAsync\(IEnumerable\<string\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves a dictionary of statistical data collections mapped by unit identifier, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable<string>? ids, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of unit identifiers to retrieve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of identifiers to query per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionDictionaryByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A dictionary mapping unit identifier to [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection'), or null if connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionsByIdsAsync\(NpgsqlConnection, IEnumerable\<string\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves statistical data collections matching a collection of unit identifiers in batched queries\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? ids, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of unit identifiers to retrieve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of identifiers to query per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') entities, or null if connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataCollectionsByIdsAsync\(IEnumerable\<string\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves statistical data collections matching a collection of unit identifiers, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.Classes.StatisticalDataCollection>?> GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable<string>? ids, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of unit identifiers to retrieve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of identifiers to query per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataCollectionsByIdsAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of matching [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') entities, or null if connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataNamesAsync\(StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously retrieves the names of all statistical data series stored for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit'), managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetStatisticalDataNamesAsync(DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of statistical data item names, or null if the collection was not found or connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataNamesAsync\(NpgsqlConnection, StatisticalUnit, int, CancellationToken\) Method
+
+Asynchronously retrieves the names of all statistical data series stored for the specified [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.GIS.Classes.StatisticalUnit? statisticalUnit, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).statisticalUnit'></a>
+
+`statisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The statistical unit\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,DiGi.GIS.Classes.StatisticalUnit,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of statistical data item names, or null if the collection was not found or connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataNamesAsync\(NpgsqlConnection, string, int, CancellationToken\) Method
+
+Asynchronously retrieves the names of all statistical data series stored for the specified unit identifier\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of statistical data item names, or null if the collection was not found or connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.GetStatisticalDataNamesAsync\(string, int, CancellationToken\) Method
+
+Asynchronously retrieves the names of all statistical data series stored for the specified unit identifier, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<string>?> GetStatisticalDataNamesAsync(string? id, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(string,int,System.Threading.CancellationToken).id'></a>
+
+`id` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial unit identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.GetStatisticalDataNamesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of statistical data item names, or null if the collection was not found or connection cannot be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.InsertAsync\(NpgsqlConnection, IEnumerable\<StatisticalDataCollection\>, int, int, CancellationToken\) Method
+
+Asynchronously inserts or updates a collection of [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') entities in the database in batches,
+merging any existing records with the incoming statistical data series\.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<string>> InsertAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.Classes.StatisticalDataCollection>? statisticalDataCollections, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).statisticalDataCollections'></a>
+
+`statisticalDataCollections` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of statistical data collections to insert or update\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of collections per batch command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the command execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of identifiers successfully inserted or updated\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.InsertAsync\(IEnumerable\<StatisticalDataCollection\>, int, int, CancellationToken\) Method
+
+Asynchronously inserts or updates a collection of [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection') entities in the database, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<string>> InsertAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.Classes.StatisticalDataCollection>? statisticalDataCollections, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).statisticalDataCollections'></a>
+
+`statisticalDataCollections` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of statistical data collections to insert or update\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of collections per batch command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the command execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.InsertAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.Classes.StatisticalDataCollection_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A list of identifiers successfully inserted or updated\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken)'></a>
+
+## StatisticalDataCollectionPostgreSQLConverter\.PopulateAsync\(string, bool, int, IProgress\<long\>, int, CancellationToken\) Method
+
+Asynchronously populates statistical data collections into PostgreSQL by reading \.sdcf files from a specified file path or directory\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> PopulateAsync(string? path, bool clear=false, int batchSize=1000, System.IProgress<long>? progress=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).path'></a>
+
+`path` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The file path to a single \.sdcf file or a directory containing \.sdcf files\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).clear'></a>
+
+`clear` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether to clear existing records in the table before inserting\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of collections per database insert batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+Optional progress reporter carrying the count of inserted records\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.StatisticalDataCollectionPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if population succeeded; otherwise, false\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_'></a>
 
@@ -21226,6 +22885,114 @@ Progress reporter carrying the count of inserted records\.
 The timeout in seconds for database execution\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(int,bool,int,string,System.IProgress_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if population succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken)'></a>
+
+## UnitPostgreSQLConverter\.PopulateAsync\(NpgsqlConnection, string, bool, int, IProgress\<long\>, int, CancellationToken\) Method
+
+Asynchronously populates the unit table from a local JSON file or directory containing JSON files\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> PopulateAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? path, bool clear=false, int batchSize=1000, System.IProgress<long>? progress=null, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The active [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).path'></a>
+
+`path` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The file path or directory path containing unit JSON files\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).clear'></a>
+
+`clear` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether to clear existing records before inserting\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of units per database insert batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+Progress reporter carrying the count of inserted records\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(Npgsql.NpgsqlConnection,string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+True if population succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken)'></a>
+
+## UnitPostgreSQLConverter\.PopulateAsync\(string, bool, int, IProgress\<long\>, int, CancellationToken\) Method
+
+Asynchronously populates the unit table from a local JSON file or directory containing JSON files, managing the connection\.
+
+```csharp
+public System.Threading.Tasks.Task<bool> PopulateAsync(string? path, bool clear=false, int batchSize=1000, System.IProgress<long>? progress=null, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).path'></a>
+
+`path` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The file path or directory path containing unit JSON files\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).clear'></a>
+
+`clear` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether to clear existing records before inserting\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of units per database insert batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+Progress reporter carrying the count of inserted records\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database execution\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter.PopulateAsync(string,bool,int,System.IProgress_long_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 

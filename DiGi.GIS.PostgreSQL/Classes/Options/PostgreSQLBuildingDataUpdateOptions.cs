@@ -41,6 +41,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 CommandTimeout = postgreSQLBuildingDataUpdateOptions.CommandTimeout;
                 CountyIds = postgreSQLBuildingDataUpdateOptions.CountyIds == null ? null : [.. postgreSQLBuildingDataUpdateOptions.CountyIds];
                 Radiuses = postgreSQLBuildingDataUpdateOptions.Radiuses == null ? null : [.. postgreSQLBuildingDataUpdateOptions.Radiuses];
+                Years = postgreSQLBuildingDataUpdateOptions.Years == null ? null : new(postgreSQLBuildingDataUpdateOptions.Years);
             }
         }
 
@@ -71,5 +72,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(Radiuses))]
         public List<double>? Radiuses { get; set; } = [200, 400, 600, 1000];
+
+        /// <summary>
+        /// Gets or sets the range of years for statistical demographic data series updates.
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(Years))]
+        public Range<int>? Years { get; set; } = new(2008, 2025);
     }
 }
