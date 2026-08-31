@@ -211,6 +211,19 @@ public const string TypologyModel = "typology_model";
 #### Field Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
+<a name='DiGi.GIS.PostgreSQL.Constants.TableName.Unit'></a>
+
+## TableName\.Unit Field
+
+The name of the territorial unit table\.
+
+```csharp
+public const string Unit = "unit";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.PostgreSQL.Constants.TableName.YearBuiltData'></a>
 
 ## TableName\.YearBuiltData Field

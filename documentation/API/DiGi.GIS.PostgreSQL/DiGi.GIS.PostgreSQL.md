@@ -925,6 +925,39 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result is true if the partition was created successfully; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Create.TableAsync_Unit(thisNpgsql.NpgsqlConnection,int,System.Threading.CancellationToken)'></a>
+
+## Create\.TableAsync\_Unit\(this NpgsqlConnection, int, CancellationToken\) Method
+
+Asynchronously creates the [Unit](DiGi.GIS.PostgreSQL.Constants.md#DiGi.GIS.PostgreSQL.Constants.TableName.Unit 'DiGi\.GIS\.PostgreSQL\.Constants\.TableName\.Unit') table along with its supporting indexes in the PostgreSQL database\.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> TableAsync_Unit(this Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Create.TableAsync_Unit(thisNpgsql.NpgsqlConnection,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') instance used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TableAsync_Unit(thisNpgsql.NpgsqlConnection,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TableAsync_Unit(thisNpgsql.NpgsqlConnection,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to monitor for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if the table was created successfully; otherwise, false\.
+
 <a name='DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_)'></a>
 
 ## Create\.TerrainPointDensityResult\(int, long, double, Nullable\<double\>\) Method
@@ -967,6 +1000,51 @@ The spacing a sampling run used, when it is known\. Supplying it is what fills i
 #### Returns
 [TerrainPointDensityResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointDensityResult')  
 The [TerrainPointDensityResult\(int, long, double, Nullable&lt;double&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_) 'DiGi\.GIS\.PostgreSQL\.Create\.TerrainPointDensityResult\(int, long, double, System\.Nullable\<double\>\)'), or null when the count is negative or the area is not a usable measurement\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken)'></a>
+
+## Create\.UnitComplianceResultAsync\(this UnitPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, AdministrativeArealType, int, CancellationToken\) Method
+
+Asynchronously evaluates the matching compliance of administrative area references of the specified type against BDL territorial units\.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.UnitComplianceResult?> UnitComplianceResultAsync(this DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter? unitPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).unitPostgreSQLConverter'></a>
+
+`unitPostgreSQLConverter` [UnitPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.UnitPostgreSQLConverter')
+
+The converter used to access stored BDL unit data and extract the statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter used to retrieve administrative area references\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+
+The administrative area type to evaluate\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for database commands\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[UnitComplianceResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UnitComplianceResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UnitComplianceResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the [UnitComplianceResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UnitComplianceResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UnitComplianceResult') if successful; otherwise, null\.
 
 <a name='DiGi.GIS.PostgreSQL.Modify'></a>
 
@@ -1506,6 +1584,153 @@ The voivodeship codes in scope, or [null](https://docs.microsoft.com/en-us/dotne
 #### Returns
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 [true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the county row is in scope, otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.Classes.AdministrativeAreal2D)'></a>
+
+## Query\.Match\(this StatisticalUnit, AdministrativeAreal2D\) Method
+
+Finds the [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') matching the specified GIS Core [DiGi\.GIS\.Classes\.AdministrativeAreal2D](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativeareal2d 'DiGi\.GIS\.Classes\.AdministrativeAreal2D') within the provided root statistical unit hierarchy\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalUnit? Match(this DiGi.GIS.Classes.StatisticalUnit? rootStatisticalUnit, DiGi.GIS.Classes.AdministrativeAreal2D? administrativeAreal2D);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.Classes.AdministrativeAreal2D).rootStatisticalUnit'></a>
+
+`rootStatisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The root statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.Classes.AdministrativeAreal2D).administrativeAreal2D'></a>
+
+`administrativeAreal2D` [DiGi\.GIS\.Classes\.AdministrativeAreal2D](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativeareal2d 'DiGi\.GIS\.Classes\.AdministrativeAreal2D')
+
+The GIS administrative area to match\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
+The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D)'></a>
+
+## Query\.Match\(this StatisticalUnit, AdministrativeAreal2D\) Method
+
+Finds the [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') matching the specified PostgreSQL [AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D') within the provided root statistical unit hierarchy\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalUnit? Match(this DiGi.GIS.Classes.StatisticalUnit? rootStatisticalUnit, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D? administrativeAreal2D);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D).rootStatisticalUnit'></a>
+
+`rootStatisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The root statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D).administrativeAreal2D'></a>
+
+`administrativeAreal2D` [AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')
+
+The administrative area to match\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
+The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference)'></a>
+
+## Query\.Match\(this StatisticalUnit, AdministrativeAreal2DReference\) Method
+
+Finds the [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') matching the specified [AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference') within the provided root statistical unit hierarchy\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalUnit? Match(this DiGi.GIS.Classes.StatisticalUnit? rootStatisticalUnit, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference).rootStatisticalUnit'></a>
+
+`rootStatisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The root statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference).administrativeAreal2DReference'></a>
+
+`administrativeAreal2DReference` [AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')
+
+The administrative area reference to match\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
+The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath)'></a>
+
+## Query\.Match\(this StatisticalUnit, AdministrativeAreal2DReferencePath\) Method
+
+Finds the [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') matching the leaf reference in the specified [AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath') within the hierarchy\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalUnit? Match(this DiGi.GIS.Classes.StatisticalUnit? rootStatisticalUnit, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath).rootStatisticalUnit'></a>
+
+`rootStatisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The root statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath).administrativeAreal2DReferencePath'></a>
+
+`administrativeAreal2DReferencePath` [AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')
+
+The reference path containing the territorial ancestor chain\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
+The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,string,string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
+
+## Query\.Match\(this StatisticalUnit, string, string, AdministrativeArealType\) Method
+
+Finds the [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') matching the specified territorial name, code, and administrative type\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalUnit? Match(this DiGi.GIS.Classes.StatisticalUnit? rootStatisticalUnit, string? name, string? code, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,string,string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).rootStatisticalUnit'></a>
+
+`rootStatisticalUnit` [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')
+
+The root statistical unit hierarchy\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,string,string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).name'></a>
+
+`name` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial entity name\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,string,string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The territorial entity code\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.Match(thisDiGi.GIS.Classes.StatisticalUnit,string,string,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).administrativeArealType'></a>
+
+`administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+
+The administrative area type\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
+The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.ParentAdministrativeArealType(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 

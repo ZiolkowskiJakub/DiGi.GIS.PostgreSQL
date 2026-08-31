@@ -686,5 +686,50 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
         }
+
+        /// <summary>
+        /// Asynchronously creates the <see cref="Constants.TableName.Unit"/> table along with its supporting indexes in the PostgreSQL database.
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
+        public static async Task<bool> TableAsync_Unit(this NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return false;
+            }
+
+            string commandText = $@"
+                CREATE TABLE IF NOT EXISTS {Constants.TableName.Unit} (
+                    id TEXT PRIMARY KEY,
+                    name TEXT,
+                    level SMALLINT NOT NULL,
+                    has_description BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at timestamptz DEFAULT now()
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Unit}_level
+                ON {Constants.TableName.Unit} (level);
+
+                CREATE INDEX IF NOT EXISTS idx_{Constants.TableName.Unit}_name
+                ON {Constants.TableName.Unit} (name);
+                ";
+
+            try
+            {
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+
+                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken);
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Console.WriteLine($"Postgres Error ({nameof(TableAsync_Unit)}): {ex.Message}");
+                return false;
+            }
+        }
     }
 }

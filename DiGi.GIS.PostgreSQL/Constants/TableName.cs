@@ -69,5 +69,10 @@ namespace DiGi.GIS.PostgreSQL.Constants
         /// The name of the terrain point table. One row is a single terrain elevation point.
         /// </summary>
         public const string TerrainPoint = "terrain_point";
+
+        /// <summary>
+        /// The name of the territorial unit table.
+        /// </summary>
+        public const string Unit = "unit";
     }
 }
