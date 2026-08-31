@@ -123,7 +123,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return [];
             }
 
-            List<StatisticalDataCollection> collectionList = [.. statisticalDataCollections.Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Code))];
+            Dictionary<string, StatisticalDataCollection> mergedIncoming = [];
+            foreach (StatisticalDataCollection incoming in statisticalDataCollections)
+            {
+                if (incoming is null || string.IsNullOrWhiteSpace(incoming.Code))
+                {
+                    continue;
+                }
+
+                if (!mergedIncoming.TryGetValue(incoming.Code, out StatisticalDataCollection? target))
+                {
+                    mergedIncoming[incoming.Code] = incoming;
+                }
+                else if (!ReferenceEquals(target, incoming))
+                {
+                    IEnumerable<IStatisticalData> incomingDatas = incoming.GetStatisticalDatas<IStatisticalData>();
+                    foreach (IStatisticalData incomingData in incomingDatas)
+                    {
+                        target.Add(incomingData);
+                    }
+                }
+            }
+
+            List<StatisticalDataCollection> collectionList = [.. mergedIncoming.Values];
             if (collectionList.Count == 0)
             {
                 return [];
