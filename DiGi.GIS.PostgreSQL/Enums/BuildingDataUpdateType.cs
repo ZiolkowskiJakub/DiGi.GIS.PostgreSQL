@@ -32,5 +32,10 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// Statistical demographic data update.
         /// </summary>
         [Description("Statistical")] Statistical,
+
+        /// <summary>
+        /// Predicted year built data update.
+        /// </summary>
+        [Description("Predicted Year Built")] PredictedYearBuilt,
     }
 }

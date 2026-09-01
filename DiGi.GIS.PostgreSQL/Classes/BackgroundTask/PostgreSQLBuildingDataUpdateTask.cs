@@ -94,6 +94,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             bool update_Occupancy = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy);
             bool update_RadialRatios = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios);
             bool update_Statistical = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Statistical);
+            bool update_PredictedYearBuilt = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.PredictedYearBuilt);
 
             // The GIS conversion carries the outline of every building, so it is done only for the update types
             // that actually measure geometry or need domain models. A Database-only run reads identifiers and never touches an outline.
@@ -129,6 +130,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 if (building2DOccupancyDataPostgreSQLConverter is null)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}: no {Converter} - the stored occupancy is not read and only what Building2D itself says about occupancy is written", nameof(PostgreSQLBuildingDataUpdateTask), nameof(Building2DOccupancyDataPostgreSQLConverter));
+                }
+            }
+
+            YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter = null;
+            if (update_PredictedYearBuilt)
+            {
+                yearBuiltDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<YearBuiltDataPostgreSQLConverter>();
+                if (yearBuiltDataPostgreSQLConverter is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}: no {Converter} - the stored predicted year built data is not read", nameof(PostgreSQLBuildingDataUpdateTask), nameof(YearBuiltDataPostgreSQLConverter));
                 }
             }
 
@@ -422,6 +433,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 IO.Modify.Update_Building2D_Population(table, targetCountyId, building2Ds_GIS, statisticalYearlyDoubleData, PostgreSQLBuildingDataUpdateOptions.Years);
                             }
                         }
+
+                        if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
+                        {
+                            List<string> references = [.. building2Ds.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+                            List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, targetCountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                            if (yearBuiltDatas is not null)
+                            {
+                                List<GIS.Classes.Building2DYearBuiltPredictions> building2DYearBuiltPredictions = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2DYearBuiltPredictions>()];
+                                IO.Modify.Update_Building2D_YearBuiltPredictions(table, targetCountyId, building2DYearBuiltPredictions);
+                            }
+                        }
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
@@ -554,6 +576,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
 
                             IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2Ds_Unassigned_GIS, building2Ds_Neighbour_GIS);
+                        }
+                    }
+
+                    if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
+                    {
+                        List<string> references = [.. building2Ds_Unassigned.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+                        List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                        if (yearBuiltDatas is not null)
+                        {
+                            List<GIS.Classes.Building2DYearBuiltPredictions> building2DYearBuiltPredictions = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2DYearBuiltPredictions>()];
+                            IO.Modify.Update_Building2D_YearBuiltPredictions(table, countyId, building2DYearBuiltPredictions);
                         }
                     }
                 }

@@ -95,6 +95,12 @@ Radial ratios \(Radial Building Coverage Ratio, Radial Floor Area Ratio\) update
 
 Statistical demographic data update\.
 
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.PredictedYearBuilt'></a>
+
+`PredictedYearBuilt` 5
+
+Predicted year built data update\.
+
 <a name='DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason'></a>
 
 ## UpdateRejectionReason Enum
