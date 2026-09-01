@@ -440,8 +440,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, targetCountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                             if (yearBuiltDatas is not null)
                             {
-                                List<GIS.Classes.Building2DYearBuiltPredictions> building2DYearBuiltPredictions = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2DYearBuiltPredictions>()];
-                                IO.Modify.Update_Building2D_YearBuiltPredictions(table, targetCountyId, building2DYearBuiltPredictions);
+                                List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
+                                IO.Modify.Update_Building2D_PredictedYearBuilt(table, targetCountyId, yearBuiltDatas_GIS);
                             }
                         }
                     }
@@ -585,8 +585,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                         if (yearBuiltDatas is not null)
                         {
-                            List<GIS.Classes.Building2DYearBuiltPredictions> building2DYearBuiltPredictions = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2DYearBuiltPredictions>()];
-                            IO.Modify.Update_Building2D_YearBuiltPredictions(table, countyId, building2DYearBuiltPredictions);
+                            List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
+                            IO.Modify.Update_Building2D_PredictedYearBuilt(table, countyId, yearBuiltDatas_GIS);
                         }
                     }
                 }
