@@ -1,6 +1,7 @@
 using DiGi.Core.Classes;
 using DiGi.Core.IO.Table.Classes;
 using DiGi.Geometry.Planar.Classes;
+using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
@@ -92,10 +93,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             bool update_Database = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Database);
             bool update_Occupancy = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy);
             bool update_RadialRatios = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios);
+            bool update_Statistical = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Statistical);
 
             // The GIS conversion carries the outline of every building, so it is done only for the update types
-            // that actually measure geometry. A Database-only run reads identifiers and never touches an outline.
-            bool convert_Building2Ds = update_General || update_Occupancy || update_RadialRatios;
+            // that actually measure geometry or need domain models. A Database-only run reads identifiers and never touches an outline.
+            bool convert_Building2Ds = update_General || update_Occupancy || update_RadialRatios || update_Statistical;
 
             int commandTimeout = PostgreSQLBuildingDataUpdateOptions.CommandTimeout;
 
@@ -127,6 +129,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 if (building2DOccupancyDataPostgreSQLConverter is null)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}: no {Converter} - the stored occupancy is not read and only what Building2D itself says about occupancy is written", nameof(PostgreSQLBuildingDataUpdateTask), nameof(Building2DOccupancyDataPostgreSQLConverter));
+                }
+            }
+
+            UnitPostgreSQLConverter? unitPostgreSQLConverter = null;
+            StatisticalDataCollectionPostgreSQLConverter? statisticalDataCollectionPostgreSQLConverter = null;
+            StatisticalUnit? rootStatisticalUnit = null;
+            if (update_Statistical)
+            {
+                unitPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<UnitPostgreSQLConverter>();
+                if (unitPostgreSQLConverter is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no {Converter} - the territorial units cannot be read", nameof(PostgreSQLBuildingDataUpdateTask), nameof(UnitPostgreSQLConverter));
+                    return false;
+                }
+
+                statisticalDataCollectionPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<StatisticalDataCollectionPostgreSQLConverter>();
+                if (statisticalDataCollectionPostgreSQLConverter is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no {Converter} - the statistical data collections cannot be read", nameof(PostgreSQLBuildingDataUpdateTask), nameof(StatisticalDataCollectionPostgreSQLConverter));
+                    return false;
+                }
+
+                rootStatisticalUnit = await unitPostgreSQLConverter.GetStatisticalUnitAsync(commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (rootStatisticalUnit is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}: no statistical unit hierarchy could be loaded - statistical updates cannot proceed", nameof(PostgreSQLBuildingDataUpdateTask));
                 }
             }
 
@@ -177,6 +205,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             HashSet<int>? countyIds = PostgreSQLBuildingDataUpdateOptions.CountyIds;
             HashSet<int> processedCountyIds = [];
+            Dictionary<string, StatisticalDataCollection?> cachedStatisticalDataCollections = [];
 
             Serilog.Modify.Log(
                 "{Type}: starting over {SubdivisionCount} subdivisions, counties {CountyScope}, update types {UpdateTypes}",
@@ -214,16 +243,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = null;
                 GIS.Classes.AdministrativeSubdivision? administrativeSubdivision = null;
 
-                if (update_General)
+                if (update_General || update_Statistical)
                 {
                     try
                     {
                         administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(administrativeAreal2DReference, commandTimeout, cancellationToken);
 
-                        // The subdivision is the one member of the chain still read whole, because its occupancy and
-                        // its settlement type are not on a reference.
-                        List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync([subdivisionId], commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                        administrativeSubdivision = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeSubdivision>().FirstOrDefault();
+                        if (update_General)
+                        {
+                            // The subdivision is the one member of the chain still read whole, because its occupancy and
+                            // its settlement type are not on a reference.
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync([subdivisionId], commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                            administrativeSubdivision = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeSubdivision>().FirstOrDefault();
+                        }
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
@@ -234,6 +266,40 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         FailedSubdivisionCount++;
                         Serilog.Modify.Log(exception, "Building data subdivision administrative metadata failed - subdivision {SubdivisionId}", subdivisionId);
                         continue;
+                    }
+                }
+
+                StatisticalDataCollection? statisticalDataCollection = null;
+                if (update_Statistical && rootStatisticalUnit is not null)
+                {
+                    StatisticalUnit? statisticalUnit = Query.Match(rootStatisticalUnit, administrativeAreal2DReference);
+                    if (statisticalUnit is null && administrativeAreal2DReferencePath is not null)
+                    {
+                        AdministrativeAreal2DReference? municipalityReference = administrativeAreal2DReferencePath[AdministrativeArealType.Municipality];
+                        if (municipalityReference is not null)
+                        {
+                            statisticalUnit = Query.Match(rootStatisticalUnit, municipalityReference);
+                        }
+                    }
+
+                    if (statisticalUnit?.Code is string statisticalUnitCode && !string.IsNullOrWhiteSpace(statisticalUnitCode))
+                    {
+                        if (!cachedStatisticalDataCollections.TryGetValue(statisticalUnitCode, out statisticalDataCollection))
+                        {
+                            try
+                            {
+                                statisticalDataCollection = await statisticalDataCollectionPostgreSQLConverter!.GetStatisticalDataCollectionByIdAsync(statisticalUnitCode, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                                cachedStatisticalDataCollections[statisticalUnitCode] = statisticalDataCollection;
+                            }
+                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                            {
+                                throw;
+                            }
+                            catch (Exception exception)
+                            {
+                                Serilog.Modify.Log(exception, "Building data statistical data collection retrieval failed - unit code {Code}", statisticalUnitCode);
+                            }
+                        }
                     }
                 }
 
@@ -345,6 +411,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
 
                                 IO.Modify.Update_RadialRatios(table, radiuses, targetCountyId, building2Ds_GIS, building2Ds_Neighbour_GIS);
+                            }
+                        }
+
+                        if (update_Statistical && statisticalDataCollection is not null)
+                        {
+                            StatisticalYearlyDoubleData? statisticalYearlyDoubleData = Query.Population(statisticalDataCollection);
+                            if (statisticalYearlyDoubleData is not null)
+                            {
+                                IO.Modify.Update_Building2D_Population(table, targetCountyId, building2Ds_GIS, statisticalYearlyDoubleData, PostgreSQLBuildingDataUpdateOptions.Years);
                             }
                         }
                     }

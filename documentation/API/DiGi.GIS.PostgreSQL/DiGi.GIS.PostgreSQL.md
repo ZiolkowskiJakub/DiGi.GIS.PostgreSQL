@@ -1861,6 +1861,27 @@ The rows to derive faces from\.
 [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
 The face of each row that has one, keyed by row identifier\. Empty when nothing could be derived\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.Population(thisDiGi.GIS.Classes.StatisticalDataCollection)'></a>
+
+## Query\.Population\(this StatisticalDataCollection\) Method
+
+Retrieves the demographic population yearly data series from the statistical data collection, scaling BDL values to individual counts if applicable\.
+
+```csharp
+public static DiGi.GIS.Classes.StatisticalYearlyDoubleData? Population(this DiGi.GIS.Classes.StatisticalDataCollection? statisticalDataCollection);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.Population(thisDiGi.GIS.Classes.StatisticalDataCollection).statisticalDataCollection'></a>
+
+`statisticalDataCollection` [DiGi\.GIS\.Classes\.StatisticalDataCollection](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticaldatacollection 'DiGi\.GIS\.Classes\.StatisticalDataCollection')
+
+The statistical data collection containing demographic information\.
+
+#### Returns
+[DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalyearlydoubledata 'DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData')  
+A [DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalyearlydoubledata 'DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData') containing normalized yearly population counts, or null if no population series is found\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int)'></a>
 
 ## Query\.RandomSeed\(int, int\) Method
