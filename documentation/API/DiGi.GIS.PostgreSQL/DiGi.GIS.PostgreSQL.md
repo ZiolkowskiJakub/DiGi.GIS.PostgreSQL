@@ -1575,6 +1575,37 @@ The distance a point may lie outside a face and still be counted as within it\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')  
 The identifier of the face containing each point, null at the position of every point that lies in none, or null when either argument is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.InScopeSubdivisionIds(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.HashSet_int__)'></a>
+
+## Query\.InScopeSubdivisionIds\(IEnumerable\<AdministrativeAreal2DReference\>, IReadOnlyDictionary\<int,HashSet\<int\>\>\) Method
+
+Computes, for every county polygon part, the set of subdivision identifiers the subdivision loop reaches under it\.
+
+The building data update walks subdivisions and reaches a building only when the building's county part sits in the sibling group of the subdivision's parent county. This is the exact set the final per-county pass must leave untouched: a building whose part does not sit in its subdivision's parent group is invisible to the loop, so only the fallback can write it.
+
+A county code is not a key - it names one row per polygon part - so the in-scope set is keyed by part identifier, and a subdivision filed under one part is in scope for every part of that part's code group. A subdivision without a parent county is out of scope everywhere.
+
+```csharp
+public static System.Collections.Generic.Dictionary<int,System.Collections.Generic.HashSet<int>> InScopeSubdivisionIds(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>? subdivisions, System.Collections.Generic.IReadOnlyDictionary<int,System.Collections.Generic.HashSet<int>>? siblingCountyGroups);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.InScopeSubdivisionIds(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.HashSet_int__).subdivisions'></a>
+
+`subdivisions` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The subdivision references, each carrying an identifier and its parent county identifier\. May be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.InScopeSubdivisionIds(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.HashSet_int__).siblingCountyGroups'></a>
+
+`siblingCountyGroups` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+Each county part mapped to every part that shares its code\. May be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null'), in which case each subdivision is in scope for its parent part only\.
+
+#### Returns
+[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
+A map from each in\-scope county part to the subdivision identifiers the subdivision loop reaches under it\. Parts with no in\-scope subdivisions are absent from the map\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.IsInScope(int,string,System.Collections.Generic.ICollection_int_,System.Collections.Generic.ICollection_string_)'></a>
 
 ## Query\.IsInScope\(int, string, ICollection\<int\>, ICollection\<string\>\) Method

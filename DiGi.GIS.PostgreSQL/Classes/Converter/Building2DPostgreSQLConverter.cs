@@ -2622,5 +2622,62 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
         }
+
+        /// <summary>
+        /// Asynchronously retrieves the buildings of one county that the subdivision loop cannot reach: those with no subdivision, and those whose subdivision is not in the named in-scope set.
+        /// <para>The in-scope set is exactly what the subdivision loop reaches under the county part, so this returns its complement - the unassigned and the cross-county border buildings the final per-county pass must write.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county polygon part used to filter the search.</param>
+        /// <param name="subdivisionIds_InScope">The subdivision identifiers the subdivision loop reaches under this county part. Buildings whose subdivision is not in this set are returned; an empty or null set returns every building that names a subdivision.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects if matches are found; otherwise, null.</returns>
+        public async Task<List<Building2D>?> GetBuilding2DsUnreachedByCountyAsync(int countyId, IEnumerable<int>? subdivisionIds_InScope, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuilding2DsUnreachedByCountyAsync(npgsqlConnection, countyId, subdivisionIds_InScope, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the buildings of one county that the subdivision loop cannot reach, over the given connection.
+        /// <para>The in-scope set is exactly what the subdivision loop reaches under the county part, so this returns its complement - the unassigned and the cross-county border buildings the final per-county pass must write.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command. This value can be null.</param>
+        /// <param name="countyId">The identifier of the county polygon part used to filter the search.</param>
+        /// <param name="subdivisionIds_InScope">The subdivision identifiers the subdivision loop reaches under this county part. Buildings whose subdivision is not in this set are returned; an empty or null set returns every building that names a subdivision.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2D"/> objects if matches are found; otherwise, null.</returns>
+        public static async Task<List<Building2D>?> GetBuilding2DsUnreachedByCountyAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<int>? subdivisionIds_InScope, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int[] subdivisionIds_Array = subdivisionIds_InScope?.ToArray() ?? [];
+
+            string commandText = $@"
+                SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = @countyId
+                  AND (subdivision_id IS NULL OR NOT (subdivision_id = ANY(@subdivisionIds_InScope)));";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionIds_InScope", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds_Array });
+
+            return await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+        }
     }
 }

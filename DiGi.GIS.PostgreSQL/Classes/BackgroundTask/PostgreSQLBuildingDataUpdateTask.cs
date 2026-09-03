@@ -15,7 +15,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that fills the building data table from Building2D and the other stored data sources.
     /// <para>The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to <see cref="PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes"/>, derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.</para>
-    /// <para>Buildings whose <c>subdivision_id</c> has not been resolved are updated in a final per-county pass, deriving their shape, occupancy, database identifier and radial ratios without subdivision-specific administrative attributes.</para>
+    /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier and radial ratios without subdivision-specific administrative attributes.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
@@ -62,6 +62,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long UnassignedSubdivisionBuildingCount { get; private set; }
 
         /// <summary>
+        /// Gets the number of buildings whose subdivision belongs to a neighbouring county that were processed during the last run.
+        /// <para>Unlike <see cref="UnassignedSubdivisionBuildingCount"/> these buildings do name a subdivision; that subdivision simply sits under another county, so the subdivision loop cannot reach them.</para>
+        /// </summary>
+        public long CrossCountySubdivisionBuildingCount { get; private set; }
+
+        /// <summary>
         /// Gets the number of building data rows written during the last run.
         /// <para>Rows rather than buildings: a building reached under more than one update type is written once, but the same building is counted again on a later run.</para>
         /// </summary>
@@ -79,6 +85,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             ProcessedSubdivisionCount = 0;
             SkippedSubdivisionCount = 0;
             UnassignedSubdivisionBuildingCount = 0;
+            CrossCountySubdivisionBuildingCount = 0;
             UpdatedRowCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
@@ -217,6 +224,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             HashSet<int>? countyIds = PostgreSQLBuildingDataUpdateOptions.CountyIds;
             HashSet<int> processedCountyIds = [];
             Dictionary<string, StatisticalDataCollection?> cachedStatisticalDataCollections = [];
+            Dictionary<int, HashSet<int>> inScopeSubdivisionIds_ByCountyId = Query.InScopeSubdivisionIds(administrativeAreal2DReferences, siblingCountyIds_ByCountyId);
 
             Serilog.Modify.Log(
                 "{Type}: starting over {SubdivisionCount} subdivisions, counties {CountyScope}, update types {UpdateTypes}",
@@ -502,7 +510,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 List<Building2D>? building2Ds_Unassigned;
                 try
                 {
-                    building2Ds_Unassigned = await building2DPostgreSQLConverter.GetBuilding2DsWithoutSubdivisionAsync(countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    inScopeSubdivisionIds_ByCountyId.TryGetValue(countyId, out HashSet<int>? inScopeSubdivisionIds);
+                    building2Ds_Unassigned = await building2DPostgreSQLConverter.GetBuilding2DsUnreachedByCountyAsync(countyId, inScopeSubdivisionIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -629,16 +638,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                UnassignedSubdivisionBuildingCount += table.RowCount;
+                UnassignedSubdivisionBuildingCount += building2Ds_Unassigned.Count(x => x.SubdivisionId is null);
+                CrossCountySubdivisionBuildingCount += building2Ds_Unassigned.Count(x => x.SubdivisionId is not null);
                 UpdatedRowCount += table.RowCount;
                 progress.Report(UpdatedRowCount);
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
                 UnassignedSubdivisionBuildingCount,
+                CrossCountySubdivisionBuildingCount,
                 UpdatedRowCount,
                 FailedSubdivisionCount,
                 SkippedSubdivisionCount);
