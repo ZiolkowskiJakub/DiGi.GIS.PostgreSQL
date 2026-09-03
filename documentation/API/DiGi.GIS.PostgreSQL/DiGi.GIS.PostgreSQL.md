@@ -303,7 +303,7 @@ Asynchronously measures what one county's building data holds against the buildi
 
 The comparison is made on references read from each side rather than by a join, because the two tables are in different databases - `building_2d` in the main one and `building_data` in the storage one.
 
-Three statements, one per side plus the unresolved subdivision count, each on its own connection and run one after another. Nothing here fans out per building or per subdivision: a coverage read that opened a connection per item is what exhausted the pool the last time this shape was written.
+The reads run sequentially on their own connections without fanning out per building or per subdivision: a coverage read that opened a connection per item is what exhausted the pool the last time this shape was written.
 
 ```csharp
 public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult?> BuildingDataCoverageResultAsync(this DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));

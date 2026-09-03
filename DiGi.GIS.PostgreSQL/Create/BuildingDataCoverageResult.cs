@@ -1,4 +1,5 @@
 using DiGi.GIS.PostgreSQL.Classes;
+using DiGi.GIS.PostgreSQL.Enums;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously measures what one county's building data holds against the buildings that county actually has.
         /// <para>The comparison is made on references read from each side rather than by a join, because the two tables are in different databases - <c>building_2d</c> in the main one and <c>building_data</c> in the storage one.</para>
-        /// <para>Three statements, one per side plus the unresolved subdivision count, each on its own connection and run one after another. Nothing here fans out per building or per subdivision: a coverage read that opened a connection per item is what exhausted the pool the last time this shape was written.</para>
+        /// <para>The reads run sequentially on their own connections without fanning out per building or per subdivision: a coverage read that opened a connection per item is what exhausted the pool the last time this shape was written.</para>
         /// </summary>
         /// <param name="buildingDataPostgreSQLConverter">The converter reading the building data side.</param>
         /// <param name="building2DPostgreSQLConverter">The converter reading the building side.</param>
@@ -66,7 +67,28 @@ namespace DiGi.GIS.PostgreSQL
 
             long unassignedSubdivisionCount = await building2DPostgreSQLConverter.GetCountWithoutSubdivisionAsync(countyId, commandTimeout, cancellationToken);
 
-            return new BuildingDataCoverageResult(countyId, references_Building2D.Count, references_BuildingData.Count, missingReferenceCount, orphanReferenceCount, unassignedSubdivisionCount);
+            AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter = new(building2DPostgreSQLConverter.ConnectionData);
+            List<AdministrativeAreal2DReference>? subdivisions_County = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivision, parentId: countyId, uniqueCode: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+            long crossCountySubdivisionCount = 0;
+            if (subdivisions_County is not null)
+            {
+                HashSet<int> inScopeSubdivisionIds = [];
+                foreach (AdministrativeAreal2DReference subdivision_County in subdivisions_County)
+                {
+                    inScopeSubdivisionIds.Add(subdivision_County.Id);
+                }
+
+                foreach (Building2DReference building2DReference in building2DReferences)
+                {
+                    if (building2DReference?.SubdivisionId is int subdivisionId && !inScopeSubdivisionIds.Contains(subdivisionId))
+                    {
+                        crossCountySubdivisionCount++;
+                    }
+                }
+            }
+
+            return new BuildingDataCoverageResult(countyId, references_Building2D.Count, references_BuildingData.Count, missingReferenceCount, orphanReferenceCount, unassignedSubdivisionCount, crossCountySubdivisionCount);
         }
     }
 }

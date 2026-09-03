@@ -8420,52 +8420,58 @@ public BuildingDataCoverageResult(DiGi.GIS.PostgreSQL.Classes.BuildingDataCovera
 
 The [BuildingDataCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult') to copy from\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long)'></a>
 
-## BuildingDataCoverageResult\(int, long, long, long, long, long\) Constructor
+## BuildingDataCoverageResult\(int, long, long, long, long, long, long\) Constructor
 
 Initializes a new instance of the [BuildingDataCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult') class\.
 
 ```csharp
-public BuildingDataCoverageResult(int countyId, long building2DCount, long buildingDataCount, long missingReferenceCount, long orphanReferenceCount, long unassignedSubdivisionCount);
+public BuildingDataCoverageResult(int countyId, long building2DCount, long buildingDataCount, long missingReferenceCount, long orphanReferenceCount, long unassignedSubdivisionCount, long crossCountySubdivisionCount=0L);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).countyId'></a>
 
 `countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The identifier of the county the coverage describes\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).building2DCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).building2DCount'></a>
 
 `building2DCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of distinct building references the county holds\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).buildingDataCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).buildingDataCount'></a>
 
 `buildingDataCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of distinct references the county's building data holds\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).missingReferenceCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).missingReferenceCount'></a>
 
 `missingReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of buildings with no building data row\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).orphanReferenceCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).orphanReferenceCount'></a>
 
 `orphanReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of building data rows whose building is no longer there\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long).unassignedSubdivisionCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).unassignedSubdivisionCount'></a>
 
 `unassignedSubdivisionCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of the county's buildings that name no subdivision\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(int,long,long,long,long,long,long).crossCountySubdivisionCount'></a>
+
+`crossCountySubdivisionCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of the county's buildings whose subdivision belongs to a different county\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.BuildingDataCoverageResult(System.Text.Json.Nodes.JsonObject)'></a>
 
@@ -8525,6 +8531,21 @@ public int CountyId { get; }
 
 #### Property Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.CrossCountySubdivisionCount'></a>
+
+## BuildingDataCoverageResult\.CrossCountySubdivisionCount Property
+
+Gets the number of the county's buildings whose subdivision belongs to a different county\.
+
+The building data update walks subdivisions by their parent county, so a building whose subdivision is filed under another county part is skipped by the subdivision loop and reached only by the fallback pass.
+
+```csharp
+public long CrossCountySubdivisionCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult.MissingReferenceCount'></a>
 

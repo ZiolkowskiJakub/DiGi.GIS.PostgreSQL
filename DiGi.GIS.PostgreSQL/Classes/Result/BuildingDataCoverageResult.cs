@@ -30,6 +30,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         [JsonInclude, JsonPropertyName(nameof(UnassignedSubdivisionCount))]
         private readonly long unassignedSubdivisionCount;
 
+        [JsonInclude, JsonPropertyName(nameof(CrossCountySubdivisionCount))]
+        private readonly long crossCountySubdivisionCount;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BuildingDataCoverageResult"/> class.
         /// </summary>
@@ -39,7 +42,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="missingReferenceCount">The number of buildings with no building data row.</param>
         /// <param name="orphanReferenceCount">The number of building data rows whose building is no longer there.</param>
         /// <param name="unassignedSubdivisionCount">The number of the county's buildings that name no subdivision.</param>
-        public BuildingDataCoverageResult(int countyId, long building2DCount, long buildingDataCount, long missingReferenceCount, long orphanReferenceCount, long unassignedSubdivisionCount)
+        /// <param name="crossCountySubdivisionCount">The number of the county's buildings whose subdivision belongs to a different county.</param>
+        public BuildingDataCoverageResult(int countyId, long building2DCount, long buildingDataCount, long missingReferenceCount, long orphanReferenceCount, long unassignedSubdivisionCount, long crossCountySubdivisionCount = 0)
         {
             this.countyId = countyId;
             this.building2DCount = building2DCount;
@@ -47,6 +51,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             this.missingReferenceCount = missingReferenceCount;
             this.orphanReferenceCount = orphanReferenceCount;
             this.unassignedSubdivisionCount = unassignedSubdivisionCount;
+            this.crossCountySubdivisionCount = crossCountySubdivisionCount;
         }
 
         /// <summary>
@@ -64,6 +69,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 missingReferenceCount = buildingDataCoverageResult.missingReferenceCount;
                 orphanReferenceCount = buildingDataCoverageResult.orphanReferenceCount;
                 unassignedSubdivisionCount = buildingDataCoverageResult.unassignedSubdivisionCount;
+                crossCountySubdivisionCount = buildingDataCoverageResult.crossCountySubdivisionCount;
             }
         }
 
@@ -115,5 +121,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonIgnore]
         public long UnassignedSubdivisionCount => unassignedSubdivisionCount;
+
+        /// <summary>
+        /// Gets the number of the county's buildings whose subdivision belongs to a different county.
+        /// <para>The building data update walks subdivisions by their parent county, so a building whose subdivision is filed under another county part is skipped by the subdivision loop and reached only by the fallback pass.</para>
+        /// </summary>
+        [JsonIgnore]
+        public long CrossCountySubdivisionCount => crossCountySubdivisionCount;
     }
 }
