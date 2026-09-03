@@ -196,35 +196,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             List<AdministrativeAreal2DReference>? countyReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.County, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
-            Dictionary<string, HashSet<int>> siblingCountyIds_ByCode = [];
-            Dictionary<int, HashSet<int>> siblingCountyIds_ByCountyId = [];
-
-            if (countyReferences is not null)
-            {
-                foreach (AdministrativeAreal2DReference countyReference in countyReferences)
-                {
-                    if (countyReference?.Code is string code && !string.IsNullOrWhiteSpace(code))
-                    {
-                        if (!siblingCountyIds_ByCode.TryGetValue(code, out HashSet<int>? siblingIds))
-                        {
-                            siblingIds = [];
-                            siblingCountyIds_ByCode[code] = siblingIds;
-                        }
-
-                        siblingIds.Add(countyReference.Id);
-                        siblingCountyIds_ByCountyId[countyReference.Id] = siblingIds;
-                    }
-                    else if (countyReference is not null)
-                    {
-                        siblingCountyIds_ByCountyId[countyReference.Id] = [countyReference.Id];
-                    }
-                }
-            }
+            Dictionary<int, HashSet<int>> siblingCountyGroups = countyReferences.SiblingCountyGroups();
 
             HashSet<int>? countyIds = PostgreSQLBuildingDataUpdateOptions.CountyIds;
             HashSet<int> processedCountyIds = [];
             Dictionary<string, StatisticalDataCollection?> cachedStatisticalDataCollections = [];
-            Dictionary<int, HashSet<int>> inScopeSubdivisionIds_ByCountyId = Query.InScopeSubdivisionIds(administrativeAreal2DReferences, siblingCountyIds_ByCountyId);
+            Dictionary<int, HashSet<int>> inScopeSubdivisionIds_ByCountyId = Query.InScopeSubdivisionIds(administrativeAreal2DReferences, siblingCountyGroups);
 
             Serilog.Modify.Log(
                 "{Type}: starting over {SubdivisionCount} subdivisions, counties {CountyScope}, update types {UpdateTypes}",
@@ -244,7 +221,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                if (!siblingCountyIds_ByCountyId.TryGetValue(subdivisionCountyId, out HashSet<int>? siblingCountyIds) || siblingCountyIds is null || siblingCountyIds.Count == 0)
+                if (!siblingCountyGroups.TryGetValue(subdivisionCountyId, out HashSet<int>? siblingCountyIds) || siblingCountyIds is null || siblingCountyIds.Count == 0)
                 {
                     siblingCountyIds = [subdivisionCountyId];
                 }
