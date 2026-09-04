@@ -15,7 +15,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that fills the building data table from Building2D and the other stored data sources.
     /// <para>The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to <see cref="PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes"/>, derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.</para>
-    /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier and radial ratios without subdivision-specific administrative attributes.</para>
+    /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through <c>administrative_areal_2d</c>; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
@@ -268,15 +268,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 StatisticalDataCollection? statisticalDataCollection = null;
                 if (update_Statistical && rootStatisticalUnit is not null)
                 {
-                    StatisticalUnit? statisticalUnit = Query.Match(rootStatisticalUnit, administrativeAreal2DReference);
-                    if (statisticalUnit is null && administrativeAreal2DReferencePath is not null)
-                    {
-                        AdministrativeAreal2DReference? municipalityReference = administrativeAreal2DReferencePath[AdministrativeArealType.Municipality];
-                        if (municipalityReference is not null)
-                        {
-                            statisticalUnit = Query.Match(rootStatisticalUnit, municipalityReference);
-                        }
-                    }
+                    StatisticalUnit? statisticalUnit = Query.Match(rootStatisticalUnit, administrativeAreal2DReference, administrativeAreal2DReferencePath);
 
                     if (statisticalUnit?.Code is string statisticalUnitCode && !string.IsNullOrWhiteSpace(statisticalUnitCode))
                     {
@@ -562,6 +554,119 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
 
                             IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2Ds_Unassigned_GIS, building2Ds_Neighbour_GIS);
+                        }
+                    }
+
+                    if (update_Statistical && rootStatisticalUnit is not null)
+                    {
+                        // These buildings either name no subdivision at all or name one the subdivision loop could
+                        // not reach (a cross-county one), so no loop variable carries their statistical unit: each
+                        // group is resolved through the building's own subdivision, exactly as the loop would have.
+                        Dictionary<int, List<Building2D>> building2Ds_BySubdivisionId = [];
+                        List<Building2D> building2Ds_WithoutSubdivision = [];
+
+                        foreach (Building2D building2D_Temp in building2Ds_Unassigned)
+                        {
+                            if (building2D_Temp.SubdivisionId is int subdivisionId_Temp)
+                            {
+                                if (!building2Ds_BySubdivisionId.TryGetValue(subdivisionId_Temp, out List<Building2D>? building2Ds_Group))
+                                {
+                                    building2Ds_Group = [];
+                                    building2Ds_BySubdivisionId[subdivisionId_Temp] = building2Ds_Group;
+                                }
+
+                                building2Ds_Group.Add(building2D_Temp);
+                            }
+                            else
+                            {
+                                building2Ds_WithoutSubdivision.Add(building2D_Temp);
+                            }
+                        }
+
+                        int buildingCount_NoPopulation = building2Ds_WithoutSubdivision.Count;
+
+                        if (building2Ds_BySubdivisionId.Count > 0)
+                        {
+                            List<int> subdivisionIds_CrossCounty = [.. building2Ds_BySubdivisionId.Keys];
+
+                            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Subdivision = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(subdivisionIds_CrossCounty, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                            List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = administrativeAreal2DReferences_Subdivision is null || administrativeAreal2DReferences_Subdivision.Count == 0 ? null : await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsAsync(administrativeAreal2DReferences_Subdivision, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+                            Dictionary<int, AdministrativeAreal2DReference> administrativeAreal2DReferences_BySubdivisionId = [];
+                            if (administrativeAreal2DReferences_Subdivision is not null)
+                            {
+                                foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Subdivision in administrativeAreal2DReferences_Subdivision)
+                                {
+                                    administrativeAreal2DReferences_BySubdivisionId[administrativeAreal2DReference_Subdivision.Id] = administrativeAreal2DReference_Subdivision;
+                                }
+                            }
+
+                            Dictionary<int, AdministrativeAreal2DReferencePath> administrativeAreal2DReferencePaths_BySubdivisionId = [];
+                            if (administrativeAreal2DReferencePaths is not null)
+                            {
+                                foreach (AdministrativeAreal2DReferencePath administrativeAreal2DReferencePath_Temp in administrativeAreal2DReferencePaths)
+                                {
+                                    List<AdministrativeAreal2DReference> administrativeAreal2DReferences_Path = administrativeAreal2DReferencePath_Temp.AdministrativeAreal2DReferences;
+                                    if (administrativeAreal2DReferences_Path.Count > 0)
+                                    {
+                                        administrativeAreal2DReferencePaths_BySubdivisionId[administrativeAreal2DReferences_Path[^1].Id] = administrativeAreal2DReferencePath_Temp;
+                                    }
+                                }
+                            }
+
+                            foreach (KeyValuePair<int, List<Building2D>> building2Ds_Group_Entry in building2Ds_BySubdivisionId)
+                            {
+                                List<Building2D> building2Ds_Group = building2Ds_Group_Entry.Value;
+
+                                if (!administrativeAreal2DReferences_BySubdivisionId.TryGetValue(building2Ds_Group_Entry.Key, out AdministrativeAreal2DReference? administrativeAreal2DReference_Subdivision))
+                                {
+                                    buildingCount_NoPopulation += building2Ds_Group.Count;
+                                    continue;
+                                }
+
+                                administrativeAreal2DReferencePaths_BySubdivisionId.TryGetValue(building2Ds_Group_Entry.Key, out AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath_Group);
+
+                                StatisticalUnit? statisticalUnit = Query.Match(rootStatisticalUnit, administrativeAreal2DReference_Subdivision, administrativeAreal2DReferencePath_Group);
+                                if (statisticalUnit?.Code is not string statisticalUnitCode || string.IsNullOrWhiteSpace(statisticalUnitCode))
+                                {
+                                    buildingCount_NoPopulation += building2Ds_Group.Count;
+                                    continue;
+                                }
+
+                                if (!cachedStatisticalDataCollections.TryGetValue(statisticalUnitCode, out StatisticalDataCollection? statisticalDataCollection))
+                                {
+                                    try
+                                    {
+                                        statisticalDataCollection = await statisticalDataCollectionPostgreSQLConverter!.GetStatisticalDataCollectionByIdAsync(statisticalUnitCode, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                                        cachedStatisticalDataCollections[statisticalUnitCode] = statisticalDataCollection;
+                                    }
+                                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                                    {
+                                        throw;
+                                    }
+                                    catch (Exception exception)
+                                    {
+                                        Serilog.Modify.Log(exception, "Building data statistical data collection retrieval failed - unit code {Code}", statisticalUnitCode);
+                                    }
+                                }
+
+                                StatisticalYearlyDoubleData? statisticalYearlyDoubleData = Query.Population(statisticalDataCollection);
+                                if (statisticalYearlyDoubleData is null)
+                                {
+                                    buildingCount_NoPopulation += building2Ds_Group.Count;
+                                    continue;
+                                }
+
+                                HashSet<string> references_Group = [.. building2Ds_Group.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+                                List<GIS.Classes.Building2D> building2Ds_Group_GIS = [.. building2Ds_Unassigned_GIS.Where(x => x.Reference is string reference_Group && references_Group.Contains(reference_Group))];
+
+                                IO.Modify.Update_Building2D_Population(table, countyId, building2Ds_Group_GIS, statisticalYearlyDoubleData, PostgreSQLBuildingDataUpdateOptions.Years);
+                            }
+                        }
+
+                        if (buildingCount_NoPopulation > 0)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data population columns left unwritten - county {CountyId}, {BuildingCount} unassigned buildings have no subdivision, no resolvable statistical unit or no population series", countyId, buildingCount_NoPopulation);
                         }
                     }
 

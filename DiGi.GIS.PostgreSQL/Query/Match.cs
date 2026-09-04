@@ -43,6 +43,30 @@ namespace DiGi.GIS.PostgreSQL
         }
 
         /// <summary>
+        /// Finds the <see cref="StatisticalUnit"/> matching the subdivision reference within the hierarchy, falling back to the subdivision's parent municipality reference from the path when the subdivision itself does not match.
+        /// </summary>
+        /// <param name="rootStatisticalUnit">The root statistical unit hierarchy.</param>
+        /// <param name="administrativeAreal2DReference">The subdivision reference to match.</param>
+        /// <param name="administrativeAreal2DReferencePath">The subdivision's territorial ancestor chain, consulted for the municipality fallback.</param>
+        /// <returns>The matching <see cref="StatisticalUnit"/> if found; otherwise, null.</returns>
+        public static StatisticalUnit? Match(this StatisticalUnit? rootStatisticalUnit, AdministrativeAreal2DReference? administrativeAreal2DReference, AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath)
+        {
+            StatisticalUnit? statisticalUnit = Match(rootStatisticalUnit, administrativeAreal2DReference);
+            if (statisticalUnit is not null || administrativeAreal2DReferencePath is null)
+            {
+                return statisticalUnit;
+            }
+
+            AdministrativeAreal2DReference? municipalityReference = administrativeAreal2DReferencePath[Enums.AdministrativeArealType.Municipality];
+            if (municipalityReference is null)
+            {
+                return null;
+            }
+
+            return Match(rootStatisticalUnit, municipalityReference);
+        }
+
+        /// <summary>
         /// Finds the <see cref="StatisticalUnit"/> matching the specified GIS Core <see cref="GIS.Classes.AdministrativeAreal2D"/> within the provided root statistical unit hierarchy.
         /// </summary>
         /// <param name="rootStatisticalUnit">The root statistical unit hierarchy.</param>
