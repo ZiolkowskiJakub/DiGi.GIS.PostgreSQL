@@ -14774,7 +14774,7 @@ The run is driven by subdivisions: for each one it reads that subdivision's buil
 
 Buildings the subdivision loop cannot reach - those without a `subdivision_id`, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through `administrative_areal_2d`; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.
 
-A subdivision that fails is logged and stepped over rather than ending the run, so [DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask.issucceeded 'DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded') alone does not say a run did everything it set out to do. [FailedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.FailedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.FailedSubdivisionCount') and [SkippedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount') are what tell those apart.
+A subdivision that fails is logged and stepped over rather than ending the run, so [DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask.issucceeded 'DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded') alone does not say a run did everything it set out to do. [FailedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.FailedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.FailedSubdivisionCount') and [SkippedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount') are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount') counts those, and the run is reported as not succeeded while it is above zero.
 
 ```csharp
 public class PostgreSQLBuildingDataUpdateTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
@@ -14901,6 +14901,21 @@ public long UnassignedSubdivisionBuildingCount { get; private set; }
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount'></a>
+
+## PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount Property
+
+Gets the number of selected update types whose prerequisite was missing during the last run, so the type wrote nothing at all\.
+
+For instance [Statistical](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.Statistical 'DiGi\.GIS\.PostgreSQL\.Enums\.BuildingDataUpdateType\.Statistical') when no statistical unit hierarchy could be loaded: both passes then skip the population columns instead of writing them. A warning-level gap that still leaves a type writing something - a missing occupancy converter, say, which only drops the stored occupancy while the Building2D-derived columns are still written - is not counted. Counted once per run rather than once per subdivision, and unlike [SkippedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount') it does make the run incomplete - a run that returned a selected update type unwritten is not a run that succeeded.
+
+```csharp
+public long UnfulfilledUpdateTypeCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UpdatedRowCount'></a>
 
 ## PostgreSQLBuildingDataUpdateTask\.UpdatedRowCount Property
@@ -14942,7 +14957,7 @@ A cancellation token that can be used to cancel the operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. Returns true when the run could be attempted and every subdivision in scope was updated without error; otherwise, false\.
+A task representing the asynchronous operation\. Returns true when the run could be attempted, every subdivision in scope was updated without error and every selected update type was written; otherwise, false \- including when a selected update type was counted against [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount')\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask'></a>
 

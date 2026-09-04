@@ -2,6 +2,7 @@ using DiGi.Core.Classes;
 using DiGi.Core.IO.Table.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
+using DiGi.GIS.PostgreSQL.Constants;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
@@ -16,7 +17,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// Represents a background task that fills the building data table from Building2D and the other stored data sources.
     /// <para>The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to <see cref="PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes"/>, derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.</para>
     /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through <c>administrative_areal_2d</c>; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.</para>
-    /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart.</para>
+    /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; <see cref="UnfulfilledUpdateTypeCount"/> counts those, and the run is reported as not succeeded while it is above zero.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -74,11 +75,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long UpdatedRowCount { get; private set; }
 
         /// <summary>
+        /// Gets the number of selected update types whose prerequisite was missing during the last run, so the type wrote nothing at all.
+        /// <para>For instance <see cref="BuildingDataUpdateType.Statistical"/> when no statistical unit hierarchy could be loaded: both passes then skip the population columns instead of writing them. A warning-level gap that still leaves a type writing something - a missing occupancy converter, say, which only drops the stored occupancy while the Building2D-derived columns are still written - is not counted. Counted once per run rather than once per subdivision, and unlike <see cref="SkippedSubdivisionCount"/> it does make the run incomplete - a run that returned a selected update type unwritten is not a run that succeeded.</para>
+        /// </summary>
+        public long UnfulfilledUpdateTypeCount { get; private set; }
+
+        /// <summary>
         /// Executes the background task to update building data from AdministrativeAreal2D and Building2D sources.
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted and every subdivision in scope was updated without error; otherwise, false.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error and every selected update type was written; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/>.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             FailedSubdivisionCount = 0;
@@ -87,6 +94,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             UnassignedSubdivisionBuildingCount = 0;
             CrossCountySubdivisionBuildingCount = 0;
             UpdatedRowCount = 0;
+            UnfulfilledUpdateTypeCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
 
@@ -172,7 +180,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 rootStatisticalUnit = await unitPostgreSQLConverter.GetStatisticalUnitAsync(commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                 if (rootStatisticalUnit is null)
                 {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}: no statistical unit hierarchy could be loaded - statistical updates cannot proceed", nameof(PostgreSQLBuildingDataUpdateTask));
+                    // The hierarchy is what every population write resolves through, so without it the statistical
+                    // updates would be dropped in silence and the run would still report success. The other update
+                    // types keep running; the missing one is counted and the result says the run was incomplete.
+                    UnfulfilledUpdateTypeCount++;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: no statistical unit hierarchy could be loaded - the statistical updates write nothing; populate the {UnitTable} and {StatisticalDataTable} tables and run again", nameof(PostgreSQLBuildingDataUpdateTask), TableName.Unit, TableName.StatisticalDataCollection);
                 }
             }
 
@@ -727,16 +739,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
                 UnassignedSubdivisionBuildingCount,
                 CrossCountySubdivisionBuildingCount,
                 UpdatedRowCount,
                 FailedSubdivisionCount,
-                SkippedSubdivisionCount);
+                SkippedSubdivisionCount,
+                UnfulfilledUpdateTypeCount);
 
-            return FailedSubdivisionCount == 0;
+            return FailedSubdivisionCount == 0 && UnfulfilledUpdateTypeCount == 0;
         }
     }
 }
