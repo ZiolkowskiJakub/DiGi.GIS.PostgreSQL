@@ -735,6 +735,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a <see cref="Building2D"/> located at or near the specified 2D point within a given tolerance.
+        /// <para>The subdivisions covering the point are tried first, then every county polygon part the point can be filed under - not only the part whose polygon covers it. A county whose territory is disconnected is stored as one row per part and its buildings can sit under a sibling part, so resolving the covering part alone answers nothing at all in those counties.</para>
         /// </summary>
         /// <param name="point2D">The <see cref="Point2D"/> coordinate to search for. This value can be null.</param>
         /// <param name="tolerance">The <see cref="double"/> distance tolerance used to determine if a building is associated with the given point. Defaults to <see cref="Core.Constants.Tolerance.MacroDistance"/>.</param>
@@ -759,32 +760,43 @@ namespace DiGi.GIS.PostgreSQL.Classes
             BoundingBox2D boundingBox2D = new(point2D, point2D);
 
             // 1. First attempt: search within matching subdivisions
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivision, tolerance, cancellationToken: cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivision, tolerance, commandTimeout, cancellationToken);
 
-            Building2D? building2D = await FindBuilding2DAsync(administrativeAreal2Ds);
+            Building2D? building2D = await FindBuilding2DBySubdivisionsAsync(administrativeAreal2Ds);
             if (building2D is not null)
             {
                 return building2D;
             }
 
-            // 2. Fallback attempt: search within matching county partitions if no subdivision matched or contained the building
-            administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.County, tolerance, cancellationToken: cancellationToken);
+            // 2. Fallback attempt: read every county partition the point can be filed under. Not the part
+            // whose polygon covers the point - a county whose territory is disconnected is stored as one row
+            // per polygon part, and the buildings can sit under a sibling part, in which case the covering
+            // part reads back as no building at all. See
+            // https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+            HashSet<int>? countyIds = await AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, commandTimeout, cancellationToken);
 
-            return await FindBuilding2DAsync(administrativeAreal2Ds);
+            if (countyIds is null || countyIds.Count == 0)
+            {
+                return null;
+            }
 
-            async Task<Building2D?> FindBuilding2DAsync(List<AdministrativeAreal2D>? administrativeAreal2Ds_Temp)
+            foreach (int countyId in countyIds.OrderBy(x => x))
+            {
+                building2D = await FindBuilding2DAsync(countyId, null);
+                if (building2D is not null)
+                {
+                    return building2D;
+                }
+            }
+
+            return null;
+
+            async Task<Building2D?> FindBuilding2DBySubdivisionsAsync(List<AdministrativeAreal2D>? administrativeAreal2Ds_Temp)
             {
                 if (administrativeAreal2Ds_Temp is null || administrativeAreal2Ds_Temp.Count == 0)
                 {
                     return null;
                 }
-
-                // Represent the point as a tolerance-sized search box so the GiST index on
-                // box(point(min_x, min_y), point(max_x, max_y)) can serve the '&&' overlap operator.
-                double searchMinX = point2D.X - tolerance;
-                double searchMinY = point2D.Y - tolerance;
-                double searchMaxX = point2D.X + tolerance;
-                double searchMaxY = point2D.Y + tolerance;
 
                 foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds_Temp)
                 {
@@ -793,11 +805,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
-                    int? countyId = administrativeAreal2D.AdministrativeArealType == AdministrativeArealType.County
+                    int? countyId_Parent = administrativeAreal2D.AdministrativeArealType == AdministrativeArealType.County
                         ? administrativeAreal2D.Id
                         : administrativeAreal2D.CountyId;
 
-                    if (countyId is null)
+                    if (countyId_Parent is null)
                     {
                         continue;
                     }
@@ -806,38 +818,56 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         ? administrativeAreal2D.Id
                         : null;
 
-                    string commandText = $@"
-                        SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
-                        FROM {Constants.TableName.Building2D}
-                        WHERE county_id = @countyId
-                            {(subdivisionId.HasValue ? "AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)" : "")}
-                            AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
-                        ORDER BY id ASC;";
-
-                    await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-                    npgsqlCommand.CommandTimeout = commandTimeout;
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
-                    if (subdivisionId.HasValue)
+                    Building2D? building2D_Temp = await FindBuilding2DAsync(countyId_Parent.Value, subdivisionId);
+                    if (building2D_Temp is not null)
                     {
-                        npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = subdivisionId.Value });
+                        return building2D_Temp;
                     }
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
-                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+                }
 
-                    List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
-                    if (results is null || results.Count == 0)
-                    {
-                        continue;
-                    }
+                return null;
+            }
 
-                    foreach (Building2D building2D_Candidate in results)
+            async Task<Building2D?> FindBuilding2DAsync(int countyId, int? subdivisionId)
+            {
+                // Represent the point as a tolerance-sized search box so the GiST index on
+                // box(point(min_x, min_y), point(max_x, max_y)) can serve the '&&' overlap operator.
+                double searchMinX = point2D.X - tolerance;
+                double searchMinY = point2D.Y - tolerance;
+                double searchMaxX = point2D.X + tolerance;
+                double searchMaxY = point2D.Y + tolerance;
+
+                string commandText = $@"
+                    SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
+                    FROM {Constants.TableName.Building2D}
+                    WHERE county_id = @countyId
+                        {(subdivisionId.HasValue ? "AND (subdivision_id = @subdivisionId OR subdivision_id IS NULL)" : "")}
+                        AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
+                    ORDER BY id ASC;";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId });
+                if (subdivisionId.HasValue)
+                {
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivisionId", NpgsqlDbType.Integer) { Value = subdivisionId.Value });
+                }
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+
+                List<Building2D>? results = await ReadAsync_Building2D(npgsqlCommand, cancellationToken);
+                if (results is null || results.Count == 0)
+                {
+                    return null;
+                }
+
+                foreach (Building2D building2D_Candidate in results)
+                {
+                    if (building2D_Candidate.ToDiGi()?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, tolerance))
                     {
-                        if (building2D_Candidate.ToDiGi()?.PolygonalFace2D is PolygonalFace2D polygonalFace2D && polygonalFace2D.InRange(point2D, tolerance))
-                        {
-                            return building2D_Candidate;
-                        }
+                        return building2D_Candidate;
                     }
                 }
 
@@ -1438,6 +1468,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a list of <see cref="Building2D"/> objects located within the specified bounding box, applying a distance tolerance.
+        /// <para>The partitions to read come from <see cref="AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken)"/>, so every polygon part of a county reaching the box is read, whichever part its buildings happen to be filed under. Nothing is filtered by subdivision: the bounding box alone decides what comes back.</para>
         /// </summary>
         /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search for buildings; may be null.</param>
         /// <param name="tolerance">The double value representing the distance tolerance used during the spatial query.</param>
@@ -1459,10 +1490,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            // 1. Get administrative areas to identify which partitions (counties) to hit
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, AdministrativeArealType.Subdivision, tolerance, cancellationToken: cancellationToken);
+            // 1. Get the county partitions to read. Not the county_id the subdivisions in the box carry:
+            // that column names one polygon part of a multi-part county, and the buildings can be filed
+            // under a sibling part, in which case pruning to it answers nothing at all - silently, because
+            // an empty result is indistinguishable from an area holding no buildings. See
+            // https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+            HashSet<int>? countyIds = await AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, commandTimeout, cancellationToken);
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (countyIds is null || countyIds.Count == 0)
             {
                 return [];
             }
@@ -1478,21 +1513,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // 3. Optimized Query:
             // - county_id = ANY(@county_ids) triggers Partition Pruning
             // - box && box triggers GiST index scan on those partitions
+            // There is deliberately no subdivision_id condition. It assisted no index - the GiST box index
+            // is what drives this query - and it dropped every building whose stored subdivision_id named a
+            // subdivision the box had not returned.
             const string commandText = $@"
                 SELECT id, county_id, reference, code, min_x, min_y, max_x, max_y, subdivision_id, object, created_at
                 FROM {Constants.TableName.Building2D}
                 WHERE county_id = ANY(@county_ids)
-                    AND (subdivision_id = ANY(@subdivision_ids) OR subdivision_id IS NULL)
                     AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@sMinX, @sMinY), point(@sMaxX, @sMaxY));";
-
-            int[] countyIds = [.. administrativeAreal2Ds.Select(a => a.CountyId).OfType<int>().Distinct()];
-            int[] subdivisionIds = [.. administrativeAreal2Ds.Select(a => a.Id).Distinct()];
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
 
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds });
-            npgsqlCommand.Parameters.Add(new NpgsqlParameter("subdivision_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = subdivisionIds });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds.ToArray() });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinX", NpgsqlDbType.Double) { Value = searchMinX });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinY", NpgsqlDbType.Double) { Value = searchMinY });

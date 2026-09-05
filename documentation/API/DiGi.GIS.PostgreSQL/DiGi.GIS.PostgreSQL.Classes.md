@@ -2400,6 +2400,98 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total number of records, or \-1 if the connection is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(BoundingBox2D, double, int, CancellationToken\) Method
+
+Asynchronously retrieves the identifiers of every county polygon part a spatial query over the given bounding box has to read, including parts lying outside the box\.
+
+See [GetCountyIdsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, int, System\.Threading\.CancellationToken\)') for why the parts overlapping the box are not the whole answer.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the spatial area to search; may be null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The double value the bounding box is expanded by on every side\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of every county part to read, an empty set when no county overlaps the box, or null when the bounding box is null or the connection could not be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken\) Method
+
+Asynchronously retrieves the identifiers of every county polygon part a spatial query over the given bounding box has to read, including parts lying outside the box\.
+
+A county code is not a key - a county whose territory is disconnected is stored as one row per polygon part - and a building is filed under one of those parts, not necessarily the part whose polygon covers it. Deriving the partition list from the parts overlapping the box alone therefore leaves out the partition the buildings are actually in, and the read comes back empty with no error at all. The result is widened to every part sharing a code with an overlapping part, which is the [SiblingCountyGroups\(this IEnumerable&lt;AdministrativeAreal2DReference&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.SiblingCountyGroups(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_) 'DiGi\.GIS\.PostgreSQL\.Query\.SiblingCountyGroups\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\>\)') rule expressed in SQL.
+
+Widening is safe: it only adds partitions to prune to, and the bounding box predicate on the rows themselves still decides what comes back. Prune by this rather than by the `county_id` carried by the subdivisions in the box - that column names one part.
+
+See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D') defining the spatial area to search; may be null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The double value the bounding box is expanded by on every side\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of every county part to read, an empty set when no county overlaps the box, or null when the connection or the bounding box is null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken)'></a>
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetEstimatedCountAsync\(bool, int, CancellationToken\) Method
@@ -4718,6 +4810,8 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously retrieves a [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') located at or near the specified 2D point within a given tolerance\.
 
+The subdivisions covering the point are tried first, then every county polygon part the point can be filed under - not only the part whose polygon covers it. A county whose territory is disconnected is stored as one row per part and its buildings can sit under a sibling part, so resolving the covering part alone answers nothing at all in those counties.
+
 ```csharp
 public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2D?> GetBuilding2DByPoint2DAsync(DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -5141,6 +5235,8 @@ A task that represents the asynchronous operation\. The task result contains a l
 ## Building2DPostgreSQLConverter\.GetBuilding2DsByBoundingBox2DAsync\(BoundingBox2D, double, int, CancellationToken\) Method
 
 Asynchronously retrieves a list of [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') objects located within the specified bounding box, applying a distance tolerance\.
+
+The partitions to read come from [GetCountyIdsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, int, System\.Threading\.CancellationToken\)'), so every polygon part of a county reaching the box is read, whichever part its buildings happen to be filed under. Nothing is filtered by subdivision: the bounding box alone decides what comes back.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2D>?> GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -14776,6 +14872,8 @@ Buildings the subdivision loop cannot reach - those without a `subdivision_id`, 
 
 A subdivision that fails is logged and stepped over rather than ending the run, so [DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask.issucceeded 'DiGi\.Core\.Classes\.BackgroundTask\.IsSucceeded') alone does not say a run did everything it set out to do. [FailedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.FailedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.FailedSubdivisionCount') and [SkippedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount') are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount') counts those, and the run is reported as not succeeded while it is above zero.
 
+The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. [RadialRatiosUnmeasuredSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount') counts the subdivisions that happened to, and also stops the run being reported as succeeded.
+
 ```csharp
 public class PostgreSQLBuildingDataUpdateTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
 ```
@@ -14873,6 +14971,23 @@ public long ProcessedSubdivisionCount { get; private set; }
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount'></a>
+
+## PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount Property
+
+Gets the number of subdivisions whose radial ratios could not be measured during the last run, so the radial columns were left as they stood\.
+
+Either no building in the subdivision carries an outline, or the read of their surroundings brought back none of the subjects themselves - and every subject is inside the area read by construction, so none of them coming back means the read is not reaching the partition they are filed under. A read that brings back some but not all of them is a different fault, per building rather than per partition, and is logged without being counted here: it understates a few ratios rather than leaving a subdivision unwritten. Counted once per subdivision, and once per county for the pass that picks up the buildings the subdivision loop cannot reach.
+
+Unlike [SkippedSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount') this does make the run incomplete. It is the partial-write counterpart of [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount'), which only catches an update type that wrote nothing at all: before this counter existed, a subdivision whose surroundings could not be read wrote every other column normally and left the radial ones untouched, so a county could be most of the way empty while the run reported success.
+
+```csharp
+public long RadialRatiosUnmeasuredSubdivisionCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.SkippedSubdivisionCount'></a>
 
 ## PostgreSQLBuildingDataUpdateTask\.SkippedSubdivisionCount Property
@@ -14957,7 +15072,7 @@ A cancellation token that can be used to cancel the operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. Returns true when the run could be attempted, every subdivision in scope was updated without error and every selected update type was written; otherwise, false \- including when a selected update type was counted against [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount')\.
+A task representing the asynchronous operation\. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false \- including when a selected update type was counted against [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount') or a subdivision against [RadialRatiosUnmeasuredSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount')\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask'></a>
 

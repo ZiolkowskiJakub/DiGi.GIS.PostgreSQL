@@ -1025,6 +1025,73 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the identifiers of every county polygon part a spatial query over the given bounding box has to read, including parts lying outside the box.
+        /// <para>A county code is not a key - a county whose territory is disconnected is stored as one row per polygon part - and a building is filed under one of those parts, not necessarily the part whose polygon covers it. Deriving the partition list from the parts overlapping the box alone therefore leaves out the partition the buildings are actually in, and the read comes back empty with no error at all. The result is widened to every part sharing a code with an overlapping part, which is the <see cref="Query.SiblingCountyGroups(IEnumerable{AdministrativeAreal2DReference})"/> rule expressed in SQL.</para>
+        /// <para>Widening is safe: it only adds partitions to prune to, and the bounding box predicate on the rows themselves still decides what comes back. Prune by this rather than by the <c>county_id</c> carried by the subdivisions in the box - that column names one part.</para>
+        /// <para>See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search; may be null.</param>
+        /// <param name="tolerance">The double value the bounding box is expanded by on every side.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of every county part to read, an empty set when no county overlaps the box, or null when the connection or the bounding box is null.</returns>
+        public static async Task<HashSet<int>?> GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection? npgsqlConnection, BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || boundingBox2D is null)
+            {
+                return null;
+            }
+
+            double searchMinX = boundingBox2D.Min.X - tolerance;
+            double searchMinY = boundingBox2D.Min.Y - tolerance;
+            double searchMaxX = boundingBox2D.Max.X + tolerance;
+            double searchMaxY = boundingBox2D.Max.Y + tolerance;
+
+            // Two index paths unioned rather than one join carrying an OR: the overlapping parts come off the
+            // GiST index on box(point(min_x, min_y), point(max_x, max_y)), their siblings off
+            // idx_administrative_areal_2d_type_code. A join reading "same id OR same code" - needed because a
+            // part carrying no code has to stay in its own answer - is what would put an OR in front of the
+            // planner, and this query runs once per spatial read.
+            string commandText = $@"
+                WITH overlapping AS (
+                    SELECT id, code
+                    FROM {TableName.AdministrativeAreal2D}
+                    WHERE type_id = @typeId
+                        AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@searchMinX, @searchMinY), point(@searchMaxX, @searchMaxY))
+                )
+                SELECT id FROM overlapping
+                UNION
+                SELECT sibling.id
+                FROM {TableName.AdministrativeAreal2D} AS sibling
+                WHERE sibling.type_id = @typeId
+                    AND sibling.code IN (SELECT code FROM overlapping WHERE code IS NOT NULL)";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinX", NpgsqlDbType.Double) { Value = searchMinX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMinY", NpgsqlDbType.Double) { Value = searchMinY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxX", NpgsqlDbType.Double) { Value = searchMaxX });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("searchMaxY", NpgsqlDbType.Double) { Value = searchMaxY });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId", NpgsqlDbType.Smallint) { Value = (short)AdministrativeArealType.County });
+
+            HashSet<int> countyIds = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (!await npgsqlDataReader.IsDBNullAsync(0, cancellationToken))
+                {
+                    countyIds.Add(npgsqlDataReader.GetInt32(0));
+                }
+            }
+
+            return countyIds;
+        }
+
+        /// <summary>
         /// Asynchronously retrieves an estimated count of the administrative areal 2D records from the database.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
@@ -2200,6 +2267,33 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await DiGi.PostgreSQL.Query.CountAsync(npgsqlConnection, TableName.AdministrativeAreal2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the identifiers of every county polygon part a spatial query over the given bounding box has to read, including parts lying outside the box.
+        /// <para>See <see cref="GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken)"/> for why the parts overlapping the box are not the whole answer.</para>
+        /// </summary>
+        /// <param name="boundingBox2D">The <see cref="BoundingBox2D"/> defining the spatial area to search; may be null.</param>
+        /// <param name="tolerance">The double value the bounding box is expanded by on every side.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of every county part to read, an empty set when no county overlaps the box, or null when the bounding box is null or the connection could not be established.</returns>
+        public async Task<HashSet<int>?> GetCountyIdsByBoundingBox2DAsync(BoundingBox2D? boundingBox2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (boundingBox2D is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountyIdsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, commandTimeout, cancellationToken);
         }
 
         /// <summary>

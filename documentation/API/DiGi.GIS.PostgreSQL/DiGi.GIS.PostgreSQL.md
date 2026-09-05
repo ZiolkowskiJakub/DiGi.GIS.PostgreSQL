@@ -1513,6 +1513,45 @@ The distance tolerance used for the containment and overlap tests\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
 The identifier of the county row the building belongs to, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it cannot be decided\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_)'></a>
+
+## Query\.CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>\) Method
+
+Reads which county row each reference belongs to, from the `building_2d` row that holds it\.
+
+A county code names one `administrative_areal_2d` row per polygon part, so a code cannot say which part an item belongs to. The 2D building already answers that - it was filed by geometry when it was imported - and reading it back keeps every table keyed by the same `(county_id, reference)` pair. Filing a whole batch under one part instead is what left sibling parts reading back empty while the upload reported success.
+
+The parts are probed in ascending order, one batched lookup each, and a reference is taken by the first part that holds it. A reference held by more than one part therefore resolves to the same one on every run.
+
+A reference no part holds is simply absent from the result: nothing states where it belongs, and the caller decides whether to drop it or resolve it some other way.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>> CountyIdsByReferencesAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter used to look the references up\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references to resolve\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The candidate county rows, normally every polygon part of one code\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The identifier of the county row holding each reference\. Empty when nothing could be resolved\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.IdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 
 ## Query\.IdColumnName\(this AdministrativeArealType\) Method
@@ -2184,6 +2223,45 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[OrtoDatasSubdivisionResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasSubdivisionResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasSubdivisionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result carries the comparison, or null when either converter is missing or either side could not be read\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int)'></a>
+
+## Query\.SubjectCount\(IEnumerable\<Building2D\>, IEnumerable\<Building2D\>, int\) Method
+
+Counts how many of the given buildings a spatial read of their own surroundings brought back\.
+
+The surroundings of a set of buildings are read over the area those buildings cover, so every one of them is inside it and a correct read returns all of them. What comes back short says which of two different things went wrong, and they are not answered by the same fix: none of them back means the read is not reaching the partition they are filed under - a county whose territory is disconnected is one row per polygon part, and pruning to the wrong part answers an empty set rather than an error. Some of them back is per building instead: `min_x` to `max_y` are nullable and the overlap test is made on them, so a building whose stored box is missing drops out of its own neighbourhood.
+
+Matched on county and reference together, because a reference is unique only within a county.
+
+See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+
+```csharp
+public static int SubjectCount(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2D>? building2Ds, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2D>? building2Ds_Neighbour, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int).building2Ds'></a>
+
+`building2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The buildings the surroundings were read for\. May be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int).building2Ds_Neighbour'></a>
+
+`building2Ds_Neighbour` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The surroundings that came back\. May be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The county part the buildings are filed under\.
+
+#### Returns
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')  
+The number of [building2Ds](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int).building2Ds 'DiGi\.GIS\.PostgreSQL\.Query\.SubjectCount\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2D\>, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2D\>, int\)\.building2Ds') present in [building2Ds\_Neighbour](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.SubjectCount(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,int).building2Ds_Neighbour 'DiGi\.GIS\.PostgreSQL\.Query\.SubjectCount\(System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2D\>, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2D\>, int\)\.building2Ds\_Neighbour')\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.TryParse(thisstring,string,System.Nullable_int_,DiGi.Core.Classes.GuidReference)'></a>
 

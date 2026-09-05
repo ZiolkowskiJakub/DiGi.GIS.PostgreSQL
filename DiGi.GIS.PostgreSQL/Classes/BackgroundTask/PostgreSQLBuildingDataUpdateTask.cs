@@ -18,6 +18,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <para>The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to <see cref="PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes"/>, derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.</para>
     /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through <c>administrative_areal_2d</c>; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; <see cref="UnfulfilledUpdateTypeCount"/> counts those, and the run is reported as not succeeded while it is above zero.</para>
+    /// <para>The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. <see cref="RadialRatiosUnmeasuredSubdivisionCount"/> counts the subdivisions that happened to, and also stops the run being reported as succeeded.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -81,11 +82,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long UnfulfilledUpdateTypeCount { get; private set; }
 
         /// <summary>
+        /// Gets the number of subdivisions whose radial ratios could not be measured during the last run, so the radial columns were left as they stood.
+        /// <para>Either no building in the subdivision carries an outline, or the read of their surroundings brought back none of the subjects themselves - and every subject is inside the area read by construction, so none of them coming back means the read is not reaching the partition they are filed under. A read that brings back some but not all of them is a different fault, per building rather than per partition, and is logged without being counted here: it understates a few ratios rather than leaving a subdivision unwritten. Counted once per subdivision, and once per county for the pass that picks up the buildings the subdivision loop cannot reach.</para>
+        /// <para>Unlike <see cref="SkippedSubdivisionCount"/> this does make the run incomplete. It is the partial-write counterpart of <see cref="UnfulfilledUpdateTypeCount"/>, which only catches an update type that wrote nothing at all: before this counter existed, a subdivision whose surroundings could not be read wrote every other column normally and left the radial ones untouched, so a county could be most of the way empty while the run reported success.</para>
+        /// </summary>
+        public long RadialRatiosUnmeasuredSubdivisionCount { get; private set; }
+
+        /// <summary>
         /// Executes the background task to update building data from AdministrativeAreal2D and Building2D sources.
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error and every selected update type was written; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/>.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/> or a subdivision against <see cref="RadialRatiosUnmeasuredSubdivisionCount"/>.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             FailedSubdivisionCount = 0;
@@ -95,6 +103,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             CrossCountySubdivisionBuildingCount = 0;
             UpdatedRowCount = 0;
             UnfulfilledUpdateTypeCount = 0;
+            RadialRatiosUnmeasuredSubdivisionCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
 
@@ -392,6 +401,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             // measuring against one would quietly gather the surroundings of the wrong place.
                             if (boundingBox2Ds.Count == 0)
                             {
+                                RadialRatiosUnmeasuredSubdivisionCount++;
                                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured - county {CountyId}, subdivision {SubdivisionId}, none of its {BuildingCount} buildings carries an outline", targetCountyId, subdivisionId, building2Ds.Count);
                             }
                             else
@@ -408,9 +418,37 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                     throw new InvalidOperationException($"The buildings surrounding subdivision {subdivisionId} of county {targetCountyId} could not be read.");
                                 }
 
-                                List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
+                                // The area read is the outlines of the subjects grown by the largest radius, so every
+                                // subject lies inside it and a correct read returns all of them back. How many do says
+                                // which of two very different things went wrong.
+                                int count_Subject = Query.SubjectCount(building2Ds, building2Ds_Neighbour, targetCountyId);
 
-                                IO.Modify.Update_RadialRatios(table, radiuses, targetCountyId, building2Ds_GIS, building2Ds_Neighbour_GIS);
+                                if (count_Subject == 0)
+                                {
+                                    // None of them. The read is not seeing the partition the subjects are filed under
+                                    // at all, so the ratios would be measured against the surroundings of a place they
+                                    // are not in - which is what left twelve multi-part counties holding zeros and
+                                    // nulls after a run that reported success:
+                                    // https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+                                    RadialRatiosUnmeasuredSubdivisionCount++;
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured - county {CountyId}, subdivision {SubdivisionId}, the surroundings came back as {NeighbourCount} buildings and none of the {BuildingCount} subjects is among them", targetCountyId, subdivisionId, building2Ds_Neighbour.Count, building2Ds.Count);
+                                }
+                                else
+                                {
+                                    // Some but not all. A partition is either read or it is not, so this is per
+                                    // building rather than per partition: min_x..max_y are nullable and the overlap
+                                    // test is made on them, so a building whose stored box is missing drops out of
+                                    // its own neighbourhood. That understates a few ratios rather than emptying a
+                                    // county, so it is reported and the rest is still written.
+                                    if (count_Subject < building2Ds.Count)
+                                    {
+                                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios understated - county {CountyId}, subdivision {SubdivisionId}, {FoundCount} of {BuildingCount} subjects came back in their own surroundings", targetCountyId, subdivisionId, count_Subject, building2Ds.Count);
+                                    }
+
+                                    List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
+
+                                    IO.Modify.Update_RadialRatios(table, radiuses, targetCountyId, building2Ds_GIS, building2Ds_Neighbour_GIS);
+                                }
                             }
                         }
 
@@ -550,6 +588,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         if (boundingBox2Ds.Count == 0)
                         {
+                            RadialRatiosUnmeasuredSubdivisionCount++;
                             Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured for unassigned buildings - county {CountyId}, none of its {BuildingCount} unassigned buildings carries an outline", countyId, building2Ds_Unassigned.Count);
                         }
                         else
@@ -563,9 +602,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 throw new InvalidOperationException($"The buildings surrounding unassigned buildings of county {countyId} could not be read.");
                             }
 
-                            List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
+                            // Same invariant as the subdivision loop, read the same way: none of the subjects back
+                            // means the partition is not being read, some of them means a stored bounding box does
+                            // not match its own geometry.
+                            int count_Subject = Query.SubjectCount(building2Ds_Unassigned, building2Ds_Neighbour, countyId);
 
-                            IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2Ds_Unassigned_GIS, building2Ds_Neighbour_GIS);
+                            if (count_Subject == 0)
+                            {
+                                RadialRatiosUnmeasuredSubdivisionCount++;
+                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured for unassigned buildings - county {CountyId}, the surroundings came back as {NeighbourCount} buildings and none of the {BuildingCount} subjects is among them", countyId, building2Ds_Neighbour.Count, building2Ds_Unassigned.Count);
+                            }
+                            else
+                            {
+                                if (count_Subject < building2Ds_Unassigned.Count)
+                                {
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios understated for unassigned buildings - county {CountyId}, {FoundCount} of {BuildingCount} subjects came back in their own surroundings", countyId, count_Subject, building2Ds_Unassigned.Count);
+                                }
+
+                                List<GIS.Classes.Building2D> building2Ds_Neighbour_GIS = [.. building2Ds_Neighbour.Select(x => x.ToDiGi()).OfType<GIS.Classes.Building2D>()];
+
+                                IO.Modify.Update_RadialRatios(table, radiuses, countyId, building2Ds_Unassigned_GIS, building2Ds_Neighbour_GIS);
+                            }
                         }
                     }
 
@@ -739,7 +796,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled, {UnmeasuredCount} subdivisions left without radial ratios",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
                 UnassignedSubdivisionBuildingCount,
@@ -747,9 +804,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 UpdatedRowCount,
                 FailedSubdivisionCount,
                 SkippedSubdivisionCount,
-                UnfulfilledUpdateTypeCount);
+                UnfulfilledUpdateTypeCount,
+                RadialRatiosUnmeasuredSubdivisionCount);
 
-            return FailedSubdivisionCount == 0 && UnfulfilledUpdateTypeCount == 0;
+            return FailedSubdivisionCount == 0 && UnfulfilledUpdateTypeCount == 0 && RadialRatiosUnmeasuredSubdivisionCount == 0;
         }
     }
 }
