@@ -1988,8 +1988,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // the same set.
             Dictionary<string, Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>> dictionary_Polygonal2D = [];
 
+            // The code a named part belongs to, cached so that a batch filed under one part costs one
+            // lookup rather than one per building.
+            Dictionary<int, string?> dictionary_CodeByCountyId = [];
+
             // County assignment runs in three tiers, in descending reliability:
-            //   1. building2D.CountyId - already names the part, nothing to infer.
+            //   1. building2D.CountyId - names a part outright, and is kept unless the code that part
+            //                            belongs to holds more than one, in which case tier 3 decides
+            //                            between them.
             //   2. building2D.Code     - names the county but not which of its parts. A code holding a
             //                            single part resolves outright; a multi-part code only narrows
             //                            the candidates and hands them to tier 3.
@@ -1999,7 +2005,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // building_2d holds ~86k rows duplicated across sibling parts: separate runs resolved the
             // same code to different parts back when that resolution had no ORDER BY. Narrowing instead
             // of choosing is what stops that recurring, and it also makes tier 3 cheaper - the candidate
-            // set is the county's own parts rather than every county overlapping the bounding box.
+            // set is the parts of one county rather than every county overlapping the bounding box.
+            //
+            // Tier 1 used to be taken on trust, and that is how a wrong answer became permanent: a caller
+            // reads the part from the building_2d row it is about to overwrite, so a row filed under the
+            // wrong part of a multi-part county rewrote itself there for as long as it was touched
+            // (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68). Checking it costs one cached lookup per distinct
+            // part named in the batch, and changes nothing for the 362 counties stored as a single part.
             foreach (Building2D building2D in building2Ds)
             {
                 if (building2D is null)
@@ -2014,6 +2026,43 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 List<AdministrativeAreal2D>? administrativeAreal2Ds_Candidate = null;
                 string? code_Candidate = null;
+
+                if (countyId is not null && countyId.HasValue)
+                {
+                    if (!dictionary_CodeByCountyId.TryGetValue(countyId.Value, out string? code_CountyId))
+                    {
+                        List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, [countyId.Value], commandTimeout, cancellationToken);
+                        code_CountyId = administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0 ? null : administrativeAreal2DReferences[0]?.Code;
+                        dictionary_CodeByCountyId[countyId.Value] = code_CountyId;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(code_CountyId))
+                    {
+                        if (!dictionary_Code.TryGetValue(code_CountyId!, out List<AdministrativeAreal2D>? administrativeAreal2Ds_CountyId) || administrativeAreal2Ds_CountyId is null)
+                        {
+                            administrativeAreal2Ds_CountyId = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(npgsqlConnection, code_CountyId!, AdministrativeArealType.County, commandTimeout, cancellationToken) ?? [];
+                            dictionary_Code[code_CountyId!] = administrativeAreal2Ds_CountyId;
+                        }
+
+                        // Only a code stored as several parts can have been filed under the wrong one.
+                        if (administrativeAreal2Ds_CountyId.Count > 1)
+                        {
+                            if (!dictionary_Polygonal2D.TryGetValue(code_CountyId!, out Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D>? polygonal2Ds_ByCountyId_Named) || polygonal2Ds_ByCountyId_Named is null)
+                            {
+                                polygonal2Ds_ByCountyId_Named = administrativeAreal2Ds_CountyId.Polygonal2DsByCountyId();
+                                dictionary_Polygonal2D[code_CountyId!] = polygonal2Ds_ByCountyId_Named;
+                            }
+
+                            // A footprint that cannot be read leaves the caller answer standing: there is
+                            // nothing better to put in its place.
+                            int? countyId_Resolved = polygonal2Ds_ByCountyId_Named.CountyId(building2D.ToDiGi()?.PolygonalFace2D?.ExternalEdge, tolerance);
+                            if (countyId_Resolved is not null && countyId_Resolved.HasValue)
+                            {
+                                countyId = countyId_Resolved;
+                            }
+                        }
+                    }
+                }
 
                 if (countyId is null || !countyId.HasValue)
                 {
@@ -2498,6 +2547,520 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetDuplicateReferencesAsync(npgsqlConnection, limit, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously counts, for every polygon part of every multi-part county, the buildings it holds whose bounding box lies outside that part.
+        /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part, and only geometry can say which of them a building belongs to. This measures how badly the stored answer disagrees with geometry, without deserializing anything: a building whose stored box does not intersect the box of the part holding it cannot be inside that part.</para>
+        /// <para>Counted rows are <b>certainly</b> misfiled, uncounted ones merely unproven - a building inside the box of a part but outside its polygon needs the polygon to settle and is not counted here. The figure is therefore a lower bound, which is what makes it safe to read as the number of rows known to be wrong before and after a repair.</para>
+        /// <para>Single-part codes are left out entirely: with one part there is nothing to be filed under by mistake. Only parts actually holding buildings are returned.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the query.</param>
+        /// <param name="code">An optional county code to restrict the measurement to. When null every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one entry per county part holding buildings, ordered by code then part identifier, an empty list when no multi-part code holds any, or null when the connection is null.</returns>
+        public static async Task<List<Building2DCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(NpgsqlConnection? npgsqlConnection, string? code = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // The parts are read first and their boxes carried into the second statement as arrays, rather
+            // than joining the two tables in one query. building_2d holds millions of rows across 406
+            // partitions, and only an explicit county_id = ANY(...) prunes it to the handful of partitions
+            // a multi-part code owns - a join against a CTE gives the planner no such promise.
+            string commandText_Part = $@"
+                SELECT id, code, min_x, min_y, max_x, max_y
+                FROM {Constants.TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                  AND code IS NOT NULL
+                  AND min_x IS NOT NULL AND min_y IS NOT NULL AND max_x IS NOT NULL AND max_y IS NOT NULL
+                  AND code IN (
+                      SELECT code
+                      FROM {Constants.TableName.AdministrativeAreal2D}
+                      WHERE type_id = @typeId AND code IS NOT NULL
+                      GROUP BY code
+                      HAVING COUNT(*) > 1)
+                  AND (@code IS NULL OR code = @code)
+                ORDER BY code ASC, id ASC;";
+
+            List<int> countyIds = [];
+            List<string> codes = [];
+            List<double> minXs = [];
+            List<double> minYs = [];
+            List<double> maxXs = [];
+            List<double> maxYs = [];
+
+            await using (NpgsqlCommand npgsqlCommand_Part = new(commandText_Part, npgsqlConnection))
+            {
+                npgsqlCommand_Part.CommandTimeout = commandTimeout;
+                npgsqlCommand_Part.Parameters.AddWithValue("typeId", (short)AdministrativeArealType.County);
+                npgsqlCommand_Part.Parameters.Add(new NpgsqlParameter("code", NpgsqlDbType.Text) { Value = string.IsNullOrWhiteSpace(code) ? DBNull.Value : code });
+
+                await using NpgsqlDataReader npgsqlDataReader_Part = await npgsqlCommand_Part.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_Part.ReadAsync(cancellationToken))
+                {
+                    countyIds.Add(npgsqlDataReader_Part.GetInt32(0));
+                    codes.Add(npgsqlDataReader_Part.GetString(1));
+                    minXs.Add(npgsqlDataReader_Part.GetDouble(2));
+                    minYs.Add(npgsqlDataReader_Part.GetDouble(3));
+                    maxXs.Add(npgsqlDataReader_Part.GetDouble(4));
+                    maxYs.Add(npgsqlDataReader_Part.GetDouble(5));
+                }
+            }
+
+            List<Building2DCountyPartMismatchResult> result = [];
+
+            if (countyIds.Count == 0)
+            {
+                return result;
+            }
+
+            Dictionary<string, List<int>> countyIds_ByCode = [];
+            for (int i = 0; i < countyIds.Count; i++)
+            {
+                if (!countyIds_ByCode.TryGetValue(codes[i], out List<int>? countyIds_Code) || countyIds_Code is null)
+                {
+                    countyIds_Code = [];
+                    countyIds_ByCode[codes[i]] = countyIds_Code;
+                }
+
+                countyIds_Code.Add(countyIds[i]);
+            }
+
+            // A row with no stored box is left uncounted rather than reported as outside: box() is strict,
+            // so a null ordinate makes the comparison null and FILTER drops the row. Nothing is claimed
+            // about a building whose extent was never written.
+            string commandText_Count = $@"
+                WITH part AS (
+                    SELECT *
+                    FROM unnest(@countyIds, @minXs, @minYs, @maxXs, @maxYs) AS t(county_id, min_x, min_y, max_x, max_y)
+                )
+                SELECT b.county_id,
+                       COUNT(*) AS count,
+                       COUNT(*) FILTER (
+                           WHERE NOT (box(point(b.min_x, b.min_y), point(b.max_x, b.max_y))
+                                   && box(point(p.min_x, p.min_y), point(p.max_x, p.max_y)))) AS count_outside
+                FROM {Constants.TableName.Building2D} b
+                JOIN part p ON p.county_id = b.county_id
+                WHERE b.county_id = ANY(@countyIds)
+                GROUP BY b.county_id;";
+
+            Dictionary<int, Tuple<long, long>> counts_ByCountyId = [];
+
+            await using (NpgsqlCommand npgsqlCommand_Count = new(commandText_Count, npgsqlConnection))
+            {
+                npgsqlCommand_Count.CommandTimeout = commandTimeout;
+                npgsqlCommand_Count.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds.ToArray() });
+                npgsqlCommand_Count.Parameters.Add(new NpgsqlParameter("minXs", NpgsqlDbType.Array | NpgsqlDbType.Double) { Value = minXs.ToArray() });
+                npgsqlCommand_Count.Parameters.Add(new NpgsqlParameter("minYs", NpgsqlDbType.Array | NpgsqlDbType.Double) { Value = minYs.ToArray() });
+                npgsqlCommand_Count.Parameters.Add(new NpgsqlParameter("maxXs", NpgsqlDbType.Array | NpgsqlDbType.Double) { Value = maxXs.ToArray() });
+                npgsqlCommand_Count.Parameters.Add(new NpgsqlParameter("maxYs", NpgsqlDbType.Array | NpgsqlDbType.Double) { Value = maxYs.ToArray() });
+
+                await using NpgsqlDataReader npgsqlDataReader_Count = await npgsqlCommand_Count.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_Count.ReadAsync(cancellationToken))
+                {
+                    counts_ByCountyId[npgsqlDataReader_Count.GetInt32(0)] = new Tuple<long, long>(npgsqlDataReader_Count.GetInt64(1), npgsqlDataReader_Count.GetInt64(2));
+                }
+            }
+
+            for (int i = 0; i < countyIds.Count; i++)
+            {
+                if (!counts_ByCountyId.TryGetValue(countyIds[i], out Tuple<long, long>? counts) || counts is null)
+                {
+                    continue;
+                }
+
+                result.Add(new Building2DCountyPartMismatchResult(codes[i], countyIds[i], countyIds_ByCode[codes[i]], counts.Item1, counts.Item2));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously counts, for every polygon part of every multi-part county, the buildings it holds whose bounding box lies outside that part.
+        /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part, and only geometry can say which of them a building belongs to. This measures how badly the stored answer disagrees with geometry, without deserializing anything: a building whose stored box does not intersect the box of the part holding it cannot be inside that part.</para>
+        /// <para>Counted rows are <b>certainly</b> misfiled, uncounted ones merely unproven - a building inside the box of a part but outside its polygon needs the polygon to settle and is not counted here. The figure is therefore a lower bound, which is what makes it safe to read as the number of rows known to be wrong before and after a repair.</para>
+        /// <para>Single-part codes are left out entirely: with one part there is nothing to be filed under by mistake. Only parts actually holding buildings are returned.</para>
+        /// </summary>
+        /// <param name="code">An optional county code to restrict the measurement to. When null every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one entry per county part holding buildings, ordered by code then part identifier, an empty list when no multi-part code holds any, or null when the connection could not be created.</returns>
+        public async Task<List<Building2DCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(string? code = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountyPartMismatchesAsync(npgsqlConnection, code, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously decides, for one multi-part county, which of its buildings are filed under a polygon part their footprint does not lie in.
+        /// <para>It writes nothing. The records it returns are what a repair moves, and what a dry run reports instead of moving.</para>
+        /// <para>The decision is the one the import makes - <see cref="Query.CountyId(System.Collections.Generic.IDictionary{int, Geometry.Planar.Interfaces.IPolygonal2D}, Geometry.Planar.Interfaces.IPolygonal2D, double)"/> over the parts of the county - reached without deserializing a footprint wherever the stored bounding boxes settle it. A part whose box does not reach a building cannot contain it, so when exactly one part is left the boxes have already answered; the footprint is read only where several parts reach the building, or none does and the nearest one has to be found. The boxes only ever narrow the candidates, so they cannot decide anything the containment test would decide differently.</para>
+        /// <para>Rows are read in pages anchored on <c>id</c> and never carry the stored object: a county of 160 000 buildings would not fit in memory as JSON, and the footprints of the few rows that need one are fetched per page.</para>
+        /// <para>A row whose part could not be decided at all - no readable footprint - is returned with <see cref="Building2DCountyPartMoveResult.CountyIdResolved"/> of -1, so that the caller can report it rather than have it disappear between "nothing to do" and "moved".</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the queries.</param>
+        /// <param name="administrativeAreal2Ds">Every polygon part of one county code, with geometry. Fewer than two parts means there is nothing to decide and an empty list is returned.</param>
+        /// <param name="tolerance">The distance tolerance used for the bounding box and containment tests.</param>
+        /// <param name="batchSize">The number of building rows read out of the database in one page.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one record per building that has to move or could not be placed, an empty list when every building sits where it belongs, or null when the connection or the parts were null.</returns>
+        public static async Task<List<Building2DCountyPartMoveResult>?> GetCountyPartMovesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<AdministrativeAreal2D>? administrativeAreal2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance, int batchSize = 5000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || administrativeAreal2Ds is null)
+            {
+                return null;
+            }
+
+            List<AdministrativeAreal2D> administrativeAreal2Ds_Part = [];
+            List<int> countyIds = [];
+            string? code = null;
+
+            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
+            {
+                if (administrativeAreal2D is null)
+                {
+                    continue;
+                }
+
+                administrativeAreal2Ds_Part.Add(administrativeAreal2D);
+                countyIds.Add(administrativeAreal2D.Id);
+
+                code ??= administrativeAreal2D.Code;
+            }
+
+            List<Building2DCountyPartMoveResult> result = [];
+
+            // A code with one part cannot have filed a building under the wrong one.
+            if (countyIds.Count < 2)
+            {
+                return result;
+            }
+
+            Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D> polygonal2Ds_ByCountyId = administrativeAreal2Ds.Polygonal2DsByCountyId();
+
+            int[] countyIds_Array = [.. countyIds];
+
+            // Pages are anchored on id rather than offset: the anchor keeps moving forward whatever the
+            // decision was, and the identity column is shared across the partitions of the table, so one
+            // ordering covers every part of the county.
+            string commandText_Page = $@"
+                SELECT id, county_id, reference, min_x, min_y, max_x, max_y
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = ANY(@countyIds) AND id > @lastId
+                ORDER BY id ASC
+                LIMIT @batchSize;";
+
+            // The county_id predicate is not redundant with the identifiers: it is what prunes the read to
+            // the partitions of this county instead of every partition of the table.
+            string commandText_Object = $@"
+                SELECT id, object
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = ANY(@countyIds) AND id = ANY(@ids);";
+
+            long id_Last = 0;
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<(long Id, int CountyId, string? Reference, BoundingBox2D? BoundingBox2D)> rows = [];
+
+                await using (NpgsqlCommand npgsqlCommand_Page = new(commandText_Page, npgsqlConnection))
+                {
+                    npgsqlCommand_Page.CommandTimeout = commandTimeout;
+                    npgsqlCommand_Page.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
+                    npgsqlCommand_Page.Parameters.AddWithValue("lastId", id_Last);
+                    npgsqlCommand_Page.Parameters.AddWithValue("batchSize", batchSize < 1 ? 1 : batchSize);
+
+                    await using NpgsqlDataReader npgsqlDataReader_Page = await npgsqlCommand_Page.ExecuteReaderAsync(cancellationToken);
+                    while (await npgsqlDataReader_Page.ReadAsync(cancellationToken))
+                    {
+                        BoundingBox2D? boundingBox2D_Row = null;
+                        if (!npgsqlDataReader_Page.IsDBNull(3) && !npgsqlDataReader_Page.IsDBNull(4) && !npgsqlDataReader_Page.IsDBNull(5) && !npgsqlDataReader_Page.IsDBNull(6))
+                        {
+                            boundingBox2D_Row = new BoundingBox2D(
+                                new Point2D(npgsqlDataReader_Page.GetDouble(3), npgsqlDataReader_Page.GetDouble(4)),
+                                new Point2D(npgsqlDataReader_Page.GetDouble(5), npgsqlDataReader_Page.GetDouble(6)));
+                        }
+
+                        rows.Add((npgsqlDataReader_Page.GetInt64(0), npgsqlDataReader_Page.GetInt32(1), npgsqlDataReader_Page.IsDBNull(2) ? null : npgsqlDataReader_Page.GetString(2), boundingBox2D_Row));
+                    }
+                }
+
+                if (rows.Count == 0)
+                {
+                    break;
+                }
+
+                id_Last = rows[^1].Id;
+
+                int?[] countyIds_Resolved = new int?[rows.Count];
+                Dictionary<int, List<int>> countyIds_Candidate_ByIndex = [];
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    List<int> countyIds_Candidate = administrativeAreal2Ds_Part.CountyIds(rows[i].BoundingBox2D, tolerance);
+
+                    // One part left means the extents have already decided, and the footprint is not read.
+                    if (countyIds_Candidate.Count == 1)
+                    {
+                        countyIds_Resolved[i] = countyIds_Candidate[0];
+                        continue;
+                    }
+
+                    // No part reaching the building means it lies outside the county as stored, and the
+                    // nearest part decides - which every part has to be a candidate for.
+                    countyIds_Candidate_ByIndex[i] = countyIds_Candidate.Count == 0 ? countyIds : countyIds_Candidate;
+                }
+
+                if (countyIds_Candidate_ByIndex.Count != 0)
+                {
+                    long[] ids_Geometry = new long[countyIds_Candidate_ByIndex.Count];
+
+                    int index_Geometry = 0;
+                    foreach (int index in countyIds_Candidate_ByIndex.Keys)
+                    {
+                        ids_Geometry[index_Geometry++] = rows[index].Id;
+                    }
+
+                    Dictionary<long, Geometry.Planar.Interfaces.IPolygonal2D> polygonal2Ds_ById = [];
+
+                    await using (NpgsqlCommand npgsqlCommand_Object = new(commandText_Object, npgsqlConnection))
+                    {
+                        npgsqlCommand_Object.CommandTimeout = commandTimeout;
+                        npgsqlCommand_Object.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
+                        npgsqlCommand_Object.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Bigint) { Value = ids_Geometry });
+
+                        await using NpgsqlDataReader npgsqlDataReader_Object = await npgsqlCommand_Object.ExecuteReaderAsync(cancellationToken);
+                        while (await npgsqlDataReader_Object.ReadAsync(cancellationToken))
+                        {
+                            if (npgsqlDataReader_Object.IsDBNull(1))
+                            {
+                                continue;
+                            }
+
+                            GIS.Classes.Building2D? building2D = Core.Convert.ToDiGi<GIS.Classes.Building2D>(npgsqlDataReader_Object.GetString(1))?.FirstOrDefault();
+                            if (building2D?.PolygonalFace2D?.ExternalEdge is Geometry.Planar.Interfaces.IPolygonal2D polygonal2D)
+                            {
+                                polygonal2Ds_ById[npgsqlDataReader_Object.GetInt64(0)] = polygonal2D;
+                            }
+                        }
+                    }
+
+                    foreach (KeyValuePair<int, List<int>> keyValuePair in countyIds_Candidate_ByIndex)
+                    {
+                        if (!polygonal2Ds_ById.TryGetValue(rows[keyValuePair.Key].Id, out Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D) || polygonal2D is null)
+                        {
+                            continue;
+                        }
+
+                        Dictionary<int, Geometry.Planar.Interfaces.IPolygonal2D> polygonal2Ds_Candidate = [];
+                        foreach (int countyId in keyValuePair.Value)
+                        {
+                            if (polygonal2Ds_ByCountyId.TryGetValue(countyId, out Geometry.Planar.Interfaces.IPolygonal2D? polygonal2D_Part) && polygonal2D_Part is not null)
+                            {
+                                polygonal2Ds_Candidate[countyId] = polygonal2D_Part;
+                            }
+                        }
+
+                        countyIds_Resolved[keyValuePair.Key] = polygonal2Ds_Candidate.CountyId(polygonal2D, tolerance);
+                    }
+                }
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    int? countyId_Resolved = countyIds_Resolved[i];
+
+                    if (countyId_Resolved is not null && countyId_Resolved.Value == rows[i].CountyId)
+                    {
+                        continue;
+                    }
+
+                    result.Add(new Building2DCountyPartMoveResult(code, rows[i].Reference, rows[i].Id, rows[i].CountyId, countyId_Resolved ?? -1, countyIds_Candidate_ByIndex.ContainsKey(i)));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously decides, for one multi-part county, which of its buildings are filed under a polygon part their footprint does not lie in.
+        /// <para>It writes nothing. The records it returns are what a repair moves, and what a dry run reports instead of moving. The decision is described on the overload taking a connection.</para>
+        /// </summary>
+        /// <param name="administrativeAreal2Ds">Every polygon part of one county code, with geometry. Fewer than two parts means there is nothing to decide and an empty list is returned.</param>
+        /// <param name="tolerance">The distance tolerance used for the bounding box and containment tests.</param>
+        /// <param name="batchSize">The number of building rows read out of the database in one page.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one record per building that has to move or could not be placed, an empty list when every building sits where it belongs, or null when the parts were null or no connection could be created.</returns>
+        public async Task<List<Building2DCountyPartMoveResult>?> GetCountyPartMovesAsync(IEnumerable<AdministrativeAreal2D>? administrativeAreal2Ds, double tolerance = Core.Constants.Tolerance.MacroDistance, int batchSize = 5000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (administrativeAreal2Ds is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountyPartMovesAsync(npgsqlConnection, administrativeAreal2Ds, tolerance, batchSize, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously moves the rows holding the given references onto <paramref name="countyId"/>, so that a building sits under the county polygon part its footprint lies in.
+        /// <para>This repairs buildings filed under the wrong part of a multi-part county. Everything keyed on a building follows <c>building_2d</c>, so this is the move the other tables are made consistent with - and their rows have to be moved as well, or they answer nothing under the part the building has left.</para>
+        /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist, and the part a county belongs to may never have held one - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
+        /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (reference, county_id)</c>, so a row cannot move onto a destination already holding that reference, and two rows carrying one reference under two different parts cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller comparing the result against what it passed in learns which references still hold something to settle by hand rather than having it silently discarded here.</para>
+        /// <para>Naming the parts the rows may currently sit under in <paramref name="countyIds_Source"/> is what keeps the cost down: without it the statement cannot be pruned to a partition and reads every partition of the table.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county polygon part every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched.</param>
+        /// <param name="batchSize">The number of references sent in one statement.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had a row moved, or null when no references were given or the connection is null.</returns>
+        public static async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            HashSet<string> references_Set = [];
+            foreach (string reference in references)
+            {
+                if (!string.IsNullOrWhiteSpace(reference))
+                {
+                    references_Set.Add(reference);
+                }
+            }
+
+            HashSet<string> result = [];
+
+            if (references_Set.Count == 0)
+            {
+                return result;
+            }
+
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.Building2D);
+            if (!exists)
+            {
+                return result;
+            }
+
+            // A row cannot move into a partition that does not exist, and the part a whole county belongs to
+            // may never have held a building - without this the update fails outright. It is an idempotent
+            // catalog check once the partition is there.
+            await npgsqlConnection.TableAsync_Building2D_Partition(countyId, commandTimeout, cancellationToken);
+
+            List<string> references_Unique = [.. references_Set];
+            int[]? countyIds_Array = countyIds_Source is null ? null : [.. new HashSet<int>(countyIds_Source)];
+
+            // NOT EXISTS is the collision guard for UNIQUE (reference, county_id). It is cheap despite the
+            // surrounding scan: county_id is fixed, so it prunes to the destination partition and probes the
+            // index that constraint is already backed by.
+            //
+            // ROW_NUMBER guards the other collision - two rows carrying one reference under two different
+            // parts both pass NOT EXISTS and would then collide with each other on arrival. One moves, the
+            // rest stay. created_at alone does not settle which one, because a bulk write stamps every row
+            // of a batch identically; id is what decides.
+            //
+            // The update addresses the row by its primary key with the partition key present, so it is a
+            // pruned index lookup rather than a second scan. ctid would not do - it is unique only within a
+            // partition.
+            string commandText = $@"
+                WITH stray AS MATERIALIZED (
+                    SELECT t.id AS id,
+                           t.county_id AS county_id,
+                           ROW_NUMBER() OVER (PARTITION BY t.reference ORDER BY t.created_at DESC, t.id DESC) AS move_rank
+                    FROM {Constants.TableName.Building2D} t
+                    WHERE t.reference = ANY(@references)
+                      AND t.county_id <> @countyId
+                      AND (@countyIds IS NULL OR t.county_id = ANY(@countyIds))
+                      AND NOT EXISTS (
+                              SELECT 1
+                              FROM {Constants.TableName.Building2D} t_Target
+                              WHERE t_Target.county_id = @countyId
+                                AND t_Target.reference = t.reference)
+                )
+                UPDATE {Constants.TableName.Building2D} t
+                SET county_id = @countyId
+                FROM stray s
+                WHERE t.id = s.id
+                  AND t.county_id = s.county_id
+                  AND s.move_rank = 1
+                RETURNING t.reference;";
+
+            int batchSize_Effective = batchSize < 1 ? 1 : batchSize;
+
+            for (int i = 0; i < references_Unique.Count; i += batchSize_Effective)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string[] references_Batch = [.. references_Unique.GetRange(i, Math.Min(batchSize_Effective, references_Unique.Count - i))];
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Batch });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array is null ? (object)DBNull.Value : countyIds_Array });
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    result.Add(npgsqlDataReader.GetString(0));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously moves the rows holding the given references onto <paramref name="countyId"/>, so that a building sits under the county polygon part its footprint lies in.
+        /// <para>The move, its collision guards and what it costs are described on the overload taking a connection.</para>
+        /// </summary>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county polygon part every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched.</param>
+        /// <param name="batchSize">The number of references sent in one statement.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had a row moved, or null when no references were given or the connection could not be created.</returns>
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, countyIds_Source, batchSize, commandTimeout, cancellationToken);
         }
 
         /// <summary>

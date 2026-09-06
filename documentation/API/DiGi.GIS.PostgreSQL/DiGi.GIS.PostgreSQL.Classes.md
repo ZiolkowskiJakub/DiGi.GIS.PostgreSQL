@@ -4454,6 +4454,345 @@ public System.Nullable<int> SubdivisionId { get; set; }
 #### Property Value
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult'></a>
+
+## Building2DCountyPartMismatchResult Class
+
+Reports how many 2D buildings held by one polygon part of a multi\-part county lie outside that part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and a building is filed under one of them. This counts, for one part, the rows whose stored bounding box does not even touch the bounding box of the part holding them - a building that cannot be inside the part it is filed under, decided without deserializing a single geometry.
+
+The figure is a <b>lower bound</b>: a building sitting inside the part's bounding box but outside its polygon is not counted, because settling that needs the polygon. Nothing counted here is a false alarm, which is what makes it usable as the before and after measurement of a repair.
+
+```csharp
+public class Building2DCountyPartMismatchResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DCountyPartMismatchResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult)'></a>
+
+## Building2DCountyPartMismatchResult\(Building2DCountyPartMismatchResult\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult') class by copying an existing one\.
+
+```csharp
+public Building2DCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult? building2DCountyPartMismatchResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult).building2DCountyPartMismatchResult'></a>
+
+`building2DCountyPartMismatchResult` [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult')
+
+The [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult') instance to copy\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long)'></a>
+
+## Building2DCountyPartMismatchResult\(string, int, IEnumerable\<int\>, long, long\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult') class\.
+
+```csharp
+public Building2DCountyPartMismatchResult(string? code, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds, long count, long countOutsideBoundingBox);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The county code the part belongs to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part holding the buildings\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+Every polygon part identifier the code holds, the part itself included\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of buildings held by the part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long).countOutsideBoundingBox'></a>
+
+`countOutsideBoundingBox` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of those buildings whose bounding box does not intersect the bounding box of the part holding them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DCountyPartMismatchResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Building2DCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Code'></a>
+
+## Building2DCountyPartMismatchResult\.Code Property
+
+Gets the county code the part belongs to\.
+
+```csharp
+public string? Code { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.Count'></a>
+
+## Building2DCountyPartMismatchResult\.Count Property
+
+Gets the number of buildings held by the part\.
+
+```csharp
+public long Count { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.CountOutsideBoundingBox'></a>
+
+## Building2DCountyPartMismatchResult\.CountOutsideBoundingBox Property
+
+Gets the number of buildings held by the part whose bounding box does not intersect the bounding box of that part\.
+
+```csharp
+public long CountOutsideBoundingBox { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.CountyId'></a>
+
+## Building2DCountyPartMismatchResult\.CountyId Property
+
+Gets the identifier of the county polygon part holding the buildings\.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult.CountyIds'></a>
+
+## Building2DCountyPartMismatchResult\.CountyIds Property
+
+Gets every polygon part identifier the code holds, the part itself included\.
+
+```csharp
+public System.Collections.Generic.List<int>? CountyIds { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult'></a>
+
+## Building2DCountyPartMoveResult Class
+
+Names one 2D building that is filed under a county polygon part its footprint does not lie in, and the part it belongs to\.
+
+Produced by the decision half of the county part repair and consumed by the write half, so the two can be run apart: a dry run reports these and writes nothing, and the same set of records drives the move when it is run for real.
+
+[DecidedByGeometry](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.DecidedByGeometry 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult\.DecidedByGeometry') says how the answer was reached. When only one part of the county has a bounding box reaching the building, the boxes settle it and the footprint is never deserialized; otherwise the footprint is read and the full containment decision runs. Both answers are the same decision the import makes - the boxes only ever narrow the candidates.
+
+```csharp
+public class Building2DCountyPartMoveResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DCountyPartMoveResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult)'></a>
+
+## Building2DCountyPartMoveResult\(Building2DCountyPartMoveResult\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult') class by copying an existing one\.
+
+```csharp
+public Building2DCountyPartMoveResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult? building2DCountyPartMoveResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult).building2DCountyPartMoveResult'></a>
+
+`building2DCountyPartMoveResult` [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult')
+
+The [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult') instance to copy\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool)'></a>
+
+## Building2DCountyPartMoveResult\(string, string, long, int, int, bool\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult') class\.
+
+```csharp
+public Building2DCountyPartMoveResult(string? code, string? reference, long id, int countyId, int countyIdResolved, bool decidedByGeometry);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The county code both parts belong to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The reference of the building\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).id'></a>
+
+`id` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The identifier of the row holding the building\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part the row is filed under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).countyIdResolved'></a>
+
+`countyIdResolved` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part the footprint lies in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(string,string,long,int,int,bool).decidedByGeometry'></a>
+
+`decidedByGeometry` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether the footprint had to be read to decide, rather than the bounding boxes settling it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DCountyPartMoveResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DCountyPartMoveResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Building2DCountyPartMoveResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Code'></a>
+
+## Building2DCountyPartMoveResult\.Code Property
+
+Gets the county code both parts belong to\.
+
+```csharp
+public string? Code { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.CountyId'></a>
+
+## Building2DCountyPartMoveResult\.CountyId Property
+
+Gets the identifier of the county polygon part the row is filed under\.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.CountyIdResolved'></a>
+
+## Building2DCountyPartMoveResult\.CountyIdResolved Property
+
+Gets the identifier of the county polygon part the footprint lies in\.
+
+```csharp
+public int CountyIdResolved { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.DecidedByGeometry'></a>
+
+## Building2DCountyPartMoveResult\.DecidedByGeometry Property
+
+Gets a value indicating whether the footprint had to be read to decide, rather than the bounding boxes settling it\.
+
+```csharp
+public bool DecidedByGeometry { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Id'></a>
+
+## Building2DCountyPartMoveResult\.Id Property
+
+Gets the identifier of the row holding the building\.
+
+```csharp
+public long Id { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.Reference'></a>
+
+## Building2DCountyPartMoveResult\.Reference Property
+
+Gets the reference of the building\.
+
+```csharp
+public string? Reference { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyData'></a>
 
 ## Building2DOccupancyData Class
@@ -5829,6 +6168,196 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the count, or \-1 when the connection is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetCountyPartMismatchesAsync\(NpgsqlConnection, string, int, CancellationToken\) Method
+
+Asynchronously counts, for every polygon part of every multi\-part county, the buildings it holds whose bounding box lies outside that part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and only geometry can say which of them a building belongs to. This measures how badly the stored answer disagrees with geometry, without deserializing anything: a building whose stored box does not intersect the box of the part holding it cannot be inside that part.
+
+Counted rows are <b>certainly</b> misfiled, uncounted ones merely unproven - a building inside the box of a part but outside its polygon needs the polygon to settle and is not counted here. The figure is therefore a lower bound, which is what makes it safe to read as the number of rows known to be wrong before and after a repair.
+
+Single-part codes are left out entirely: with one part there is nothing to be filed under by mistake. Only parts actually holding buildings are returned.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the query\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When null every multi\-part code is measured\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one entry per county part holding buildings, ordered by code then part identifier, an empty list when no multi\-part code holds any, or null when the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetCountyPartMismatchesAsync\(string, int, CancellationToken\) Method
+
+Asynchronously counts, for every polygon part of every multi\-part county, the buildings it holds whose bounding box lies outside that part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and only geometry can say which of them a building belongs to. This measures how badly the stored answer disagrees with geometry, without deserializing anything: a building whose stored box does not intersect the box of the part holding it cannot be inside that part.
+
+Counted rows are <b>certainly</b> misfiled, uncounted ones merely unproven - a building inside the box of a part but outside its polygon needs the polygon to settle and is not counted here. The figure is therefore a lower bound, which is what makes it safe to read as the number of rows known to be wrong before and after a repair.
+
+Single-part codes are left out entirely: with one part there is nothing to be filed under by mistake. Only parts actually holding buildings are returned.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When null every multi\-part code is measured\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one entry per county part holding buildings, ordered by code then part identifier, an empty list when no multi\-part code holds any, or null when the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetCountyPartMovesAsync\(NpgsqlConnection, IEnumerable\<AdministrativeAreal2D\>, double, int, int, CancellationToken\) Method
+
+Asynchronously decides, for one multi\-part county, which of its buildings are filed under a polygon part their footprint does not lie in\.
+
+It writes nothing. The records it returns are what a repair moves, and what a dry run reports instead of moving.
+
+The decision is the one the import makes - [CountyId\(this IDictionary&lt;int,IPolygonal2D&gt;, IPolygonal2D, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyId\(this System\.Collections\.Generic\.IDictionary\<int,DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D\>, DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D, double\)') over the parts of the county - reached without deserializing a footprint wherever the stored bounding boxes settle it. A part whose box does not reach a building cannot contain it, so when exactly one part is left the boxes have already answered; the footprint is read only where several parts reach the building, or none does and the nearest one has to be found. The boxes only ever narrow the candidates, so they cannot decide anything the containment test would decide differently.
+
+Rows are read in pages anchored on `id` and never carry the stored object: a county of 160 000 buildings would not fit in memory as JSON, and the footprints of the few rows that need one are fetched per page.
+
+A row whose part could not be decided at all - no readable footprint - is returned with [CountyIdResolved](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult.CountyIdResolved 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult\.CountyIdResolved') of -1, so that the caller can report it rather than have it disappear between "nothing to do" and "moved".
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult>?> GetCountyPartMovesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds, double tolerance=0.001, int batchSize=5000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the queries\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).administrativeAreal2Ds'></a>
+
+`administrativeAreal2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+Every polygon part of one county code, with geometry\. Fewer than two parts means there is nothing to decide and an empty list is returned\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance used for the bounding box and containment tests\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of building rows read out of the database in one page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one record per building that has to move or could not be placed, an empty list when every building sits where it belongs, or null when the connection or the parts were null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetCountyPartMovesAsync\(IEnumerable\<AdministrativeAreal2D\>, double, int, int, CancellationToken\) Method
+
+Asynchronously decides, for one multi\-part county, which of its buildings are filed under a polygon part their footprint does not lie in\.
+
+It writes nothing. The records it returns are what a repair moves, and what a dry run reports instead of moving. The decision is described on the overload taking a connection.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult>?> GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds, double tolerance=0.001, int batchSize=5000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).administrativeAreal2Ds'></a>
+
+`administrativeAreal2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+Every polygon part of one county code, with geometry\. Fewer than two parts means there is nothing to decide and an empty list is returned\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance used for the bounding box and containment tests\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of building rows read out of the database in one page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetCountyPartMovesAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one record per building that has to move or could not be placed, an empty list when every building sits where it belongs, or null when the parts were null or no connection could be created\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.GetDuplicateReferencesAsync\(int, int, CancellationToken\) Method
@@ -6365,6 +6894,124 @@ The cancellation token to observe while waiting for the task to complete\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result carries a [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult') with details of the operation, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the database connection could not be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(NpgsqlConnection, IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously moves the rows holding the given references onto [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), so that a building sits under the county polygon part its footprint lies in\.
+
+This repairs buildings filed under the wrong part of a multi-part county. Everything keyed on a building follows `building_2d`, so this is the move the other tables are made consistent with - and their rows have to be moved as well, or they answer nothing under the part the building has left.
+
+`county_id` is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist, and the part a county belongs to may never have held one - and the identifiers of the rows are preserved, so anything holding an `id` from before the call still addresses the same record.
+
+<b>Nothing is deleted.</b> The table constrains `UNIQUE (reference, county_id)`, so a row cannot move onto a destination already holding that reference, and two rows carrying one reference under two different parts cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller comparing the result against what it passed in learns which references still hold something to settle by hand rather than having it silently discarded here.
+
+Naming the parts the rows may currently sit under in [countyIds\_Source](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyIds\_Source') is what keeps the cost down: without it the statement cannot be pruned to a partition and reads every partition of the table.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> RefreshCountyIdsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part every one of those references should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the references that had a row moved, or null when no references were given or the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously moves the rows holding the given references onto [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), so that a building sits under the county polygon part its footprint lies in\.
+
+The move, its collision guards and what it costs are described on the overload taking a connection.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part every one of those references should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the references that had a row moved, or null when no references were given or the connection could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RemoveAsync(System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
 
@@ -9671,6 +10318,61 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') instance if data is successfully retrieved; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataPostgreSQLConverter\.RefreshCountyIdsAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously moves the rows held for the given building references onto [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), so that they stay under the same county polygon part as the building itself\.
+
+Called after a building has been re-filed under the part its footprint lies in. A row left behind under the part the building came from is unreachable: every read here filters on `county_id` first. Nothing is deleted - a row the destination will not take is left where it is and its reference is not reported.
+
+The move, its collision guards and what it costs are described on [RefreshCountyIdsAsync\(this NpgsqlConnection, string, IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Modify.RefreshCountyIdsAsync(thisNpgsql.NpgsqlConnection,string,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Modify\.RefreshCountyIdsAsync\(this Npgsql\.NpgsqlConnection, string, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)').
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The building references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part the rows should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the references that had at least one row moved, or null when no references were given or the connection could not be created\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel'></a>
 
 ## BuildingModel Class
@@ -10622,6 +11324,61 @@ The cancellation token to observe while waiting for the task to complete\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a dictionary keyed by county identifier holding the estimated row count for every county whose partition exists, or null when no connection could be opened or the identifiers are null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingPostgreSQLConverter\.RefreshCountyIdsAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously moves the rows held for the given building references onto [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), so that they stay under the same county polygon part as the building itself\.
+
+Called after a building has been re-filed under the part its footprint lies in. A row left behind under the part the building came from is unreachable: every read here filters on `county_id` first. Nothing is deleted - a row the destination will not take is left where it is and its reference is not reported.
+
+The move, its collision guards and what it costs are described on [RefreshCountyIdsAsync\(this NpgsqlConnection, string, IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Modify.RefreshCountyIdsAsync(thisNpgsql.NpgsqlConnection,string,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Modify\.RefreshCountyIdsAsync\(this Npgsql\.NpgsqlConnection, string, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)').
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The building references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part the rows should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the references that had at least one row moved, or null when no references were given or the connection could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building_,double,int,System.Threading.CancellationToken)'></a>
 
@@ -13105,6 +13862,61 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[OrtoDatasCountyResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCountyResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCountyResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains one [OrtoDatasCountyResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCountyResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCountyResult') per county holding rows, or null when no connection could be built or nothing has ever been stored\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasPostgreSQLConverter\.RefreshCountyIdsAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously moves the rows held for the given building references onto [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), so that they stay under the same county polygon part as the building itself\.
+
+Called after a building has been re-filed under the part its footprint lies in. A row left behind under the part the building came from is unreachable: every read here filters on `county_id` first. Nothing is deleted - a row the destination will not take is left where it is and its reference is not reported.
+
+The move, its collision guards and what it costs are described on [RefreshCountyIdsAsync\(this NpgsqlConnection, string, IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Modify.RefreshCountyIdsAsync(thisNpgsql.NpgsqlConnection,string,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Modify\.RefreshCountyIdsAsync\(this Npgsql\.NpgsqlConnection, string, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)').
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<string>?> RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The building references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part the rows should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the references that had at least one row moved, or null when no references were given or the connection could not be created\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.OrtoDatas_,double,int,System.Threading.CancellationToken)'></a>
 
 ## OrtoDatasPostgreSQLConverter\.UpdateAsync\(IEnumerable\<OrtoDatas\>, double, int, CancellationToken\) Method
@@ -14258,6 +15070,521 @@ A cancellation token that can be used to cancel the operation\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true if the refresh was successful; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions Class
+
+Options for re\-filing 2D buildings under the county polygon part their footprint lies in\.
+
+[DryRun](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.DryRun 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions\.DryRun') defaults to [true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool'): the run reports what it would move and writes nothing until it is turned off deliberately.
+
+```csharp
+public class PostgreSQLBuilding2DCountyPartRefreshOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLBuilding2DCountyPartRefreshOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.PostgreSQLBuilding2DCountyPartRefreshOptions()'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions') class\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.PostgreSQLBuilding2DCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\(PostgreSQLBuilding2DCountyPartRefreshOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions postgreSQLBuilding2DCountyPartRefreshOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.PostgreSQLBuilding2DCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions).postgreSQLBuilding2DCountyPartRefreshOptions'></a>
+
+`postgreSQLBuilding2DCountyPartRefreshOptions` [PostgreSQLBuilding2DCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions')
+
+The source options to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.PostgreSQLBuilding2DCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.PostgreSQLBuilding2DCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object used to initialize the options\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.BatchSize'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.BatchSize Property
+
+Gets or sets the number of building rows read out of the database in one page\.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.Codes'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.Codes Property
+
+Gets or sets the county codes to examine\. When null every code holding more than one polygon part is examined\.
+
+```csharp
+public System.Collections.Generic.List<string>? Codes { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.DryRun'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.DryRun Property
+
+Gets or sets a value indicating whether the run only reports what it would do\. Defaults to [true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool'); nothing is written until it is turned off\.
+
+```csharp
+public bool DryRun { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.ReferencedObjects Property
+
+Gets or sets a value indicating whether the rows keyed on a moved building \- its 3D buildings, models, year built, occupancy, orthophotos and building data \- are carried onto the same county part\.
+
+Leaving them behind makes them unreachable: every read of those tables filters on `county_id` first, so a row still filed under the part the building has left answers nothing. Turn it off only to move `building_2d` alone and knowingly accept that.
+
+```csharp
+public bool ReferencedObjects { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.ReportDirectory'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.ReportDirectory Property
+
+Gets or sets the directory the report files are written into\. When null the directory the application was launched from is used\.
+
+```csharp
+public string? ReportDirectory { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.Tolerance'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshOptions\.Tolerance Property
+
+Gets or sets the distance tolerance used for the bounding box and containment tests\.
+
+```csharp
+public double Tolerance { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult Class
+
+Represents the outcome of re\-filing 2D buildings under the county polygon part their footprint lies in\.
+
+[MoveCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.MoveCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult\.MoveCount') is what the run decided, [MovedCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.MovedCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult\.MovedCount') what it wrote: a dry run reports the first and leaves the second at zero. The two also differ on a live run when a move is blocked, which is what [BlockedCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.BlockedCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult\.BlockedCount') counts - the destination part already holds that reference, so the row stays where it is rather than being deleted.
+
+```csharp
+public class PostgreSQLBuilding2DCountyPartRefreshResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PostgreSQLBuilding2DCountyPartRefreshResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\(PostgreSQLBuilding2DCountyPartRefreshResult\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') class by copying an existing instance\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult? postgreSQLBuilding2DCountyPartRefreshResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult).postgreSQLBuilding2DCountyPartRefreshResult'></a>
+
+`postgreSQLBuilding2DCountyPartRefreshResult` [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult')
+
+The [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') instance to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\(long, long, long, long, long, long, long, bool\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') class\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshResult(long codeCount, long readCount, long moveCount, long movedCount, long blockedCount, long unresolvedCount, long referencedObjectMovedCount, bool cancelled);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).codeCount'></a>
+
+`codeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of multi\-part county codes examined\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).readCount'></a>
+
+`readCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building rows read out of the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).moveCount'></a>
+
+`moveCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building rows found to be filed under a part their footprint does not lie in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).movedCount'></a>
+
+`movedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building rows actually moved\. Zero on a dry run\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).blockedCount'></a>
+
+`blockedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of moves the destination part refused because it already holds that reference\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).unresolvedCount'></a>
+
+`unresolvedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building rows no part could be decided for, left where they are\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).referencedObjectMovedCount'></a>
+
+`referencedObjectMovedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of references carried onto the new part in the tables keyed on a building\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).cancelled'></a>
+
+`cancelled` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether the run was cancelled before reaching the end\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing serialized properties\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.BlockedCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.BlockedCount Property
+
+Gets the number of moves the destination part refused because it already holds that reference\.
+
+```csharp
+public long BlockedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.Cancelled'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.Cancelled Property
+
+Gets a value indicating whether the run was cancelled before reaching the end\.
+
+```csharp
+public bool Cancelled { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.CodeCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.CodeCount Property
+
+Gets the number of multi\-part county codes examined\.
+
+```csharp
+public long CodeCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.MoveCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.MoveCount Property
+
+Gets the number of building rows found to be filed under a part their footprint does not lie in\.
+
+```csharp
+public long MoveCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.MovedCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.MovedCount Property
+
+Gets the number of building rows actually moved\. Zero on a dry run\.
+
+```csharp
+public long MovedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.ReadCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.ReadCount Property
+
+Gets the number of building rows read out of the database\.
+
+```csharp
+public long ReadCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.ReferencedObjectMovedCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.ReferencedObjectMovedCount Property
+
+Gets the number of references carried onto the new part in the tables keyed on a building\.
+
+```csharp
+public long ReferencedObjectMovedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.UnresolvedCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.UnresolvedCount Property
+
+Gets the number of building rows no part could be decided for, left where they are\.
+
+```csharp
+public long UnresolvedCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask Class
+
+Re\-files every 2D building of a multi\-part county under the polygon part its footprint lies in, and carries everything keyed on that building with it\.
+
+A county code names one `administrative_areal_2d` row per polygon part. Imports that resolved a code to a single part filed a whole county under it, and only geometry can say which part a building really belongs to - so a county can read back empty on the part holding its territory while every one of its buildings sits on a neighbouring exclave.
+
+Each building is decided with [CountyId\(this IDictionary&lt;int,IPolygonal2D&gt;, IPolygonal2D, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyId\(this System\.Collections\.Generic\.IDictionary\<int,DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D\>, DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D, double\)'), the same decision the import makes, and moved onto the part it belongs to. A building already sitting where it belongs is not touched, so a run over a healthy county does nothing.
+
+<b>The rows keyed on a moved building move with it</b> - its 3D buildings, models, year built, occupancy, orthophotos and building data - unless [ReferencedObjects](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions\.ReferencedObjects') says otherwise. Leaving them behind would make them unreachable, because every read of those tables filters on `county_id` first.
+
+<b>Reports by default and writes nothing.</b>[DryRun](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.DryRun 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions\.DryRun') has to be turned off deliberately, and the report a dry run produces is what the move should be reviewed against.
+
+The report is written into [ReportDirectory](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions.ReportDirectory 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions\.ReportDirectory') as well as to the log: one row per building in `Building2D_CountyPartRefresh.csv` and per-code totals in `Building2D_CountyPartRefresh_Summary.txt`. The row file is flushed per code, so a run interrupted late still leaves everything it had already decided.
+
+Nothing is deleted anywhere. A row the destination part will not take - it already holds that reference - stays where it is and is counted as blocked, for a person to settle.
+
+```csharp
+public class PostgreSQLBuilding2DCountyPartRefreshTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLBuilding2DCountyPartRefreshTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.PostgreSQLBuilding2DCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\(GISPostgreSQLConverterManager\) Constructor
+
+Constructor with Dependency Injection\.
+
+```csharp
+public PostgreSQLBuilding2DCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.PostgreSQLBuilding2DCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS PostgreSQL converter manager holding the converters the run reads and writes through\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.gISPostgreSQLConverterManager'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\.gISPostgreSQLConverterManager Field
+
+The converter manager the run draws its converters from\.
+
+```csharp
+private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+```
+
+#### Field Value
+[GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.PostgreSQLBuilding2DCountyPartRefreshOptions'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\.PostgreSQLBuilding2DCountyPartRefreshOptions Property
+
+Gets the configuration for the run\. These options are used when the task is started\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions PostgreSQLBuilding2DCountyPartRefreshOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLBuilding2DCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.PostgreSQLBuilding2DCountyPartRefreshResult'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\.PostgreSQLBuilding2DCountyPartRefreshResult Property
+
+Gets what the last run read, decided and wrote\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult? PostgreSQLBuilding2DCountyPartRefreshResult { get; private set; }
+```
+
+#### Property Value
+[PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task, re\-filing the buildings of every multi\-part county under the polygon part they belong to\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter carrying the running total of buildings decided\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true unless the run could not be attempted or was cancelled\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshTask\.RefreshReferencedObjectsAsync\(GISPostgreSQLConverterManager, IEnumerable\<string\>, int, IEnumerable\<int\>, CancellationToken\) Method
+
+Carries every row keyed on the given buildings onto the county part those buildings have just been moved to\.
+
+A converter the manager does not hold is skipped rather than failing the run: an installation storing no orthophotos has nothing to carry, and that is not an error.
+
+```csharp
+private static System.Threading.Tasks.Task<long> RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager? gISPostgreSQLConverterManager, System.Collections.Generic.IEnumerable<string> references, int countyId, System.Collections.Generic.IEnumerable<int> countyIds_Source, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The manager holding the converters to move rows through\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings that have moved\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The county polygon part they have moved onto\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts their rows may still be sitting under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask.RefreshReferencedObjectsAsync(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is the number of references that had at least one row carried, summed over the tables\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCreateTableTask'></a>
 

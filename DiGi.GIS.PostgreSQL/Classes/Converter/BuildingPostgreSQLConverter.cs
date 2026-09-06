@@ -1010,5 +1010,35 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             return await ReadAsync_Building(npgsqlDataReader, cancellationToken);
         }
+
+        /// <summary>
+        /// Asynchronously moves the rows held for the given building references onto <paramref name="countyId"/>, so that they stay under the same county polygon part as the building itself.
+        /// <para>Called after a building has been re-filed under the part its footprint lies in. A row left behind under the part the building came from is unreachable: every read here filters on <c>county_id</c> first. Nothing is deleted - a row the destination will not take is left where it is and its reference is not reported.</para>
+        /// <para>The move, its collision guards and what it costs are described on <see cref="Modify.RefreshCountyIdsAsync(NpgsqlConnection, string, IEnumerable{string}, int, IEnumerable{int}, int, int, CancellationToken)"/>.</para>
+        /// </summary>
+        /// <param name="references">The building references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county polygon part the rows should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched.</param>
+        /// <param name="batchSize">The number of references sent in one statement.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved, or null when no references were given or the connection could not be created.</returns>
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await npgsqlConnection.RefreshCountyIdsAsync(TableName.Building, references, countyId, countyIds_Source, batchSize, commandTimeout, cancellationToken);
+        }
     }
 }
