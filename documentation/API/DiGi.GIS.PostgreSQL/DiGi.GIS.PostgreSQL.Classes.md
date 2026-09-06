@@ -15935,6 +15935,8 @@ Gets or sets the counties to sample, by identifier\. Null samples every county\.
 
 Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier and its own subdivisions, so a code names several of them.
 
+Each identifier names one polygon part, and the part is widened to every part sharing its code before the run starts - the county is sampled once as a whole, and each point is filed under the part containing it.
+
 Naming a few counties is the ordinary way to use this task at a fine grid size - see [GridSize](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableOptions.GridSize 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointCreateTableOptions\.GridSize').
 
 ```csharp
@@ -16085,7 +16087,7 @@ public double Tolerance { get; set; }
 
 Represents a background task that fills the terrain point table by sampling elevations on a regular grid\.
 
-The work is driven county by county rather than by one grid over the whole area. Each county's subdivisions are read once, their outlines are derived once, and the points of that county are then decided against them in memory - so a point costs no database round trip at all, where deciding it through the database costs six of them plus the deserializing of an outline of thousands of vertices.
+The work is driven per county code rather than by one grid over the whole area. A county held in several pieces is one row per piece sharing one code, so its pieces are walked as one group: the county's subdivisions are read once, the pieces' own outlines are read once, and each point is then decided in memory against both - against the subdivisions for whether it is on land at all, and against the pieces for which piece contains it, which is the partition it is filed under. A point costs no database round trip at all, where deciding it through the database costs six of them plus the deserializing of an outline of thousands of vertices.
 
 Every county is sampled on tiles cut from one grid shared by all of them, anchored by [OriginX](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableOptions.OriginX 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointCreateTableOptions\.OriginX') and [OriginY](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLTerrainPointCreateTableOptions.OriginY 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLTerrainPointCreateTableOptions\.OriginY'). Neighbouring counties therefore produce the same coordinates for a shared point instead of two grids that do not line up, and a tile that was already sampled is recognised and skipped - so a run that was stopped resumes, and a county sampled coarsely can later be sampled finely without paying for the points it already holds.
 
@@ -16391,6 +16393,8 @@ Gets or sets the counties to repair, by identifier\. Null repairs every county\.
 
 Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier and its own subdivisions, so a code names several of them.
 
+Each identifier names one polygon part, and the part is widened to every part sharing its code before the run starts - the county is measured against what all of its partitions hold together, and each filled node is filed under the part containing it.
+
 ```csharp
 public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
 ```
@@ -16522,7 +16526,7 @@ Represents a background task that goes back for the terrain points a sampling ru
 
 A run of tens of millions of single requests to a public service loses a few of them. The point is simply absent afterwards, and nothing in the run says which: the tallies count what went unanswered without naming it. Re-running the sampling task does recover them, but it pays to read back every tile of every county to find the handful that are short - hours of work to repair minutes of it.
 
-This asks the question directly instead. Each county is measured against the lattice by [GetCoverageByCountyIdAsync\(int, Dictionary&lt;int,PolygonalFace2D&gt;, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(int, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)') - the same comparison the coverage and gap endpoints report - and only the nodes it names are sampled. A county that is already complete costs the measurement and nothing else.
+This asks the question directly instead. A county held in several pieces is one row per piece sharing one code, so its pieces are walked as one group and measured together by [GetCoverageByCountyIdAsync\(IEnumerable&lt;int&gt;, Dictionary&lt;int,PolygonalFace2D&gt;, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)') - the same comparison the coverage and gap endpoints report - and only the nodes it names are sampled, each filled node filed under the piece containing it. A county that is already complete costs the measurement and nothing else.
 
 The write is the ordinary one, which leaves points already stored as they are, so the task is idempotent and a run that was stopped can simply be repeated.
 
@@ -20461,13 +20465,9 @@ The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-
 
 ## TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(NpgsqlConnection, int, Dictionary\<int,PolygonalFace2D\>, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\) Method
 
-Compares the nodes of a lattice lying on a county's land against the points this table holds for it\.
+Compares the nodes of a lattice lying on a county's land against the points this table holds for its partition\.
 
-Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.
-
-The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again elsewhere would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled. This sits on the converter rather than in the Web API for that reason: the endpoint that reports a missing node and the task that goes back for it have to mean the same thing by it.
-
-The subdivision outlines are passed in rather than read here, because they live in a different database to the points.
+Measured against the single partition named. For a county held in several pieces pass every part to the [GetCoverageByCountyIdAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, Dictionary&lt;int,PolygonalFace2D&gt;, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)') overload instead - a piece holds only the territory filed under it, so one partition alone reads as short of its siblings.
 
 ```csharp
 public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D_Limit, double gridSize, DiGi.Geometry.Planar.Classes.Point2D? origin, double tolerance, int limit, long maximumNodeCount, int tileSize=128, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -20549,6 +20549,180 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the input is unusable or the area and the lattice together exceed [maximumNodeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)\.maximumNodeCount')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(NpgsqlConnection, IEnumerable\<int\>, Dictionary\<int,PolygonalFace2D\>, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\) Method
+
+Compares the nodes of a lattice lying on a county's land against the points this table holds for it\.
+
+Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.
+
+The stored read reaches every partition named, so a county held in several pieces is measured against what all of its parts hold together - whichever partition a point is filed under, the node it answers for counts as stored. The subdivisions are passed in rather than read here, because they live in a different database to the points.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D_Limit, double gridSize, DiGi.Geometry.Planar.Classes.Point2D? origin, double tolerance, int limit, long maximumNodeCount, int tileSize=128, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county partitions to measure \- every part sharing a code for a multi\-part county\. The result names the lowest of them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')
+
+The outlines of the county's subdivisions, keyed by subdivision identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).boundingBox2D_Limit'></a>
+
+`boundingBox2D_Limit` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+An area to confine the measurement to, or null for the whole county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).origin'></a>
+
+`origin` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The point the lattice is anchored at\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a stored point may lie from a node and still be counted as that node\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates to carry back\. The counts themselves are never capped, only the list\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount'></a>
+
+`maximumNodeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The largest number of lattice nodes the request may generate, checked before a single node is built\. Values of zero or less do not cap it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tileSize'></a>
+
+`tileSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of lattice steps along a tile edge\. Matches the sampling task so that the two walk the same tiles\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each read of what a tile already holds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the input is unusable or the area and the lattice together exceed [maximumNodeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)\.maximumNodeCount')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(IEnumerable\<int\>, Dictionary\<int,PolygonalFace2D\>, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken\) Method
+
+Compares the nodes of a lattice lying on a county's land against the points this table holds for it, automatically managing the connection\.
+
+The stored read reaches every partition named, so a county held in several pieces is measured against what all of its parts hold together - whichever partition a point is filed under, the node it answers for counts as stored. Pass every part sharing a code; the single-partition overload reads as short of the siblings' territory. The subdivision outlines are passed in rather than read here, because they live in a different database to the points.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D_Limit, double gridSize, DiGi.Geometry.Planar.Classes.Point2D? origin, double tolerance, int limit, long maximumNodeCount, int tileSize=128, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county partitions to measure \- every part sharing a code for a multi\-part county\. The result names the lowest of them\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')
+
+The outlines of the county's subdivisions, keyed by subdivision identifier\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).boundingBox2D_Limit'></a>
+
+`boundingBox2D_Limit` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+An area to confine the measurement to, or null for the whole county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).origin'></a>
+
+`origin` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The point the lattice is anchored at\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a stored point may lie from a node and still be counted as that node\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates to carry back\. The counts themselves are never capped, only the list\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount'></a>
+
+`maximumNodeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The largest number of lattice nodes the request may generate, checked before a single node is built\. Values of zero or less do not cap it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).tileSize'></a>
+
+`tileSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of lattice steps along a tile edge\. Matches the sampling task so that the two walk the same tiles\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each read of what a tile already holds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TerrainPointCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the input is unusable or the area and the lattice together exceed [maximumNodeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,long,int,int,System.Threading.CancellationToken).maximumNodeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter\.GetCoverageByCountyIdAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.Dictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, DiGi\.Geometry\.Planar\.Classes\.Point2D, double, int, long, int, int, System\.Threading\.CancellationToken\)\.maximumNodeCount')\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter.GetEstimatedCountAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,bool,int,System.Threading.CancellationToken)'></a>
 

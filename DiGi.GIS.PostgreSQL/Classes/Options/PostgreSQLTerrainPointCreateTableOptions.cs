@@ -52,6 +52,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Gets or sets the counties to sample, by identifier. Null samples every county.
         /// <para>Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier and its own subdivisions, so a code names several of them.</para>
+        /// <para>Each identifier names one polygon part, and the part is widened to every part sharing its code before the run starts - the county is sampled once as a whole, and each point is filed under the part containing it.</para>
         /// <para>Naming a few counties is the ordinary way to use this task at a fine grid size - see <see cref="GridSize"/>.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(CountyIds))]

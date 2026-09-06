@@ -1134,10 +1134,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Compares the nodes of a lattice lying on a county's land against the points this table holds for it.
-        /// <para>Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.</para>
-        /// <para>The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again elsewhere would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled. This sits on the converter rather than in the Web API for that reason: the endpoint that reports a missing node and the task that goes back for it have to mean the same thing by it.</para>
-        /// <para>The subdivision outlines are passed in rather than read here, because they live in a different database to the points.</para>
+        /// Compares the nodes of a lattice lying on a county's land against the points this table holds for its partition.
+        /// <para>Measured against the single partition named. For a county held in several pieces pass every part to the <see cref="GetCoverageByCountyIdAsync(NpgsqlConnection, IEnumerable{int}, Dictionary{int, PolygonalFace2D}, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken)"/> overload instead - a piece holds only the territory filed under it, so one partition alone reads as short of its siblings.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="countyId">The identifier of the county partition to measure.</param>
@@ -1166,10 +1164,60 @@ namespace DiGi.GIS.PostgreSQL.Classes
             int commandTimeout = 600,
             CancellationToken cancellationToken = default)
         {
-            if (npgsqlConnection is null || polygonalFace2Ds_ById is null || origin is null || gridSize <= 0 || tileSize <= 0)
+            if (npgsqlConnection is null)
             {
                 return null;
             }
+
+            return await GetCoverageByCountyIdAsync(npgsqlConnection, [countyId], polygonalFace2Ds_ById, boundingBox2D_Limit, gridSize, origin, tolerance, limit, maximumNodeCount, tileSize, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Compares the nodes of a lattice lying on a county's land against the points this table holds for it.
+        /// <para>Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.</para>
+        /// <para>The stored read reaches every partition named, so a county held in several pieces is measured against what all of its parts hold together - whichever partition a point is filed under, the node it answers for counts as stored. The subdivisions are passed in rather than read here, because they live in a different database to the points.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The identifiers of the county partitions to measure - every part sharing a code for a multi-part county. The result names the lowest of them.</param>
+        /// <param name="polygonalFace2Ds_ById">The outlines of the county's subdivisions, keyed by subdivision identifier.</param>
+        /// <param name="boundingBox2D_Limit">An area to confine the measurement to, or null for the whole county.</param>
+        /// <param name="gridSize">The lattice spacing.</param>
+        /// <param name="origin">The point the lattice is anchored at.</param>
+        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node.</param>
+        /// <param name="limit">The largest number of missing coordinates to carry back. The counts themselves are never capped, only the list.</param>
+        /// <param name="maximumNodeCount">The largest number of lattice nodes the request may generate, checked before a single node is built. Values of zero or less do not cap it.</param>
+        /// <param name="tileSize">The number of lattice steps along a tile edge. Matches the sampling task so that the two walk the same tiles.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each read of what a tile already holds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>The coverage, or <see langword="null"/> when the input is unusable or the area and the lattice together exceed <paramref name="maximumNodeCount"/>.</returns>
+        public static async Task<TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(
+            NpgsqlConnection? npgsqlConnection,
+            IEnumerable<int>? countyIds,
+            Dictionary<int, PolygonalFace2D>? polygonalFace2Ds_ById,
+            BoundingBox2D? boundingBox2D_Limit,
+            double gridSize,
+            Point2D? origin,
+            double tolerance,
+            int limit,
+            long maximumNodeCount,
+            int tileSize = 128,
+            int commandTimeout = 600,
+            CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || countyIds is null || polygonalFace2Ds_ById is null || origin is null || gridSize <= 0 || tileSize <= 0)
+            {
+                return null;
+            }
+
+            List<int> countyIds_Sorted = [.. countyIds];
+            countyIds_Sorted.Sort();
+
+            if (countyIds_Sorted.Count == 0)
+            {
+                return null;
+            }
+
+            int countyId = countyIds_Sorted[0];
 
             static int FloorDivide(int value, int divisor)
             {
@@ -1303,7 +1351,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
 
                     HashSet<(int, int)> indexes_Stored = [];
-                    PointCloud3D? pointCloud3D = await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
+                    PointCloud3D? pointCloud3D = await GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection, boundingBox2D_Tile, countyIds_Sorted, tolerance, commandTimeout, cancellationToken);
                     if (pointCloud3D is not null)
                     {
                         for (int i = 0; i < pointCloud3D.Count; i++)
@@ -1399,6 +1447,50 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
             return await GetCoverageByCountyIdAsync(npgsqlConnection, countyId, polygonalFace2Ds_ById, boundingBox2D_Limit, gridSize, origin, tolerance, limit, maximumNodeCount, tileSize, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Compares the nodes of a lattice lying on a county's land against the points this table holds for it, automatically managing the connection.
+        /// <para>The stored read reaches every partition named, so a county held in several pieces is measured against what all of its parts hold together - whichever partition a point is filed under, the node it answers for counts as stored. Pass every part sharing a code; the single-partition overload reads as short of the siblings' territory. The subdivision outlines are passed in rather than read here, because they live in a different database to the points.</para>
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to measure - every part sharing a code for a multi-part county. The result names the lowest of them.</param>
+        /// <param name="polygonalFace2Ds_ById">The outlines of the county's subdivisions, keyed by subdivision identifier.</param>
+        /// <param name="boundingBox2D_Limit">An area to confine the measurement to, or null for the whole county.</param>
+        /// <param name="gridSize">The lattice spacing.</param>
+        /// <param name="origin">The point the lattice is anchored at.</param>
+        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node.</param>
+        /// <param name="limit">The largest number of missing coordinates to carry back. The counts themselves are never capped, only the list.</param>
+        /// <param name="maximumNodeCount">The largest number of lattice nodes the request may generate, checked before a single node is built. Values of zero or less do not cap it.</param>
+        /// <param name="tileSize">The number of lattice steps along a tile edge. Matches the sampling task so that the two walk the same tiles.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each read of what a tile already holds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>The coverage, or <see langword="null"/> when the input is unusable or the area and the lattice together exceed <paramref name="maximumNodeCount"/>.</returns>
+        public async Task<TerrainPointCoverageResult?> GetCoverageByCountyIdAsync(
+            IEnumerable<int>? countyIds,
+            Dictionary<int, PolygonalFace2D>? polygonalFace2Ds_ById,
+            BoundingBox2D? boundingBox2D_Limit,
+            double gridSize,
+            Point2D? origin,
+            double tolerance,
+            int limit,
+            long maximumNodeCount,
+            int tileSize = 128,
+            int commandTimeout = 600,
+            CancellationToken cancellationToken = default)
+        {
+            if (polygonalFace2Ds_ById is null || origin is null || gridSize <= 0 || tileSize <= 0)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+            return await GetCoverageByCountyIdAsync(npgsqlConnection, countyIds, polygonalFace2Ds_ById, boundingBox2D_Limit, gridSize, origin, tolerance, limit, maximumNodeCount, tileSize, commandTimeout, cancellationToken);
         }
 
         /// <summary>

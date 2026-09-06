@@ -59,6 +59,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Gets or sets the counties to repair, by identifier. Null repairs every county.
         /// <para>Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier and its own subdivisions, so a code names several of them.</para>
+        /// <para>Each identifier names one polygon part, and the part is widened to every part sharing its code before the run starts - the county is measured against what all of its partitions hold together, and each filled node is filed under the part containing it.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(CountyIds))]
         public HashSet<int>? CountyIds { get; set; } = null;

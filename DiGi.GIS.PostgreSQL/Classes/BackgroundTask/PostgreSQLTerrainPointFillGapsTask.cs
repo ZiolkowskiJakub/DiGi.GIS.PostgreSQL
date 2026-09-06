@@ -14,7 +14,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that goes back for the terrain points a sampling run left behind.
     /// <para>A run of tens of millions of single requests to a public service loses a few of them. The point is simply absent afterwards, and nothing in the run says which: the tallies count what went unanswered without naming it. Re-running the sampling task does recover them, but it pays to read back every tile of every county to find the handful that are short - hours of work to repair minutes of it.</para>
-    /// <para>This asks the question directly instead. Each county is measured against the lattice by <see cref="TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(int, Dictionary{int, PolygonalFace2D}, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken)"/> - the same comparison the coverage and gap endpoints report - and only the nodes it names are sampled. A county that is already complete costs the measurement and nothing else.</para>
+    /// <para>This asks the question directly instead. A county held in several pieces is one row per piece sharing one code, so its pieces are walked as one group and measured together by <see cref="TerrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(System.Collections.Generic.IEnumerable{int}, Dictionary{int, PolygonalFace2D}, BoundingBox2D, double, Point2D, double, int, long, int, int, CancellationToken)"/> - the same comparison the coverage and gap endpoints report - and only the nodes it names are sampled, each filled node filed under the piece containing it. A county that is already complete costs the measurement and nothing else.</para>
     /// <para>The write is the ordinary one, which leaves points already stored as they are, so the task is idempotent and a run that was stopped can simply be repeated.</para>
     /// <para>What this cannot do is invent a spacing. <see cref="PostgreSQLTerrainPointFillGapsOptions.GridSize"/> has to be the spacing the county was sampled at, or every node in between reads as a gap and the repair becomes a densification.</para>
     /// </summary>
@@ -164,8 +164,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
-            // Identifiers rather than codes: a county held in several pieces is one row per piece, each with its own
-            // subdivisions, so walking the identifiers reaches all of its territory exactly once.
+            // Identifiers, then codes: the options name county parts, and a county held in several pieces is one
+            // row per piece sharing one code. Each named piece is widened to every piece of its code, so a
+            // multi-part county is repaired as one group - measured against what all of its partitions hold
+            // together, and with each filled node filed under the piece containing it.
             HashSet<int>? countyIds = PostgreSQLTerrainPointFillGapsOptions.CountyIds;
             countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken: cancellationToken);
             if (countyIds is null)
@@ -184,17 +186,28 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<int> countyIds_Sorted = [.. countyIds];
             countyIds_Sorted.Sort();
 
-            Serilog.Modify.Log(
-                "{Type} started: {CountyCount} counties, grid {GridSize}, tile {TileSize}, origin {OriginX}/{OriginY}, tolerance {Tolerance}, {MaxConcurrentRequests} requests in flight, {RetryCount} retries",
-                nameof(PostgreSQLTerrainPointFillGapsTask), countyIds_Sorted.Count, gridSize, tileSize, origin.X, origin.Y, tolerance, maxConcurrentRequests, retryCount);
+            List<List<int>>? countyIdGroups = await administrativeAreal2DPostgreSQLConverter.CountyIdGroupsAsync(countyIds_Sorted, commandTimeout, cancellationToken);
+            if (countyIdGroups is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: the counties could not be resolved into code groups - the run would not know which parts share a county", nameof(PostgreSQLTerrainPointFillGapsTask));
+                return false;
+            }
 
-            foreach (int countyId in countyIds_Sorted)
+            Serilog.Modify.Log(
+                "{Type} started: {CountyCount} counties in {CountyGroupCount} groups, grid {GridSize}, tile {TileSize}, origin {OriginX}/{OriginY}, tolerance {Tolerance}, {MaxConcurrentRequests} requests in flight, {RetryCount} retries",
+                nameof(PostgreSQLTerrainPointFillGapsTask), countyIds_Sorted.Count, countyIdGroups.Count, gridSize, tileSize, origin.X, origin.Y, tolerance, maxConcurrentRequests, retryCount);
+
+            foreach (List<int> countyIds_Group in countyIdGroups)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // The group's lowest identifier names it in the log and receives the nodes that reach no part.
+                int countyId = countyIds_Group[0];
 
                 try
                 {
                     List<AdministrativeAreal2D>? administrativeAreal2Ds;
+                    Dictionary<int, PolygonalFace2D> polygonalFace2Ds_CountyById = [];
 
                     await using (NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(administrativeAreal2DPostgreSQLConverter.ConnectionData))
                     {
@@ -207,7 +220,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         await npgsqlConnection.OpenAsync(cancellationToken);
 
+                        // The read widens the parent to every part sharing its code, which is right here because
+                        // the group IS that widening: the subdivisions of the whole county decide which nodes are
+                        // on land, and the parts' own outlines, read below, decide which partition each filled
+                        // node is filed under.
                         administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivision, countyId, cancellationToken: cancellationToken);
+
+                        if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count > 0 && countyIds_Group.Count > 1)
+                        {
+                            // The parts' own outlines are read only where the county is held in several pieces:
+                            // one part is the whole answer, and testing every node against a single face would
+                            // only restate the identifier the group already carries.
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds_County = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Group, commandTimeout, cancellationToken);
+                            polygonalFace2Ds_CountyById = administrativeAreal2Ds_County.PolygonalFace2DsById();
+
+                            if (polygonalFace2Ds_CountyById.Count != countyIds_Group.Count)
+                            {
+                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain gap fill - county {CountyId} holds {PartCount} parts but only {FaceCount} of them carries an outline - the nodes of the rest are filed under the lowest part", countyId, countyIds_Group.Count, polygonalFace2Ds_CountyById.Count);
+                            }
+                        }
                     }
 
                     if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
@@ -225,8 +256,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     // No node ceiling: this is a background task working through a county it was told to repair,
                     // not an unauthenticated request that has to be defended against its own size. Every missing
-                    // node is wanted, so the list is not capped either.
-                    TerrainPointCoverageResult? terrainPointCoverageResult = await terrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(countyId, polygonalFace2Ds_ById, null, gridSize, origin, tolerance, int.MaxValue, 0, tileSize, commandTimeout, cancellationToken);
+                    // node is wanted, so the list is not capped either. Measured against every partition of the
+                    // group, so a node stored under whichever part holds it counts as stored.
+                    TerrainPointCoverageResult? terrainPointCoverageResult = await terrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(countyIds_Group, polygonalFace2Ds_ById, null, gridSize, origin, tolerance, int.MaxValue, 0, tileSize, commandTimeout, cancellationToken);
                     if (terrainPointCoverageResult is null)
                     {
                         FailedBatchCount++;
@@ -270,6 +302,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             continue;
                         }
 
+                        // One node, one part: the piece whose polygon contains the node is the partition it is
+                        // filed under. A node that reaches no part - the residue a tolerance leaves on a part
+                        // boundary, or a piece whose outline could not be read - is filed under the group's
+                        // lowest identifier rather than dropped: dropping it would leave the gap it came to fill.
+                        int?[]? countyIds_Routed = polygonalFace2Ds_CountyById.Count > 1 ? polygonalFace2Ds_CountyById.IdsByPoint2Ds(point2Ds_Batch, tolerance) : null;
+
+                        List<int> countyIds_Kept = [];
+                        int count_Unrouted = 0;
+                        for (int i = 0; i < point2Ds_Batch.Count; i++)
+                        {
+                            if (countyIds_Routed is not null && countyIds_Routed[i] is int countyId_Routed)
+                            {
+                                countyIds_Kept.Add(countyId_Routed);
+                            }
+                            else
+                            {
+                                count_Unrouted++;
+                                countyIds_Kept.Add(countyId);
+                            }
+                        }
+
+                        if (count_Unrouted > 0)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain gap fill nodes outside every part - county {CountyId}, {UnroutedCount} of {PointCount} filed under the lowest part", countyId, count_Unrouted, point2Ds_Batch.Count);
+                        }
+
                         List<Point3D?>? point3Ds = await GIS.Query.ElevationsAsync(httpClient, point2Ds_Batch, maxConcurrentRequests, retryCount, retryDelay, cancellationToken);
                         if (point3Ds is null)
                         {
@@ -289,7 +347,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 continue;
                             }
 
-                            terrainPoints.Add(new TerrainPoint(countyId, point3D, subdivisionIds[i]));
+                            terrainPoints.Add(new TerrainPoint(countyIds_Kept[i], point3D, subdivisionIds[i]));
                         }
 
                         if (point2Ds_Unresolved_Batch.Count != 0)

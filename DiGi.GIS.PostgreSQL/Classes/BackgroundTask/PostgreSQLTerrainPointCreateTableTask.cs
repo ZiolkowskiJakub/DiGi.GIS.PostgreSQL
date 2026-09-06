@@ -15,7 +15,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Represents a background task that fills the terrain point table by sampling elevations on a regular grid.
-    /// <para>The work is driven county by county rather than by one grid over the whole area. Each county's subdivisions are read once, their outlines are derived once, and the points of that county are then decided against them in memory - so a point costs no database round trip at all, where deciding it through the database costs six of them plus the deserializing of an outline of thousands of vertices.</para>
+    /// <para>The work is driven per county code rather than by one grid over the whole area. A county held in several pieces is one row per piece sharing one code, so its pieces are walked as one group: the county's subdivisions are read once, the pieces' own outlines are read once, and each point is then decided in memory against both - against the subdivisions for whether it is on land at all, and against the pieces for which piece contains it, which is the partition it is filed under. A point costs no database round trip at all, where deciding it through the database costs six of them plus the deserializing of an outline of thousands of vertices.</para>
     /// <para>Every county is sampled on tiles cut from one grid shared by all of them, anchored by <see cref="PostgreSQLTerrainPointCreateTableOptions.OriginX"/> and <see cref="PostgreSQLTerrainPointCreateTableOptions.OriginY"/>. Neighbouring counties therefore produce the same coordinates for a shared point instead of two grids that do not line up, and a tile that was already sampled is recognised and skipped - so a run that was stopped resumes, and a county sampled coarsely can later be sampled finely without paying for the points it already holds.</para>
     /// <para>What remains is one request to the elevation service per point, which is the whole of the running time. <see cref="PostgreSQLTerrainPointCreateTableOptions.MaxConcurrentRequests"/> governs it.</para>
     /// <para>A run reports success unless it was cancelled. A county or a tile that cannot be sampled is counted in <see cref="FailedBatchCount"/>, logged with the exception that caused it, and stepped over - so a run of many hours is not reduced to a single word by one batch out of hundreds of thousands, and what did go wrong is named in the log rather than inferred from a count nothing reads.</para>
@@ -178,8 +178,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            // Identifiers rather than codes: a county held in several pieces is one row per piece, each with its own
-            // subdivisions, so walking the identifiers reaches all of its territory exactly once.
+            // Identifiers, then codes: the options name county parts, and a county held in several pieces is one
+            // row per piece sharing one code. Each named piece is widened to every piece of its code, so a
+            // multi-part county is walked as one group and its territory is sampled exactly once.
             HashSet<int>? countyIds = PostgreSQLTerrainPointCreateTableOptions.CountyIds;
             countyIds ??= await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(Enums.AdministrativeArealType.County, cancellationToken: cancellationToken);
             if (countyIds is null)
@@ -198,13 +199,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
             List<int> countyIds_Sorted = [.. countyIds];
             countyIds_Sorted.Sort();
 
-            Serilog.Modify.Log(
-                "{Type} started: {CountyCount} counties, grid {GridSize}, tile {TileSize}, origin {OriginX}/{OriginY}, tolerance {Tolerance}, {MaxConcurrentRequests} requests in flight, {RetryCount} retries, override existing {OverrideExisting}",
-                nameof(PostgreSQLTerrainPointCreateTableTask), countyIds_Sorted.Count, gridSize, tileSize, origin.X, origin.Y, tolerance, maxConcurrentRequests, retryCount, overrideExisting);
+            List<List<int>>? countyIdGroups = await administrativeAreal2DPostgreSQLConverter.CountyIdGroupsAsync(countyIds_Sorted, commandTimeout, cancellationToken);
+            if (countyIdGroups is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type}: the counties could not be resolved into code groups - the run would not know which parts share a county", nameof(PostgreSQLTerrainPointCreateTableTask));
+                return false;
+            }
 
-            foreach (int countyId in countyIds_Sorted)
+            Serilog.Modify.Log(
+                "{Type} started: {CountyCount} counties in {CountyGroupCount} groups, grid {GridSize}, tile {TileSize}, origin {OriginX}/{OriginY}, tolerance {Tolerance}, {MaxConcurrentRequests} requests in flight, {RetryCount} retries, override existing {OverrideExisting}",
+                nameof(PostgreSQLTerrainPointCreateTableTask), countyIds_Sorted.Count, countyIdGroups.Count, gridSize, tileSize, origin.X, origin.Y, tolerance, maxConcurrentRequests, retryCount, overrideExisting);
+
+            foreach (List<int> countyIds_Group in countyIdGroups)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // The group's lowest identifier names it in the log, decides its tile walk and receives the
+                // points that reach no part.
+                int countyId = countyIds_Group[0];
 
                 // Read before the county rather than accumulated inside it, so that the county's own contribution
                 // survives the batches that fail: the running totals are what the tallies below are subtracted from.
@@ -216,6 +228,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 try
                 {
                     List<AdministrativeAreal2D>? administrativeAreal2Ds;
+                    Dictionary<int, PolygonalFace2D> polygonalFace2Ds_CountyById = [];
 
                     await using (NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(administrativeAreal2DPostgreSQLConverter.ConnectionData))
                     {
@@ -228,7 +241,25 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         await npgsqlConnection.OpenAsync(cancellationToken);
 
+                        // The read widens the parent to every part sharing its code, which is right here because
+                        // the group IS that widening: the subdivisions of the whole county decide which points
+                        // are on land, and the parts' own outlines, read below, decide which partition each
+                        // point is filed under.
                         administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(npgsqlConnection, Enums.AdministrativeArealType.Subdivision, countyId, cancellationToken: cancellationToken);
+
+                        if (administrativeAreal2Ds is not null && administrativeAreal2Ds.Count > 0 && countyIds_Group.Count > 1)
+                        {
+                            // The parts' own outlines are read only where the county is held in several pieces:
+                            // one part is the whole answer, and testing every point against a single face would
+                            // only restate the identifier the group already carries.
+                            List<AdministrativeAreal2D>? administrativeAreal2Ds_County = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, countyIds_Group, commandTimeout, cancellationToken);
+                            polygonalFace2Ds_CountyById = administrativeAreal2Ds_County.PolygonalFace2DsById();
+
+                            if (polygonalFace2Ds_CountyById.Count != countyIds_Group.Count)
+                            {
+                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain county {CountyId} holds {PartCount} parts but only {FaceCount} of them carries an outline - the points of the rest are filed under the lowest part", countyId, countyIds_Group.Count, polygonalFace2Ds_CountyById.Count);
+                            }
+                        }
                     }
 
                     if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
@@ -348,7 +379,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                 HashSet<(int, int)> indexes_Stored = [];
                                 if (!overrideExisting)
                                 {
-                                    PointCloud3D? pointCloud3D = await TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection_Terrain, boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
+                                    // Read across every partition of the group: a point stored under the sibling
+                                    // part that holds it is stored, and must not be sampled again for this one.
+                                    PointCloud3D? pointCloud3D = await TerrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(npgsqlConnection_Terrain, boundingBox2D_Tile, countyIds_Group, tolerance, commandTimeout, cancellationToken);
                                     if (pointCloud3D is not null)
                                     {
                                         for (int i = 0; i < pointCloud3D.Count; i++)
@@ -425,6 +458,33 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                     continue;
                                 }
 
+                                // One point, one part: the piece whose polygon contains the point is the partition
+                                // it is filed under. A point that reaches no part - the residue a tolerance leaves
+                                // on a part boundary, or a piece whose outline could not be read - is filed under
+                                // the group's lowest identifier rather than dropped: dropping it would punch a
+                                // hole no later run knows how to fill.
+                                int?[]? countyIds_Routed = polygonalFace2Ds_CountyById.Count > 1 ? polygonalFace2Ds_CountyById.IdsByPoint2Ds(point2Ds_Kept, tolerance) : null;
+
+                                List<int> countyIds_Kept = [];
+                                int count_Unrouted = 0;
+                                for (int i = 0; i < point2Ds_Kept.Count; i++)
+                                {
+                                    if (countyIds_Routed is not null && countyIds_Routed[i] is int countyId_Routed)
+                                    {
+                                        countyIds_Kept.Add(countyId_Routed);
+                                    }
+                                    else
+                                    {
+                                        count_Unrouted++;
+                                        countyIds_Kept.Add(countyId);
+                                    }
+                                }
+
+                                if (count_Unrouted > 0)
+                                {
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Terrain points outside every part - county {CountyId}, block {BlockX}/{BlockY}, {UnroutedCount} of {PointCount} filed under the lowest part", countyId, block_X, block_Y, count_Unrouted, point2Ds_Kept.Count);
+                                }
+
                                 List<Point3D?>? point3Ds = await GIS.Query.ElevationsAsync(httpClient, point2Ds_Kept, maxConcurrentRequests, retryCount, retryDelay, cancellationToken);
                                 if (point3Ds is null)
                                 {
@@ -444,7 +504,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                         continue;
                                     }
 
-                                    terrainPoints.Add(new TerrainPoint(countyId, point3D, subdivisionIds_Kept[i]));
+                                    terrainPoints.Add(new TerrainPoint(countyIds_Kept[i], point3D, subdivisionIds_Kept[i]));
                                 }
 
                                 if (point2Ds_Unresolved_Tile.Count != 0)
@@ -528,8 +588,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
 
                 Serilog.Modify.Log(
-                    "Terrain county {CountyId} done: {PointCount} points stored, {UnresolvedPointCount} unresolved, {RejectionCount} rejected, {FailedBatchCount} batches stepped over",
-                    countyId, PointCount - pointCount_County, UnresolvedPointCount - unresolvedPointCount_County, RejectionCount - rejectionCount_County, FailedBatchCount - failedBatchCount_County);
+                    "Terrain county {CountyId} done{Parts}: {PointCount} points stored, {UnresolvedPointCount} unresolved, {RejectionCount} rejected, {FailedBatchCount} batches stepped over",
+                    countyId, countyIds_Group.Count > 1 ? $" over {countyIds_Group.Count} parts" : string.Empty, PointCount - pointCount_County, UnresolvedPointCount - unresolvedPointCount_County, RejectionCount - rejectionCount_County, FailedBatchCount - failedBatchCount_County);
             }
 
             bool cancelled = cancellationToken.IsCancellationRequested;

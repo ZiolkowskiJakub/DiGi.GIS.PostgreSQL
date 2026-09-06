@@ -1513,6 +1513,80 @@ The distance tolerance used for the containment and overlap tests\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
 The identifier of the county row the building belongs to, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it cannot be decided\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroups(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_string,System.Collections.Generic.HashSet_int__)'></a>
+
+## Query\.CountyIdGroups\(this IEnumerable\<AdministrativeAreal2DReference\>, IReadOnlyDictionary\<string,HashSet\<int\>\>\) Method
+
+Orders county polygon parts into one group per county code, each group widened to every part the caller has looked up for its code\.
+
+A county code is not a key - it names one row per polygon part - so a run driven per identifier would sample a multi-part county once per part. Driven per group instead, each code's territory is reached exactly once, and every point it produces can then be filed under the part containing it. The widening is handed in rather than looked up here: the parts of a code live in the database, and this method is pure.
+
+Groups are ordered by their lowest identifier and each group is sorted ascending, so a run that is stopped and started again walks the counties in the same order and its progress means the same thing. A part with no usable code groups with itself.
+
+```csharp
+public static System.Collections.Generic.List<System.Collections.Generic.List<int>> CountyIdGroups(this System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference>? countyReferences, System.Collections.Generic.IReadOnlyDictionary<string,System.Collections.Generic.HashSet<int>>? countyIds_ByCode=null);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroups(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_string,System.Collections.Generic.HashSet_int__).countyReferences'></a>
+
+`countyReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts the caller named\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroups(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Collections.Generic.IReadOnlyDictionary_string,System.Collections.Generic.HashSet_int__).countyIds_ByCode'></a>
+
+`countyIds_ByCode` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+Every part of each code, as looked up from the database, keyed by code\. Only codes present among the references are widened; a code the dictionary does not name keeps the parts supplied with it\.
+
+#### Returns
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
+One group of identifiers per county code, ordered by lowest identifier, or an empty list when nothing was supplied\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroupsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## Query\.CountyIdGroupsAsync\(this AdministrativeAreal2DPostgreSQLConverter, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Resolves county part identifiers into one group per county code, each group widened to every part the database holds for its code\.
+
+A county code names one `administrative_areal_2d` row per polygon part, so a run driven per identifier would sample or repair a multi-part county once per part. The groups this returns are the scope a run walks instead: one group per code, each covering the whole county, so its territory is reached exactly once and every point it produces can be filed under the part containing it.
+
+It lives here rather than in a host because it is the same question for every terrain caller: the sampling task, the gap-fill task and any future one have to mean the same thing by a county, and each answering it for itself is how a whole county came to be stored once per part in the first place.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<System.Collections.Generic.List<int>>?> CountyIdGroupsAsync(this DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroupsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter used to read the parts and their codes\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroupsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county part identifiers the run is scoped to\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroupsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdGroupsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+One sorted group of part identifiers per county code, ordered by lowest identifier, or null when the parts or their codes could not be read \- an unreadable scope must not silently narrow to the named parts and file a whole county under one of them\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_)'></a>
 
 ## Query\.CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>\) Method
