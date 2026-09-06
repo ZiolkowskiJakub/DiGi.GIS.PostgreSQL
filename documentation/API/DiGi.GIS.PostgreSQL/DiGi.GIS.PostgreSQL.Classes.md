@@ -15245,60 +15245,66 @@ public PostgreSQLBuilding2DCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.P
 
 The [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') instance to copy from\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool)'></a>
 
-## PostgreSQLBuilding2DCountyPartRefreshResult\(long, long, long, long, long, long, long, bool\) Constructor
+## PostgreSQLBuilding2DCountyPartRefreshResult\(long, long, long, long, long, long, long, long, bool\) Constructor
 
 Initializes a new instance of the [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult') class\.
 
 ```csharp
-public PostgreSQLBuilding2DCountyPartRefreshResult(long codeCount, long readCount, long moveCount, long movedCount, long blockedCount, long unresolvedCount, long referencedObjectMovedCount, bool cancelled);
+public PostgreSQLBuilding2DCountyPartRefreshResult(long codeCount, long readCount, long moveCount, long movedCount, long blockedCount, long unresolvedCount, long referencedObjectMovedCount, long failedCodeCount, bool cancelled);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).codeCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).codeCount'></a>
 
 `codeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of multi\-part county codes examined\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).readCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).readCount'></a>
 
 `readCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of building rows read out of the database\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).moveCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).moveCount'></a>
 
 `moveCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of building rows found to be filed under a part their footprint does not lie in\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).movedCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).movedCount'></a>
 
 `movedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of building rows actually moved\. Zero on a dry run\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).blockedCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).blockedCount'></a>
 
 `blockedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of moves the destination part refused because it already holds that reference\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).unresolvedCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).unresolvedCount'></a>
 
 `unresolvedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of building rows no part could be decided for, left where they are\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).referencedObjectMovedCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).referencedObjectMovedCount'></a>
 
 `referencedObjectMovedCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of references carried onto the new part in the tables keyed on a building\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,bool).cancelled'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).failedCodeCount'></a>
+
+`failedCodeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of counties stepped over after a failure, which the run reports rather than ending on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.PostgreSQLBuilding2DCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).cancelled'></a>
 
 `cancelled` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
@@ -15356,6 +15362,21 @@ Gets the number of multi\-part county codes examined\.
 
 ```csharp
 public long CodeCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult.FailedCodeCount'></a>
+
+## PostgreSQLBuilding2DCountyPartRefreshResult\.FailedCodeCount Property
+
+Gets the number of counties stepped over after a failure\.
+
+A county that fails is logged with the exception that caused it and the run carries on, because the counties are independent of each other. The run does not report success while this is not zero: what it left undone is finished by running it again, and a run reported as successful is a run nobody goes back to.
+
+```csharp
+public long FailedCodeCount { get; }
 ```
 
 #### Property Value

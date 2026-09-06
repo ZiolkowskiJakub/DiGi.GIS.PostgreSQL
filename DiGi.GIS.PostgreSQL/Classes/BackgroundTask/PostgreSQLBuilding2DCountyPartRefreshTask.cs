@@ -124,6 +124,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             long blockedCount = 0;
             long unresolvedCount = 0;
             long referencedObjectMovedCount = 0;
+            long failedCodeCount = 0;
             bool cancelled = false;
 
             List<string> summaryLines =
@@ -160,22 +161,46 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     List<int> countyIds_Code = administrativeAreal2Ds_Code.ConvertAll(x => x.Id);
 
+                    bool failed_Code = false;
+
                     long readCount_Code = 0;
-                    foreach (int countyId in countyIds_Code)
+                    List<Building2DCountyPartMoveResult>? building2DCountyPartMoveResults;
+
+                    // One county failing does not end the run. The counties are independent of each other,
+                    // and every mover skips what already sits where it belongs, so a county stepped over
+                    // here is finished by running the task again rather than by starting from nothing.
+                    try
                     {
-                        long count = await building2DPostgreSQLConverter.CountAsync(countyId, cancellationToken: cancellationToken);
-                        if (count > 0)
+                        foreach (int countyId in countyIds_Code)
                         {
-                            readCount_Code += count;
+                            long count = await building2DPostgreSQLConverter.CountAsync(countyId, cancellationToken: cancellationToken);
+                            if (count > 0)
+                            {
+                                readCount_Code += count;
+                            }
                         }
+
+                        building2DCountyPartMoveResults = await building2DPostgreSQLConverter.GetCountyPartMovesAsync(administrativeAreal2Ds_Code, tolerance, batchSize, cancellationToken: cancellationToken);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        failedCodeCount++;
+                        Serilog.Modify.Log(exception, "Code {Code}: the buildings could not be read, county stepped over", code);
+                        summaryLines.Add($"{code};{string.Join(" ", countyIds_Code)};;;;;read failed");
+                        continue;
                     }
 
                     readCount += readCount_Code;
 
-                    List<Building2DCountyPartMoveResult>? building2DCountyPartMoveResults = await building2DPostgreSQLConverter.GetCountyPartMovesAsync(administrativeAreal2Ds_Code, tolerance, batchSize, cancellationToken: cancellationToken);
                     if (building2DCountyPartMoveResults is null)
                     {
+                        failedCodeCount++;
                         Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: the buildings could not be read, county stepped over", code);
+                        summaryLines.Add($"{code};{string.Join(" ", countyIds_Code)};;;;;read failed");
                         continue;
                     }
 
@@ -232,34 +257,55 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             // county instead of scanning every partition of the table.
                             List<int> countyIds_Source = countyIds_Code.FindAll(x => x != countyId_Target);
 
-                            HashSet<string>? references_Moved = await building2DPostgreSQLConverter.RefreshCountyIdsAsync(references_Move, countyId_Target, countyIds_Source, cancellationToken: cancellationToken);
-                            if (references_Moved is null)
+                            // A destination that fails takes only itself down. The buildings already moved
+                            // stay moved and the rows keyed on them have already followed, so the estate is
+                            // consistent as far as it got and the rest is picked up by the next run.
+                            try
                             {
-                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: the move onto part {CountyId} could not be attempted", code, countyId_Target);
-                                continue;
+                                HashSet<string>? references_Moved = await building2DPostgreSQLConverter.RefreshCountyIdsAsync(references_Move, countyId_Target, countyIds_Source, cancellationToken: cancellationToken);
+                                if (references_Moved is null)
+                                {
+                                    failed_Code = true;
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: the move onto part {CountyId} could not be attempted", code, countyId_Target);
+                                    continue;
+                                }
+
+                                movedCount_Code += references_Moved.Count;
+                                blockedCount_Code += references_Move.Count - references_Moved.Count;
+
+                                longProgressWrapper?.Increment(references_Moved.Count);
+
+                                if (references_Moved.Count != references_Move.Count)
+                                {
+                                    // The destination already held that reference. Deleting either copy is a
+                                    // decision for a person, so both are left and the reference is reported.
+                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: {Blocked} of {Requested} buildings could not move onto part {CountyId} - it already holds the reference", code, references_Move.Count - references_Moved.Count, references_Move.Count, countyId_Target);
+                                }
+
+                                if (postgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects && references_Moved.Count != 0)
+                                {
+                                    referencedObjectMovedCount += await RefreshReferencedObjectsAsync(gISPostgreSQLConverterManager, references_Moved, countyId_Target, countyIds_Source, cancellationToken);
+                                }
                             }
-
-                            movedCount_Code += references_Moved.Count;
-                            blockedCount_Code += references_Move.Count - references_Moved.Count;
-
-                            longProgressWrapper?.Increment(references_Moved.Count);
-
-                            if (references_Moved.Count != references_Move.Count)
+                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                             {
-                                // The destination already held that reference. Deleting either copy is a
-                                // decision for a person, so both are left and the reference is reported.
-                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: {Blocked} of {Requested} buildings could not move onto part {CountyId} - it already holds the reference", code, references_Move.Count - references_Moved.Count, references_Move.Count, countyId_Target);
+                                throw;
                             }
-
-                            if (postgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects && references_Moved.Count != 0)
+                            catch (Exception exception)
                             {
-                                referencedObjectMovedCount += await RefreshReferencedObjectsAsync(gISPostgreSQLConverterManager, references_Moved, countyId_Target, countyIds_Source, cancellationToken);
+                                failed_Code = true;
+                                Serilog.Modify.Log(exception, "Code {Code}: the move onto part {CountyId} failed", code, countyId_Target);
                             }
                         }
                     }
 
                     movedCount += movedCount_Code;
                     blockedCount += blockedCount_Code;
+
+                    if (failed_Code)
+                    {
+                        failedCodeCount++;
+                    }
 
                     if (dryRun)
                     {
@@ -287,20 +333,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
             summaryLines.Add($"Blocked by the destination: {blockedCount}");
             summaryLines.Add($"Undecidable: {unresolvedCount}");
             summaryLines.Add($"Referenced object references carried: {referencedObjectMovedCount}");
+            summaryLines.Add($"Codes stepped over after a failure: {failedCodeCount}");
             summaryLines.Add($"Ended: {DateTime.Now:yyyy-MM-dd HH:mm:ss}{(cancelled ? " after being cancelled" : string.Empty)}");
 
             await streamWriter.FlushAsync(CancellationToken.None);
 
             await File.WriteAllLinesAsync(System.IO.Path.Combine(directory, "Building2D_CountyPartRefresh_Summary.txt"), summaryLines, CancellationToken.None);
 
-            PostgreSQLBuilding2DCountyPartRefreshResult = new PostgreSQLBuilding2DCountyPartRefreshResult(codeCount, readCount, moveCount, movedCount, blockedCount, unresolvedCount, referencedObjectMovedCount, cancelled);
+            PostgreSQLBuilding2DCountyPartRefreshResult = new PostgreSQLBuilding2DCountyPartRefreshResult(codeCount, readCount, moveCount, movedCount, blockedCount, unresolvedCount, referencedObjectMovedCount, failedCodeCount, cancelled);
 
             Serilog.Modify.Log(
-                cancelled ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
-                "{Type} ended{Cancelled}. DryRun: {DryRun}. Codes {Codes}, read {Read}, wrongly filed {Move}, moved {Moved}, blocked {Blocked}, undecidable {Unresolved}, referenced object references carried {Referenced}. Report written to {Directory}",
-                nameof(PostgreSQLBuilding2DCountyPartRefreshTask), cancelled ? " after being cancelled" : string.Empty, dryRun, codeCount, readCount, moveCount, movedCount, blockedCount, unresolvedCount, referencedObjectMovedCount, directory);
+                cancelled || failedCodeCount != 0 ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
+                "{Type} ended{Cancelled}. DryRun: {DryRun}. Codes {Codes}, read {Read}, wrongly filed {Move}, moved {Moved}, blocked {Blocked}, undecidable {Unresolved}, referenced object references carried {Referenced}, codes stepped over {Failed}. Report written to {Directory}",
+                nameof(PostgreSQLBuilding2DCountyPartRefreshTask), cancelled ? " after being cancelled" : string.Empty, dryRun, codeCount, readCount, moveCount, movedCount, blockedCount, unresolvedCount, referencedObjectMovedCount, failedCodeCount, directory);
 
-            return !cancelled;
+            // A county stepped over leaves the run incomplete, and a run that reports success is a run
+            // nobody goes back to. Cancellation and a failed county are both reasons to look at the log.
+            return !cancelled && failedCodeCount == 0;
         }
 
         /// <summary>
@@ -348,24 +397,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // The tables keyed on (county_id, unique_id). Their own converter already knows how to move a
             // row between partitions; it searches every partition rather than the parts named here, which is
             // the cost of an interface that predates this run.
+            //
+            // That search is why they get an hour rather than the ten minutes of the default: the index on
+            // these tables leads with county_id, so a statement naming only references cannot seek and reads
+            // every partition. It is one statement per county, carrying all of its references at once - for
+            // a county of 157 000 buildings the ten minutes is not obviously enough, and a statement that
+            // times out here would leave the buildings moved and the models behind them.
+            const int commandTimeout_Unpruned = 3600;
             BuildingModelPostgreSQLConverter? buildingModelPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingModelPostgreSQLConverter>();
             if (buildingModelPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await buildingModelPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, cancellationToken: cancellationToken);
+                HashSet<string>? references_Moved = await buildingModelPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
                 result += Count(references_Moved, Constants.TableName.BuildingModel, countyId);
             }
 
             YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<YearBuiltDataPostgreSQLConverter>();
             if (yearBuiltDataPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await yearBuiltDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, cancellationToken: cancellationToken);
+                HashSet<string>? references_Moved = await yearBuiltDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
                 result += Count(references_Moved, Constants.TableName.YearBuiltData, countyId);
             }
 
             Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>();
             if (building2DOccupancyDataPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await building2DOccupancyDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, cancellationToken: cancellationToken);
+                HashSet<string>? references_Moved = await building2DOccupancyDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
                 result += Count(references_Moved, Constants.TableName.OccupancyData_Building2D, countyId);
             }
 

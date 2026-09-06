@@ -20,6 +20,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         [JsonInclude, JsonPropertyName(nameof(CodeCount))]
         private readonly long codeCount;
 
+        [JsonInclude, JsonPropertyName(nameof(FailedCodeCount))]
+        private readonly long failedCodeCount;
+
         [JsonInclude, JsonPropertyName(nameof(MoveCount))]
         private readonly long moveCount;
 
@@ -45,10 +48,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="blockedCount">The number of moves the destination part refused because it already holds that reference.</param>
         /// <param name="unresolvedCount">The number of building rows no part could be decided for, left where they are.</param>
         /// <param name="referencedObjectMovedCount">The number of references carried onto the new part in the tables keyed on a building.</param>
+        /// <param name="failedCodeCount">The number of counties stepped over after a failure, which the run reports rather than ending on.</param>
         /// <param name="cancelled">Whether the run was cancelled before reaching the end.</param>
-        public PostgreSQLBuilding2DCountyPartRefreshResult(long codeCount, long readCount, long moveCount, long movedCount, long blockedCount, long unresolvedCount, long referencedObjectMovedCount, bool cancelled)
+        public PostgreSQLBuilding2DCountyPartRefreshResult(long codeCount, long readCount, long moveCount, long movedCount, long blockedCount, long unresolvedCount, long referencedObjectMovedCount, long failedCodeCount, bool cancelled)
         {
             this.codeCount = codeCount;
+            this.failedCodeCount = failedCodeCount;
             this.readCount = readCount;
             this.moveCount = moveCount;
             this.movedCount = movedCount;
@@ -68,6 +73,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             if (postgreSQLBuilding2DCountyPartRefreshResult is not null)
             {
                 codeCount = postgreSQLBuilding2DCountyPartRefreshResult.codeCount;
+                failedCodeCount = postgreSQLBuilding2DCountyPartRefreshResult.failedCodeCount;
                 readCount = postgreSQLBuilding2DCountyPartRefreshResult.readCount;
                 moveCount = postgreSQLBuilding2DCountyPartRefreshResult.moveCount;
                 movedCount = postgreSQLBuilding2DCountyPartRefreshResult.movedCount;
@@ -104,6 +110,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonIgnore]
         public long CodeCount => codeCount;
+
+        /// <summary>
+        /// Gets the number of counties stepped over after a failure.
+        /// <para>A county that fails is logged with the exception that caused it and the run carries on, because the counties are independent of each other. The run does not report success while this is not zero: what it left undone is finished by running it again, and a run reported as successful is a run nobody goes back to.</para>
+        /// </summary>
+        [JsonIgnore]
+        public long FailedCodeCount => failedCodeCount;
 
         /// <summary>
         /// Gets the number of building rows found to be filed under a part their footprint does not lie in.
