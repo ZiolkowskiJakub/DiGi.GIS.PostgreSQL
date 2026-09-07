@@ -23,7 +23,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// Re-files every 2D building of a multi-part county under the polygon part its footprint lies in, and carries everything keyed on that building with it.
     /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part. Imports that resolved a code to a single part filed a whole county under it, and only geometry can say which part a building really belongs to - so a county can read back empty on the part holding its territory while every one of its buildings sits on a neighbouring exclave.</para>
     /// <para>Each building is decided with <see cref="Query.CountyId(System.Collections.Generic.IDictionary{int, Geometry.Planar.Interfaces.IPolygonal2D}, Geometry.Planar.Interfaces.IPolygonal2D, double)"/>, the same decision the import makes, and moved onto the part it belongs to. A building already sitting where it belongs is not touched, so a run over a healthy county does nothing.</para>
-    /// <para><b>The rows keyed on a moved building move with it</b> - its 3D buildings, models, year built, occupancy, orthophotos and building data - unless <see cref="PostgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects"/> says otherwise. Leaving them behind would make them unreachable, because every read of those tables filters on <c>county_id</c> first.</para>
+    /// <para><b>The rows keyed on a building are pulled onto the part that building sits on</b> - its 3D buildings, models, year built, occupancy, orthophotos and building data - unless <see cref="PostgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects"/> says otherwise. Leaving them behind would make them unreachable, because every read of those tables filters on <c>county_id</c> first.</para>
+    /// <para>That sweep covers <b>every</b> building of the county rather than the ones a given run moved, which is what makes the run repeatable. A run interrupted between moving the buildings and carrying their rows leaves a state no re-decision would notice - the buildings are already right, so nothing looks wrong - and the sweep is what finds it. A mover only touches a row sitting under a different part, so a county already consistent costs the reads and nothing else.</para>
     /// <para><b>Reports by default and writes nothing.</b> <see cref="PostgreSQLBuilding2DCountyPartRefreshOptions.DryRun"/> has to be turned off deliberately, and the report a dry run produces is what the move should be reviewed against.</para>
     /// <para>The report is written into <see cref="PostgreSQLBuilding2DCountyPartRefreshOptions.ReportDirectory"/> as well as to the log: one row per building in <c>Building2D_CountyPartRefresh.csv</c> and per-code totals in <c>Building2D_CountyPartRefresh_Summary.txt</c>. The row file is flushed per code, so a run interrupted late still leaves everything it had already decided.</para>
     /// <para>Nothing is deleted anywhere. A row the destination part will not take - it already holds that reference - stays where it is and is counted as blocked, for a person to settle.</para>
@@ -282,10 +283,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Code {Code}: {Blocked} of {Requested} buildings could not move onto part {CountyId} - it already holds the reference", code, references_Move.Count - references_Moved.Count, references_Move.Count, countyId_Target);
                                 }
 
-                                if (postgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects && references_Moved.Count != 0)
-                                {
-                                    referencedObjectMovedCount += await RefreshReferencedObjectsAsync(gISPostgreSQLConverterManager, references_Moved, countyId_Target, countyIds_Source, cancellationToken);
-                                }
+                                // The rows keyed on these buildings are carried by the sweep below rather
+                                // than here, so that they are carried for every building of the county and
+                                // not only for the ones this run happened to move.
                             }
                             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                             {
@@ -301,6 +301,56 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                     movedCount += movedCount_Code;
                     blockedCount += blockedCount_Code;
+
+                    // Everything keyed on a building is pulled onto the part that building sits on, for
+                    // every building of the county rather than for the ones this run moved. That is what
+                    // makes the run repeatable: the buildings move once, and a later run still finds and
+                    // carries anything left behind - which is exactly the state a run interrupted between
+                    // the two halves leaves. A mover only touches a row sitting under a different part, so
+                    // a county already consistent costs the reads and nothing else.
+                    if (!dryRun && postgreSQLBuilding2DCountyPartRefreshOptions.ReferencedObjects)
+                    {
+                        foreach (int countyId in countyIds_Code)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+
+                            List<int> countyIds_Source = countyIds_Code.FindAll(x => x != countyId);
+
+                            try
+                            {
+                                List<Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, cancellationToken: cancellationToken);
+                                if (building2DReferences is null || building2DReferences.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                List<string> references_Part = [];
+                                foreach (Building2DReference building2DReference in building2DReferences)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(building2DReference?.Reference))
+                                    {
+                                        references_Part.Add(building2DReference.Reference!);
+                                    }
+                                }
+
+                                if (references_Part.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                referencedObjectMovedCount += await RefreshReferencedObjectsAsync(gISPostgreSQLConverterManager, references_Part, countyId, countyIds_Source, cancellationToken);
+                            }
+                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                            {
+                                throw;
+                            }
+                            catch (Exception exception)
+                            {
+                                failed_Code = true;
+                                Serilog.Modify.Log(exception, "Code {Code}: carrying the rows keyed on the buildings of part {CountyId} failed", code, countyId);
+                            }
+                        }
+                    }
 
                     if (failed_Code)
                     {
@@ -398,30 +448,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // row between partitions; it searches every partition rather than the parts named here, which is
             // the cost of an interface that predates this run.
             //
-            // That search is why they get an hour rather than the ten minutes of the default: the index on
-            // these tables leads with county_id, so a statement naming only references cannot seek and reads
-            // every partition. It is one statement per county, carrying all of its references at once - for
-            // a county of 157 000 buildings the ten minutes is not obviously enough, and a statement that
-            // times out here would leave the buildings moved and the models behind them.
-            const int commandTimeout_Unpruned = 3600;
+            // They are given the parts to look in as well. Their index leads with county_id, so a statement
+            // naming only references has nothing to seek on and reads every partition - which is what a
+            // national run died of.
             BuildingModelPostgreSQLConverter? buildingModelPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingModelPostgreSQLConverter>();
             if (buildingModelPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await buildingModelPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
+                HashSet<string>? references_Moved = await buildingModelPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, countyIds_Source, cancellationToken: cancellationToken);
                 result += Count(references_Moved, Constants.TableName.BuildingModel, countyId);
             }
 
             YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<YearBuiltDataPostgreSQLConverter>();
             if (yearBuiltDataPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await yearBuiltDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
+                HashSet<string>? references_Moved = await yearBuiltDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, countyIds_Source, cancellationToken: cancellationToken);
                 result += Count(references_Moved, Constants.TableName.YearBuiltData, countyId);
             }
 
             Building2DOccupancyDataPostgreSQLConverter? building2DOccupancyDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<Building2DOccupancyDataPostgreSQLConverter>();
             if (building2DOccupancyDataPostgreSQLConverter is not null)
             {
-                HashSet<string>? references_Moved = await building2DOccupancyDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, commandTimeout_Unpruned, cancellationToken);
+                HashSet<string>? references_Moved = await building2DOccupancyDataPostgreSQLConverter.RefreshCountyIdsAsync(references, countyId, countyIds_Source, cancellationToken: cancellationToken);
                 result += Count(references_Moved, Constants.TableName.OccupancyData_Building2D, countyId);
             }
 

@@ -44,18 +44,25 @@ namespace DiGi.GIS.PostgreSQL
             // counts as a collision on arrival, and how rows carrying one key are ranked so that only one of
             // them moves. For building that is (reference, lod, year) - the same tuple its unique index
             // carries - so a model of another level of detail at the destination does not block the move.
-            List<string> columnNames_Key;
+            //
+            // Each is paired with whether it is nullable, because that decides how it may be compared. A
+            // column declared NOT NULL is compared with =, which an index can serve; IS NOT DISTINCT FROM
+            // means the same thing for it and cannot be indexed at all. Getting this wrong does not give a
+            // wrong answer, it gives a sequential scan: every one of these tables indexes
+            // (county_id, reference), so a comparison the index cannot serve leaves nothing to seek on, and
+            // a batch carrying a single reference measured 31 seconds against production.
+            List<(string ColumnName, bool Nullable)> columnNames_Key;
             if (tableName == Constants.TableName.Building)
             {
-                columnNames_Key = ["reference", "lod", "year"];
+                columnNames_Key = [("reference", false), ("lod", true), ("year", true)];
             }
             else if (tableName == Constants.TableName.OrtoDatas)
             {
-                columnNames_Key = ["reference"];
+                columnNames_Key = [("reference", false)];
             }
             else if (tableName == Constants.TableName.BuildingData)
             {
-                columnNames_Key = [Core.IO.Query.UniqueId(GIS.IO.Constants.Column.Reference) ?? "reference"];
+                columnNames_Key = [(Core.IO.Query.UniqueId(GIS.IO.Constants.Column.Reference) ?? "reference", false)];
             }
             else
             {
@@ -104,15 +111,15 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            foreach (string columnName_Key in columnNames_Key)
+            foreach ((string ColumnName, bool Nullable) columnName_Key in columnNames_Key)
             {
-                if (!columnNames_Existing.Contains(columnName_Key))
+                if (!columnNames_Existing.Contains(columnName_Key.ColumnName))
                 {
                     return null;
                 }
             }
 
-            string columnName_Reference = columnNames_Key[0];
+            string columnName_Reference = columnNames_Key[0].ColumnName;
 
             // A row cannot move into a partition that does not exist, and the part a whole county belongs to
             // may never have held one of these rows either. Idempotent once the partition is there.
@@ -133,14 +140,26 @@ namespace DiGi.GIS.PostgreSQL
             List<string> columnNames_Key_Quoted = [];
             List<string> conditions_Target = [];
             List<string> conditions_Stray = [];
-            foreach (string columnName_Key in columnNames_Key)
+            foreach ((string ColumnName, bool Nullable) columnName_Key in columnNames_Key)
             {
-                string columnName_Quoted = npgsqlCommandBuilder.QuoteIdentifier(columnName_Key);
+                string columnName_Quoted = npgsqlCommandBuilder.QuoteIdentifier(columnName_Key.ColumnName);
+
+                // = where the column cannot be null, so the index on (county_id, reference) can serve it.
+                // IS NOT DISTINCT FROM only where a null is a value the key carries, as lod and year do on
+                // building, whose index is declared NULLS NOT DISTINCT for exactly that reason.
+                string @operator = columnName_Key.Nullable ? "IS NOT DISTINCT FROM" : "=";
 
                 columnNames_Key_Quoted.Add($"t.{columnName_Quoted}");
-                conditions_Target.Add($"t_Target.{columnName_Quoted} IS NOT DISTINCT FROM t.{columnName_Quoted}");
-                conditions_Stray.Add($"t.{columnName_Quoted} IS NOT DISTINCT FROM s.{columnName_Quoted}");
+                conditions_Target.Add($"t_Target.{columnName_Quoted} {@operator} t.{columnName_Quoted}");
+                conditions_Stray.Add($"t.{columnName_Quoted} {@operator} s.{columnName_Quoted}");
             }
+
+            // The parts the rows can be sitting under are written into the statement rather than carried as
+            // a nullable parameter tested with OR. An OR against a parameter is not something the planner
+            // can prune a partitioned table on, so the version that had one read all 406 partitions of
+            // building_data on every batch - which is how a national run spent ten minutes per county and
+            // then timed out (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68).
+            string condition_Source = countyIds_Source is null ? string.Empty : "\r\n                      AND t.county_id = ANY(@countyIds)";
 
             // NOT EXISTS is the collision guard for the unique key. It is cheap despite the surrounding
             // scan: county_id is fixed, so it prunes to the destination partition and probes the index the
@@ -157,8 +176,7 @@ namespace DiGi.GIS.PostgreSQL
                            ROW_NUMBER() OVER (PARTITION BY {string.Join(", ", columnNames_Key_Quoted)} ORDER BY t.county_id) AS move_rank
                     FROM {tableName_Quoted} t
                     WHERE t.{npgsqlCommandBuilder.QuoteIdentifier(columnName_Reference)} = ANY(@references)
-                      AND t.county_id <> @countyId
-                      AND (@countyIds IS NULL OR t.county_id = ANY(@countyIds))
+                      AND t.county_id <> @countyId{condition_Source}
                       AND NOT EXISTS (
                               SELECT 1
                               FROM {tableName_Quoted} t_Target
@@ -188,7 +206,10 @@ namespace DiGi.GIS.PostgreSQL
                 npgsqlCommand.CommandTimeout = commandTimeout;
                 npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
                 npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Batch });
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array is null ? (object)DBNull.Value : countyIds_Array });
+                if (countyIds_Array is not null)
+                {
+                    npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
+                }
 
                 await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
                 while (await npgsqlDataReader.ReadAsync(cancellationToken))

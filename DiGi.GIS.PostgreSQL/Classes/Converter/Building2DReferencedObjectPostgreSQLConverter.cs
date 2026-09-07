@@ -690,10 +690,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
         /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection is null.</returns>
-        public async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -746,6 +747,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
             // pass. Excluding references that merely have a row under countyId would skip exactly
             // those split ones.
             //
+            // The parts the rows can still be sitting under are written into the statement when the caller
+            // knows them, because the index here leads with county_id: without a predicate on it there is
+            // nothing to seek on and every partition is read. A batch carrying one reference measured close
+            // to a minute that way (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68). Callers that do not know where
+            // a row strayed to still pay for the whole table, which is the cost this parameter avoids.
+            int[]? countyIds_Array = countyIds_Source is null ? null : [.. new HashSet<int>(countyIds_Source)];
+
+            string condition_Source = countyIds_Array is null ? string.Empty : "\r\n                      AND t.county_id = ANY(@countyIds)";
+
             // NOT EXISTS is the collision guard for UNIQUE (county_id, unique_id). It is cheap
             // despite the surrounding scan: county_id is fixed, so it prunes to the destination
             // partition and probes the index that constraint is already backed by.
@@ -765,7 +775,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                            ROW_NUMBER() OVER (PARTITION BY t.unique_id ORDER BY t.created_at DESC, t.id DESC) AS move_rank
                     FROM {TableName} t
                     WHERE t.reference = ANY(@references)
-                      AND t.county_id <> @countyId
+                      AND t.county_id <> @countyId{condition_Source}
                       AND NOT EXISTS (
                               SELECT 1
                               FROM {TableName} t_Target
@@ -787,6 +797,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
             npgsqlCommand.Parameters.AddWithValue("references", references_Array);
 
+            if (countyIds_Array is not null)
+            {
+                npgsqlCommand.Parameters.AddWithValue("countyIds", countyIds_Array);
+            }
+
             // RETURNING yields one row per record moved, and several of them can belong to one
             // building - the set collapses those without the server having to sort for DISTINCT.
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
@@ -807,10 +822,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
         /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection could not be created.</returns>
-        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -825,7 +841,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, commandTimeout, cancellationToken);
+            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, countyIds_Source, commandTimeout, cancellationToken);
         }
 
         /// <summary>

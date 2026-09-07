@@ -65,8 +65,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public bool DryRun { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the rows keyed on a moved building - its 3D buildings, models, year built, occupancy, orthophotos and building data - are carried onto the same county part.
+        /// Gets or sets a value indicating whether the rows keyed on a building - its 3D buildings, models, year built, occupancy, orthophotos and building data - are pulled onto the part that building sits on.
         /// <para>Leaving them behind makes them unreachable: every read of those tables filters on <c>county_id</c> first, so a row still filed under the part the building has left answers nothing. Turn it off only to move <c>building_2d</c> alone and knowingly accept that.</para>
+        /// <para>The sweep covers every building of the county, not only the ones a run moves, so it is also what repairs a run that stopped between the two halves.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName("ReferencedObjects")]
         public bool ReferencedObjects { get; set; } = true;
