@@ -76,7 +76,6 @@ Derived
 ↳ [PostgreSQLAdministrativeAreal2DCreateDatabaseTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLAdministrativeAreal2DCreateDatabaseTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLAdministrativeAreal2DCreateDatabaseTask')  
 ↳ [PostgreSQLAdministrativeAreal2DCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLAdministrativeAreal2DCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLAdministrativeAreal2DCreateTableTask')  
 ↳ [PostgreSQLAdministrativeAreal2DRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLAdministrativeAreal2DRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLAdministrativeAreal2DRefreshTask')  
-↳ [PostgreSQLBuilding2DCountyPartRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshTask')  
 ↳ [PostgreSQLBuilding2DCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCreateTableTask')  
 ↳ [PostgreSQLBuilding2DRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshTask')  
 ↳ [PostgreSQLBuildingDataUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask')  
@@ -117,7 +116,6 @@ public interface IGISPostgreSQLSerializableObject : DiGi.Core.Interfaces.ISerial
 Derived  
 ↳ [AdministrativeAreal2DReferencePath](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReferencePath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath')  
 ↳ [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult')  
-↳ [Building2DCountyPartMoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMoveResult')  
 ↳ [Building2DReferenceDuplicate](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceDuplicate')  
 ↳ [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')  
 ↳ [BuildingDataCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult')  
@@ -125,7 +123,6 @@ Derived
 ↳ [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult')  
 ↳ [OrtoDatasQueueResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasQueueResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasQueueResult')  
 ↳ [OrtoDatasSubdivisionResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasSubdivisionResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasSubdivisionResult')  
-↳ [PostgreSQLBuilding2DCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCountyPartRefreshResult')  
 ↳ [PostgreSQLBuilding2DRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshResult')  
 ↳ [PostgreSQLOrtoDatasRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasRefreshResult')  
 ↳ [PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')  

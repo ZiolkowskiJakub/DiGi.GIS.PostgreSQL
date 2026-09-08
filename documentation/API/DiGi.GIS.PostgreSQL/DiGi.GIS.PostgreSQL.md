@@ -1658,45 +1658,6 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 One sorted group of part identifiers per county code, ordered by lowest identifier, or null when the parts or their codes could not be read \- an unreadable scope must not silently narrow to the named parts and file a whole county under one of them\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIds(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double)'></a>
-
-## Query\.CountyIds\(this IEnumerable\<AdministrativeAreal2D\>, BoundingBox2D, double\) Method
-
-Narrows the polygon parts of a county to those whose stored extent reaches the given bounding box\.
-
-A part whose bounding box does not reach a building cannot contain it, because the polygon lies inside its own box. This is therefore a deduction rather than an approximation: what it removes could not have been the answer, and handing what is left to [CountyId\(this IDictionary&lt;int,IPolygonal2D&gt;, IPolygonal2D, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyId\(this System\.Collections\.Generic\.IDictionary\<int,DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D\>, DiGi\.Geometry\.Planar\.Interfaces\.IPolygonal2D, double\)') gives what testing every part would have given.
-
-What it buys is the geometry it does not read. Deciding a county of a hundred thousand buildings by containment means deserializing every footprint and testing it against polygons of thousands of vertices; where one part is left, the boxes have already decided and no footprint is needed at all.
-
-A part storing no extent is always a candidate - nothing is known about it, so nothing can be ruled out - and a building with no extent leaves every part standing for the same reason. An empty result means no part reaches the building: it lies outside the county as stored, and the caller has to fall back to every part so that the nearest one can be found.
-
-```csharp
-public static System.Collections.Generic.List<int> CountyIds(this System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double tolerance=0.001);
-```
-#### Parameters
-
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIds(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double).administrativeAreal2Ds'></a>
-
-`administrativeAreal2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
-
-The candidate county rows, normally every polygon part of one code\.
-
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIds(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double).boundingBox2D'></a>
-
-`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
-
-The stored extent of the building\.
-
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIds(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double).tolerance'></a>
-
-`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
-
-The distance tolerance used for the extent comparison\.
-
-#### Returns
-[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
-The identifiers of the parts that could contain the building, in the order the parts were given\. Empty when none reaches it or there were no parts\.
-
 <a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_)'></a>
 
 ## Query\.CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>\) Method
