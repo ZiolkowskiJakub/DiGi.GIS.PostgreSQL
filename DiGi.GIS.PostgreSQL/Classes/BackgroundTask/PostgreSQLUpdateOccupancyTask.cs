@@ -299,7 +299,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return true;
                 }
 
-                ILookup<int?, AdministrativeAreal2DReference> subdivisionsByCountyId = subdivisionReferences.Where(s => s != null && s.CountyId.HasValue).ToLookup(s => s.CountyId);
+                // A building and the subdivision holding its occupancy are not guaranteed to be filed under the same
+                // county polygon part, so the subdivision side of the pairing is widened to every part sharing the
+                // parent's code - the same rule the building data update scopes its runs by. Keying the pairing on the
+                // part alone left every building of a multi-part county whose subdivisions sit under a sibling part
+                // without a stored occupancy record, and calculated_occupancy unwritten.
+                Dictionary<int, HashSet<int>> siblingCountyGroups = countyReferences.SiblingCountyGroups();
+                Dictionary<int, HashSet<int>> inScopeSubdivisionIds_ByCountyId = Query.InScopeSubdivisionIds(subdivisionReferences, siblingCountyGroups);
+
+                Dictionary<int, AdministrativeAreal2DReference> subdivisionReferences_ById = [];
+                foreach (AdministrativeAreal2DReference subdivisionReference in subdivisionReferences)
+                {
+                    if (subdivisionReference is not null)
+                    {
+                        subdivisionReferences_ById[subdivisionReference.Id] = subdivisionReference;
+                    }
+                }
 
                 HashSet<int> countyIds = [.. countyReferences?.Select(c => c.Id) ?? []];
                 foreach (AdministrativeAreal2DReference subdivisionReference in subdivisionReferences)
@@ -314,7 +329,18 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    List<AdministrativeAreal2DReference> countySubdivisions = [.. subdivisionsByCountyId[countyId]];
+                    List<AdministrativeAreal2DReference> countySubdivisions = [];
+                    if (inScopeSubdivisionIds_ByCountyId.TryGetValue(countyId, out HashSet<int>? inScopeSubdivisionIds))
+                    {
+                        foreach (int inScopeSubdivisionId in inScopeSubdivisionIds)
+                        {
+                            if (subdivisionReferences_ById.TryGetValue(inScopeSubdivisionId, out AdministrativeAreal2DReference? subdivisionReference_InScope))
+                            {
+                                countySubdivisions.Add(subdivisionReference_InScope);
+                            }
+                        }
+                    }
+
                     if (countySubdivisions.Count == 0)
                     {
                         continue;

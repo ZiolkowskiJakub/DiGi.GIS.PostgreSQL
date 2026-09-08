@@ -685,16 +685,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <para>This repairs data filed under the wrong part of a multi-part county. <c>building_2d</c> is the source of truth for the <c>(county_id, reference)</c> pair; rows in this table that disagree with it are unreachable, because every read here filters on <c>county_id</c> first and so returns nothing for the part the building is now known to belong to.</para>
         /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
         /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}?, string, int?, int, CancellationToken)"/> - rather than having it silently discarded here.</para>
-        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. It is one statement for the whole batch: call it once per county with all of that county's references, never once per reference.</para>
+        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. Call it once per county with all of that county's references, never once per reference: the references are sent in batches inside, so one call is not one statement to lose on a timeout.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
         /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
         /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
         /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
+        /// <param name="batchSize">The number of references sent in one statement. One statement for a whole county is fewer round trips and a single timeout to lose them all in.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection is null.</returns>
-        public async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null || references is null)
             {
@@ -792,22 +793,38 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             string[] references_Array = [.. references_Unique];
 
-            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
-            npgsqlCommand.CommandTimeout = commandTimeout;
-            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
-            npgsqlCommand.Parameters.AddWithValue("references", references_Array);
+            // Sent in batches rather than as one statement carrying every reference of the county. One
+            // statement is fewer round trips, but it is also one timeout: a county of 157 354 buildings ran
+            // for the whole ten minutes and then lost all of it, while the counties either side of it
+            // finished (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68). A batch that fits inside the timeout turns
+            // a county that cannot be carried at all into one carried a thousand references at a time.
+            int batchSize_Effective = batchSize < 1 ? 1 : batchSize;
 
-            if (countyIds_Array is not null)
-            {
-                npgsqlCommand.Parameters.AddWithValue("countyIds", countyIds_Array);
-            }
+            List<string> references_List = [.. references_Unique];
 
-            // RETURNING yields one row per record moved, and several of them can belong to one
-            // building - the set collapses those without the server having to sort for DISTINCT.
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            for (int i = 0; i < references_List.Count; i += batchSize_Effective)
             {
-                result.Add(npgsqlDataReader.GetString(0));
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string[] references_Batch = [.. references_List.GetRange(i, System.Math.Min(batchSize_Effective, references_List.Count - i))];
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+                npgsqlCommand.Parameters.AddWithValue("references", references_Batch);
+
+                if (countyIds_Array is not null)
+                {
+                    npgsqlCommand.Parameters.AddWithValue("countyIds", countyIds_Array);
+                }
+
+                // RETURNING yields one row per record moved, and several of them can belong to one
+                // building - the set collapses those without the server having to sort for DISTINCT.
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    result.Add(npgsqlDataReader.GetString(0));
+                }
             }
 
             return result;
@@ -818,15 +835,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <para>This repairs data filed under the wrong part of a multi-part county. <c>building_2d</c> is the source of truth for the <c>(county_id, reference)</c> pair; rows in this table that disagree with it are unreachable, because every read here filters on <c>county_id</c> first and so returns nothing for the part the building is now known to belong to.</para>
         /// <para><c>county_id</c> is the <b>partition key</b>, so this is a row movement between partitions rather than an ordinary column update. The destination partition is created first - PostgreSQL cannot move a row into a partition that does not exist - and the identifiers of the rows are preserved, so anything holding an <c>id</c> from before the call still addresses the same record.</para>
         /// <para><b>Nothing is deleted.</b> The table constrains <c>UNIQUE (county_id, unique_id)</c>, so a row cannot move onto a destination that already holds that same stored object, and two rows carrying one <c>unique_id</c> under two different wrong counties cannot both arrive. Such a row is left exactly where it is and its reference is <b>not</b> reported, so a caller that compares the result against what it passed in learns which references still hold something to be resolved by hand - with <see cref="GetItemsByReferenceAsync"/> and <see cref="RemoveByUniqueIdsAsync(IEnumerable{string}?, string, int?, int, CancellationToken)"/> - rather than having it silently discarded here.</para>
-        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. It is one statement for the whole batch: call it once per county with all of that county's references, never once per reference.</para>
+        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition and reads every partition of the table once. Call it once per county with all of that county's references, never once per reference: the references are sent in batches inside, so one call is not one statement to lose on a timeout.</para>
         /// </summary>
         /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
         /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
         /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
+        /// <param name="batchSize">The number of references sent in one statement. One statement for a whole county is fewer round trips and a single timeout to lose them all in.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the references that had at least one row moved - not the number of rows - or null when no references were given or the connection could not be created.</returns>
-        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<HashSet<string>?> RefreshCountyIdsAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             if (references is null)
             {
@@ -841,7 +859,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, countyIds_Source, commandTimeout, cancellationToken);
+            return await RefreshCountyIdsAsync(npgsqlConnection, references, countyId, countyIds_Source, batchSize, commandTimeout, cancellationToken);
         }
 
         /// <summary>
