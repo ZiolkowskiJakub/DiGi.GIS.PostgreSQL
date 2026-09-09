@@ -464,7 +464,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
                         {
                             List<string> references = [.. building2Ds.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
-                            List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, targetCountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+                            // Fallback by reference: a stored year_built_data row may sit under a sibling polygon part
+                            // of the same county code. That is safe to write because Update_Building2D_PredictedYearBuilt
+                            // keys the row on the run's county (its parameter), never on the record's. DiGi.GIS.PostgreSQL#70
+                            List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, targetCountyId, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                             if (yearBuiltDatas is not null)
                             {
                                 List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
@@ -742,7 +746,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
                     {
                         List<string> references = [.. building2Ds_Unassigned.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
-                        List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+                        // Fallback by reference: a stored year_built_data row may sit under a sibling polygon part
+                        // of the same county code. That is safe to write because Update_Building2D_PredictedYearBuilt
+                        // keys the row on the run's county (its parameter), never on the record's. DiGi.GIS.PostgreSQL#70
+                        List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                         if (yearBuiltDatas is not null)
                         {
                             List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
