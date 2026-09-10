@@ -137,3 +137,9 @@ County resolution ran and named no part\. Not necessarily the caller's fault \- 
 `PartitionUnavailable` 3
 
 The county resolved, but its partition could not be created, so every row filed under it was dropped\. Server\-side\.
+
+<a name='DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason.MissingCounty'></a>
+
+`MissingCounty` 4
+
+The caller did not state a county identifier, and the row carries no geometry from which one could be inferred\. A defect in the posted payload\.

@@ -1120,8 +1120,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <param name="building2DReferencedObjects">An <see cref="IEnumerable{TBuilding2DReferencedObject}"/> containing the referenced objects to be updated, or <c>null</c>.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="HashSet{T}"/> of <see cref="long"/> identifiers for the objects that were updated, or <c>null</c> if no updates occurred.</returns>
-        public async Task<HashSet<long>?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all - no connection, or the table could not be created.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (building2DReferencedObjects is null)
             {
@@ -1145,10 +1145,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             HashSet<long> result = [];
+            List<Rejection> rejections = [];
             List<TBuilding2DReferencedObject> building2DReferencedObjects_List = [.. building2DReferencedObjects.Where(x => x != null)];
             if (building2DReferencedObjects_List.Count == 0)
             {
-                return result;
+                return new PostgreSQLUpdateResult(result, rejections);
             }
 
             IEnumerable<IGrouping<int?, TBuilding2DReferencedObject>> groupings = building2DReferencedObjects_List.GroupBy(x => x.CountyId);
@@ -1159,6 +1160,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 if (!grouping.Key.HasValue)
                 {
+                    // Recorded rather than skipped in silence, so the rejection count stays an exact
+                    // account of the rows that never reached the database.
+                    foreach (TBuilding2DReferencedObject building2DReferencedObject_Rejected in grouping)
+                    {
+                        rejections.Add(new Rejection(building2DReferencedObject_Rejected.Reference,
+                            Enums.UpdateRejectionReason.MissingCounty));
+                    }
+
                     continue;
                 }
 
@@ -1215,7 +1224,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            return result;
+            return new PostgreSQLUpdateResult(result, rejections);
         }
 
         /// <summary>

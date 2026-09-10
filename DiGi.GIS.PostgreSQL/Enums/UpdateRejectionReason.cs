@@ -28,5 +28,10 @@ namespace DiGi.GIS.PostgreSQL.Enums
         /// The county resolved, but its partition could not be created, so every row filed under it was dropped. Server-side.
         /// </summary>
         [Description("Partition Unavailable")] PartitionUnavailable = 3,
+
+        /// <summary>
+        /// The caller did not state a county identifier, and the row carries no geometry from which one could be inferred. A defect in the posted payload.
+        /// </summary>
+        [Description("Missing County")] MissingCounty = 4,
     }
 }
