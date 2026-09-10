@@ -1691,7 +1691,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             HashSet<string> references_HeldUnderOwn = [.. building2DReferences_Resolved.Where(x => x.CountyId.HasValue && !string.IsNullOrWhiteSpace(x.Reference)).Select(x => $"{x.CountyId!.Value}_{x.Reference}")];
             HashSet<string> references_HeldAnywhere = [.. building2DReferences_Resolved.Where(x => !string.IsNullOrWhiteSpace(x.Reference)).Select(x => x.Reference!)];
 
-            List<Building2DReferencedObjectCountyPartMismatchResult> result = [];
+            Dictionary<int, List<string>> references_MismatchedByPart = [];
+            HashSet<string> references_MismatchedHeldElsewhere = [];
             foreach (int countyId_Part in countyIds)
             {
                 if (!references_ByCountyId.TryGetValue(countyId_Part, out HashSet<string>? references_Part) || references_Part is null)
@@ -1699,8 +1700,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                long countHeldElsewhere = 0;
-                long countOrphan = 0;
+                List<string>? references_Mismatched = null;
                 foreach (string reference in references_Part)
                 {
                     if (references_HeldUnderOwn.Contains($"{countyId_Part}_{reference}"))
@@ -1708,21 +1708,94 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
+                    references_Mismatched ??= [];
+                    references_Mismatched.Add(reference);
+
                     if (references_HeldAnywhere.Contains(reference))
                     {
-                        countHeldElsewhere++;
-                    }
-                    else
-                    {
-                        countOrphan++;
+                        references_MismatchedHeldElsewhere.Add(reference);
                     }
                 }
 
-                long count = countHeldElsewhere + countOrphan;
+                if (references_Mismatched is not null)
+                {
+                    references_MismatchedByPart[countyId_Part] = references_Mismatched;
+                }
+            }
+
+            if (references_MismatchedByPart.Count == 0)
+            {
+                return [];
+            }
+
+            // The classification above is per distinct reference, but the figure is a row count: several rows of one part can
+            // share a reference, and each of them needs the repair. Counting the pairs would report one misfile where the
+            // table holds ten, so the before and after of a repair would not match the rows actually moved.
+            //
+            // The pairs are matched as pairs, not over the two sets separately: a reference can be mismatched under one part
+            // while correctly held by another, so a cross-product filter would count rows that are not misfiles.
+            List<int> pairCountyIds = [];
+            List<string> pairReferences = [];
+            foreach (KeyValuePair<int, List<string>> references_Mismatched in references_MismatchedByPart)
+            {
+                foreach (string reference in references_Mismatched.Value)
+                {
+                    pairCountyIds.Add(references_Mismatched.Key);
+                    pairReferences.Add(reference);
+                }
+            }
+
+            string commandText_Counts = $@"
+                SELECT county_id, reference, COUNT(*) AS count
+                FROM {TableName}
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM unnest(@pairCountyIds, @pairReferences) AS pair(county_id, reference)
+                    WHERE pair.county_id = {TableName}.county_id
+                      AND pair.reference = {TableName}.reference)
+                GROUP BY county_id, reference;";
+
+            Dictionary<int, long> rows_ByPart = [];
+            Dictionary<int, long> rowsHeldElsewhere_ByPart = [];
+
+            await using (NpgsqlCommand npgsqlCommand_Counts = new(commandText_Counts, npgsqlConnection))
+            {
+                npgsqlCommand_Counts.CommandTimeout = commandTimeout;
+                npgsqlCommand_Counts.Parameters.Add(new NpgsqlParameter("pairCountyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = pairCountyIds.ToArray() });
+                npgsqlCommand_Counts.Parameters.Add(new NpgsqlParameter("pairReferences", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = pairReferences.ToArray() });
+
+                await using NpgsqlDataReader npgsqlDataReader_Counts = await npgsqlCommand_Counts.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_Counts.ReadAsync(cancellationToken))
+                {
+                    int countyId_Count = npgsqlDataReader_Counts.GetInt32(0);
+                    string reference_Count = npgsqlDataReader_Counts.GetString(1);
+                    long count_Rows = npgsqlDataReader_Counts.GetInt64(2);
+
+                    rows_ByPart[countyId_Count] = rows_ByPart.GetValueOrDefault(countyId_Count) + count_Rows;
+
+                    if (references_MismatchedHeldElsewhere.Contains(reference_Count))
+                    {
+                        rowsHeldElsewhere_ByPart[countyId_Count] = rowsHeldElsewhere_ByPart.GetValueOrDefault(countyId_Count) + count_Rows;
+                    }
+                }
+            }
+
+            List<Building2DReferencedObjectCountyPartMismatchResult> result = [];
+            foreach (int countyId_Part in countyIds)
+            {
+                if (!references_MismatchedByPart.ContainsKey(countyId_Part))
+                {
+                    continue;
+                }
+
+                long count = rows_ByPart.GetValueOrDefault(countyId_Part);
                 if (count == 0)
                 {
                     continue;
                 }
+
+                long countHeldElsewhere = rowsHeldElsewhere_ByPart.GetValueOrDefault(countyId_Part);
+                long countOrphan = count - countHeldElsewhere;
 
                 result.Add(new Building2DReferencedObjectCountyPartMismatchResult(code_ByCountyId[countyId_Part], countyId_Part, countyIds_ByCode[code_ByCountyId[countyId_Part]], count, countHeldElsewhere, countOrphan));
             }
