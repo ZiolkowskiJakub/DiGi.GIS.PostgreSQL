@@ -10171,7 +10171,9 @@ A task that represents the asynchronous operation\. The task result contains a n
 
 ## BuildingDataPostgreSQLConverter\.PullAsync\(int, IEnumerable\<string\>, string, int, int, CancellationToken\) Method
 
-Asynchronously pulls a keyset\-paginated chunk of building data from a partition county\.
+Asynchronously pulls a keyset\-paginated chunk of building data from a partition county, opening a connection of its own\.
+
+Each call opens a connection and resolves the column metadata, so a caller paging a whole partition should open one connection and use the overload taking it.
 
 ```csharp
 public System.Threading.Tasks.Task<DiGi.Core.IO.Table.Classes.Table?> PullAsync(int countyId, System.Collections.Generic.IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize=250, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -10209,6 +10211,65 @@ The page size count limit\.
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the async operation, returning the populated [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') if successful; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataPostgreSQLConverter\.PullAsync\(NpgsqlConnection, int, IEnumerable\<string\>, string, int, int, CancellationToken\) Method
+
+Asynchronously pulls a keyset\-paginated chunk of building data from a partition county over an already open connection\.
+
+Prefer this overload when paging a whole partition. The overload opening a connection of its own resolves the column metadata and opens a connection on every call, so paging a county of tens of thousands of rows through it costs one connection and one metadata query per page.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.Core.IO.Table.Classes.Table?> PullAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, System.Collections.Generic.IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize=250, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open connection the pull is executed on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The partition key identifying the county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).columnUniqueIds'></a>
+
+`columnUniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The optional list of column unique identifiers to project\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).lastReference'></a>
+
+`lastReference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The last reference string from the previous page used as the cursor seek\-key\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).pageSize'></a>
+
+`pageSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The page size count limit\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 

@@ -390,7 +390,47 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously pulls a keyset-paginated chunk of building data from a partition county.
+        /// Asynchronously pulls a keyset-paginated chunk of building data from a partition county over an already open connection.
+        /// <para>Prefer this overload when paging a whole partition. The overload opening a connection of its own resolves the column metadata and opens a connection on every call, so paging a county of tens of thousands of rows through it costs one connection and one metadata query per page.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The open connection the pull is executed on.</param>
+        /// <param name="countyId">The partition key identifying the county.</param>
+        /// <param name="columnUniqueIds">The optional list of column unique identifiers to project.</param>
+        /// <param name="lastReference">The last reference string from the previous page used as the cursor seek-key.</param>
+        /// <param name="pageSize">The page size count limit.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the async operation, returning the populated <see cref="Core.IO.Table.Classes.Table"/> if successful; otherwise, null.</returns>
+        public async Task<Core.IO.Table.Classes.Table?> PullAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
+
+            Core.IO.Table.Classes.Table table_Result = new(columns);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
+
+            bool isSuccess = await PullAsync(
+                npgsqlConnection,
+                table_Result,
+                IO.Constants.Column.Reference.UniqueId()!,
+                lastReference,
+                pageSize,
+                countyId,
+                commandTimeout,
+                cancellationToken);
+
+            return isSuccess ? table_Result : null;
+        }
+
+        /// <summary>
+        /// Asynchronously pulls a keyset-paginated chunk of building data from a partition county, opening a connection of its own.
+        /// <para>Each call opens a connection and resolves the column metadata, so a caller paging a whole partition should open one connection and use the overload taking it.</para>
         /// </summary>
         /// <param name="countyId">The partition key identifying the county.</param>
         /// <param name="columnUniqueIds">The optional list of column unique identifiers to project.</param>
@@ -401,13 +441,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task representing the async operation, returning the populated <see cref="Core.IO.Table.Classes.Table"/> if successful; otherwise, null.</returns>
         public async Task<Core.IO.Table.Classes.Table?> PullAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastReference, int pageSize = 250, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
-            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
-
-            Core.IO.Table.Classes.Table table_Result = new(columns);
-            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
-            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
-
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
             {
@@ -415,17 +448,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
-            bool isSuccess = await PullAsync(
-                npgsqlConnection_Db,
-                table_Result,
-                IO.Constants.Column.Reference.UniqueId()!,
-                lastReference,
-                pageSize,
-                countyId,
-                commandTimeout,
-                cancellationToken);
-
-            return isSuccess ? table_Result : null;
+            return await PullAsync(npgsqlConnection_Db, countyId, columnUniqueIds, lastReference, pageSize, commandTimeout, cancellationToken);
         }
 
         /// <summary>

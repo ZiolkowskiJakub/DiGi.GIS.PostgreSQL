@@ -1034,6 +1034,81 @@ The spacing a sampling run used, when it is known\. Supplying it is what fills i
 [TerrainPointDensityResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.TerrainPointDensityResult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointDensityResult')  
 The [TerrainPointDensityResult\(int, long, double, Nullable&lt;double&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.TerrainPointDensityResult(int,long,double,System.Nullable_double_) 'DiGi\.GIS\.PostgreSQL\.Create\.TerrainPointDensityResult\(int, long, double, System\.Nullable\<double\>\)'), or null when the count is negative or the area is not a usable measurement\.
 
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken)'></a>
+
+## Create\.TypologyAsync\(this BuildingDataPostgreSQLConverter, ColumnTypologyFilter\<Column\>, IEnumerable\<int\>, Column, TypologyItem, bool, int, int, CancellationToken\) Method
+
+Asynchronously classifies the building data of the given county partitions into a typology tree, grouping it by the chained columns of a column typology filter\.
+
+The partitions to read are named explicitly and never defaulted to all of them. A county identifier addresses one polygon part rather than a county - there are 406 parts for 380 counties - and the table holds tens of thousands of rows per part, so classifying the whole country is millions of rows in memory rather than a larger query. Grouping by county name rather than county identifier is what re-merges the parts of one county into a single node.
+
+Only the columns the chain needs are projected, plus the reference and county identifier the pull adds itself. One connection is opened for the whole run and every partition is paged over it, because the overload opening its own connection would open one per page.
+
+Rows are classified by [DiGi\.GIS\.Create\.Typology\(DiGi\.Core\.IO\.Table\.Classes\.Table,DiGi\.Typology\.Classes\.ColumnTypologyFilter\{DiGi\.Core\.IO\.Table\.Classes\.Column\},DiGi\.Core\.IO\.Table\.Classes\.Column,DiGi\.Typology\.Classes\.TypologyItem,System\.Boolean\)](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.create.typology#digi-gis-create-typology(digi-core-io-table-classes-table-digi-typology-classes-columntypologyfilter{digi-core-io-table-classes-column}-digi-core-io-table-classes-column-digi-typology-classes-typologyitem-system-boolean) 'DiGi\.GIS\.Create\.Typology\(DiGi\.Core\.IO\.Table\.Classes\.Table,DiGi\.Typology\.Classes\.ColumnTypologyFilter\{DiGi\.Core\.IO\.Table\.Classes\.Column\},DiGi\.Core\.IO\.Table\.Classes\.Column,DiGi\.Typology\.Classes\.TypologyItem,System\.Boolean\)'), whose remarks describe which rows a level excludes.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.Typology.Classes.Typology?> TypologyAsync(this DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter, DiGi.Typology.Classes.ColumnTypologyFilter<DiGi.Core.IO.Table.Classes.Column>? columnTypologyFilter, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.Core.IO.Table.Classes.Column? column_Reference=null, DiGi.Typology.Classes.TypologyItem? typologyItem_Root=null, bool includeReferences=true, int pageSize=5000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).buildingDataPostgreSQLConverter'></a>
+
+`buildingDataPostgreSQLConverter` [BuildingDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
+
+The converter reading the building data\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).columnTypologyFilter'></a>
+
+`columnTypologyFilter` [DiGi\.Typology\.Classes\.ColumnTypologyFilter&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.typology.classes.columntypologyfilter-1 'DiGi\.Typology\.Classes\.ColumnTypologyFilter\`1')[DiGi\.Core\.IO\.Table\.Classes\.Column](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.column 'DiGi\.Core\.IO\.Table\.Classes\.Column')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.typology.classes.columntypologyfilter-1 'DiGi\.Typology\.Classes\.ColumnTypologyFilter\`1')
+
+The root of the filter chain describing the grouping levels\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county partitions to read\. One identifier is one polygon part\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).column_Reference'></a>
+
+`column_Reference` [DiGi\.Core\.IO\.Table\.Classes\.Column](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.column 'DiGi\.Core\.IO\.Table\.Classes\.Column')
+
+The column identifying a row\. Defaults to the shared reference column\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).typologyItem_Root'></a>
+
+`typologyItem_Root` [DiGi\.Typology\.Classes\.TypologyItem](https://learn.microsoft.com/en-us/dotnet/api/digi.typology.classes.typologyitem 'DiGi\.Typology\.Classes\.TypologyItem')
+
+The item naming the root node\. When null the root is left unnamed\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).includeReferences'></a>
+
+`includeReferences` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the identified references are stored on the nodes\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).pageSize'></a>
+
+`pageSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows read per page\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Typology\.Classes\.Typology](https://learn.microsoft.com/en-us/dotnet/api/digi.typology.classes.typology 'DiGi\.Typology\.Classes\.Typology')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the solved typology, or null when the converter, the chain or the partition list is missing, when a page could not be read, or when the partitions hold no rows at all\.
+
 <a name='DiGi.GIS.PostgreSQL.Create.UnitComplianceResultAsync(thisDiGi.GIS.PostgreSQL.Classes.UnitPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken)'></a>
 
 ## Create\.UnitComplianceResultAsync\(this UnitPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, AdministrativeArealType, int, CancellationToken\) Method
