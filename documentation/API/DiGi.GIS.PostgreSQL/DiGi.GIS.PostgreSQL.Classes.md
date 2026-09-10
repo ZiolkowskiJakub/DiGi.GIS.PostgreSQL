@@ -7022,6 +7022,187 @@ public long Id { get; set; }
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult Class
+
+Reports how many rows held by one polygon part of a multi\-part county name a building that `building_2d` does not hold under that part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and a referenced object is filed under one of them. A row mismatches when `building_2d` holds its reference under a different part, or under none at all - the read half of the part misfile the [Building2DReferencedObjectPostgreSQLConverter&lt;TBuilding2DReferencedObject,TUniqueObject&gt;](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_ 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>') repair settles in the other direction.
+
+The mismatches split into two classes with different repairs, and they are reported separately: [CountHeldElsewhere](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountHeldElsewhere 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountHeldElsewhere') names a building `building_2d` holds under another part, so it has a destination and the move has somewhere to put it; [CountOrphan](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountOrphan 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountOrphan') names a building `building_2d` holds under no part, so there is no destination and the gap is a missing building row, not a misfile.
+
+[Count](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Count 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.Count') is `CountHeldElsewhere + CountOrphan`, the before and after number of a repair. Unlike the [Building2DCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCountyPartMismatchResult') of `building_2d` itself, nothing here is a geometry lower bound: a referenced object carries no box, so a non-zero count is a certain misfile, not a suspect, and a part absent from the result is one that held no mismatched row.
+
+```csharp
+public class Building2DReferencedObjectCountyPartMismatchResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DReferencedObjectCountyPartMismatchResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult)'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\(Building2DReferencedObjectCountyPartMismatchResult\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult') class by copying an existing one\.
+
+```csharp
+public Building2DReferencedObjectCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult? building2DReferencedObjectCountyPartMismatchResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult).building2DReferencedObjectCountyPartMismatchResult'></a>
+
+`building2DReferencedObjectCountyPartMismatchResult` [Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult')
+
+The [Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult') instance to copy\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long)'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\(string, int, IEnumerable\<int\>, long, long, long\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult') class\.
+
+```csharp
+public Building2DReferencedObjectCountyPartMismatchResult(string? code, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds, long count, long countHeldElsewhere, long countOrphan);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The county code the part belongs to\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county polygon part holding the mismatched rows\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+Every polygon part identifier the code holds, the part itself included\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).count'></a>
+
+`count` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of mismatched rows held by the part; `countHeldElsewhere + countOrphan`\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).countHeldElsewhere'></a>
+
+`countHeldElsewhere` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of those rows whose reference `building_2d` holds under at least one other part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(string,int,System.Collections.Generic.IEnumerable_int_,long,long,long).countOrphan'></a>
+
+`countOrphan` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of those rows whose reference `building_2d` holds under no part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DReferencedObjectCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Building2DReferencedObjectCountyPartMismatchResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Code'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.Code Property
+
+Gets the county code the part belongs to\.
+
+```csharp
+public string? Code { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Count'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.Count Property
+
+Gets the number of mismatched rows held by the part\.
+
+```csharp
+public long Count { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountHeldElsewhere'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.CountHeldElsewhere Property
+
+Gets the number of those rows whose reference `building_2d` holds under at least one other part\.
+
+```csharp
+public long CountHeldElsewhere { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountOrphan'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.CountOrphan Property
+
+Gets the number of those rows whose reference `building_2d` holds under no part\.
+
+```csharp
+public long CountOrphan { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountyId'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.CountyId Property
+
+Gets the identifier of the county polygon part holding the mismatched rows\.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountyIds'></a>
+
+## Building2DReferencedObjectCountyPartMismatchResult\.CountyIds Property
+
+Gets every polygon part identifier the code holds, the part itself included\.
+
+```csharp
+public System.Collections.Generic.List<int>? CountyIds { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\> Class
@@ -7302,6 +7483,86 @@ The cancellation token used to propagate notification that the operation should 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the total count as a long integer\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetCountyPartMismatchesAsync\(NpgsqlConnection, string, int, CancellationToken\) Method
+
+Asynchronously reports, for every polygon part of a multi\-part county, the rows of this table held under that part whose reference `building_2d` does not hold under the same part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and a row here is filed under one of them. A row mismatches when `building_2d` holds its reference under a different part, or under none at all. This is the discovery half of the part misfile: it finds where a row sits that `building_2d` says it does not belong, the opposite direction of the [RefreshCountyIdsAsync\(IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)') repair.
+
+The mismatches split per part into [CountHeldElsewhere](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountHeldElsewhere 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountHeldElsewhere') - `building_2d` holds the reference under another part, so it has a destination and the repair has somewhere to put it - and [CountOrphan](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.CountOrphan 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountOrphan') - `building_2d` holds the reference under no part, so there is no destination and the gap is a missing building row. [Count](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult.Count 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.Count') is the sum, the before and after number of a repair.
+
+Only parts holding at least one mismatched row are returned, so a clean measurement is an empty list; single-part codes are left out entirely because with one part there is nothing to be filed under by mistake. No geometry is involved - a referenced object carries no box - so a non-zero count is a certain misfile, not a suspect like the `building_2d` bounding-box lower bound.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the queries\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When null every multi\-part code is measured\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to each command executed\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one entry per part holding a mismatched row, ordered by code then part identifier, an empty list when no measured part holds a mismatched row, or null when the connection is null or the timeout is negative\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetCountyPartMismatchesAsync\(string, int, CancellationToken\) Method
+
+Asynchronously reports, for every polygon part of a multi\-part county, the rows of this table held under that part whose reference `building_2d` does not hold under the same part\.
+
+See the [GetCountyPartMismatchesAsync\(NpgsqlConnection, string, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(Npgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetCountyPartMismatchesAsync\(Npgsql\.NpgsqlConnection, string, int, System\.Threading\.CancellationToken\)') overload for what a mismatch is, how it splits into held elsewhere and orphan, and why only parts holding a mismatched row are returned.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When null every multi\-part code is measured\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to each command executed\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReferencedObjectCountyPartMismatchResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectCountyPartMismatchResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one entry per part holding a mismatched row, an empty list when no measured part holds a mismatched row, or null when the timeout is negative or the connection could not be created\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetDuplicatesCountAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 

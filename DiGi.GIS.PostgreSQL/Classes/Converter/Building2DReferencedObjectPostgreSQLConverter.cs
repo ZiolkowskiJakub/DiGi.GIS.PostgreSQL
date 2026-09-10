@@ -1,4 +1,5 @@
 using DiGi.Core.Interfaces;
+using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
 using NpgsqlTypes;
@@ -1550,6 +1551,209 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetDuplicatesCountAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reports, for every polygon part of a multi-part county, the rows of this table held under that part whose reference <c>building_2d</c> does not hold under the same part.
+        /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part, and a row here is filed under one of them. A row mismatches when <c>building_2d</c> holds its reference under a different part, or under none at all. This is the discovery half of the part misfile: it finds where a row sits that <c>building_2d</c> says it does not belong, the opposite direction of the <see cref="RefreshCountyIdsAsync(IEnumerable{string}, int, IEnumerable{int}, int, int, CancellationToken)"/> repair.</para>
+        /// <para>The mismatches split per part into <see cref="Building2DReferencedObjectCountyPartMismatchResult.CountHeldElsewhere"/> - <c>building_2d</c> holds the reference under another part, so it has a destination and the repair has somewhere to put it - and <see cref="Building2DReferencedObjectCountyPartMismatchResult.CountOrphan"/> - <c>building_2d</c> holds the reference under no part, so there is no destination and the gap is a missing building row. <see cref="Building2DReferencedObjectCountyPartMismatchResult.Count"/> is the sum, the before and after number of a repair.</para>
+        /// <para>Only parts holding at least one mismatched row are returned, so a clean measurement is an empty list; single-part codes are left out entirely because with one part there is nothing to be filed under by mistake. No geometry is involved - a referenced object carries no box - so a non-zero count is a certain misfile, not a suspect like the <c>building_2d</c> bounding-box lower bound.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the queries.</param>
+        /// <param name="code">An optional county code to restrict the measurement to. When null every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to each command executed. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one entry per part holding a mismatched row, ordered by code then part identifier, an empty list when no measured part holds a mismatched row, or null when the connection is null or the timeout is negative.</returns>
+        public async Task<List<Building2DReferencedObjectCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(NpgsqlConnection? npgsqlConnection, string? code = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || commandTimeout < 0)
+            {
+                return null;
+            }
+
+            // The parts are resolved up front from administrative_areal_2d and their codes carried into the result, rather
+            // than joining the two tables in one statement: a join against the table under test hands the planner no
+            // partition promise, and the handful of parts a multi-part code owns are all the measurement needs. Single-part
+            // codes are excluded - with one part there is nothing to be filed under by mistake - the same rule building_2d
+            // applies to its own box measurement.
+            string commandText_Parts = $@"
+                SELECT id, code
+                FROM {Constants.TableName.AdministrativeAreal2D}
+                WHERE type_id = @typeId
+                  AND code IS NOT NULL
+                  AND code IN (
+                      SELECT code
+                      FROM {Constants.TableName.AdministrativeAreal2D}
+                      WHERE type_id = @typeId AND code IS NOT NULL
+                      GROUP BY code
+                      HAVING COUNT(*) > 1)
+                  AND (@code IS NULL OR code = @code)
+                ORDER BY code ASC, id ASC;";
+
+            List<int> countyIds = [];
+            List<string> codes = [];
+
+            await using (NpgsqlCommand npgsqlCommand_Parts = new(commandText_Parts, npgsqlConnection))
+            {
+                npgsqlCommand_Parts.CommandTimeout = commandTimeout;
+                npgsqlCommand_Parts.Parameters.AddWithValue("typeId", (short)AdministrativeArealType.County);
+                npgsqlCommand_Parts.Parameters.Add(new NpgsqlParameter("code", NpgsqlDbType.Text) { Value = string.IsNullOrWhiteSpace(code) ? DBNull.Value : code });
+
+                await using NpgsqlDataReader npgsqlDataReader_Parts = await npgsqlCommand_Parts.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_Parts.ReadAsync(cancellationToken))
+                {
+                    countyIds.Add(npgsqlDataReader_Parts.GetInt32(0));
+                    codes.Add(npgsqlDataReader_Parts.GetString(1));
+                }
+            }
+
+            if (countyIds.Count == 0)
+            {
+                return [];
+            }
+
+            Dictionary<string, List<int>> countyIds_ByCode = [];
+            Dictionary<int, string> code_ByCountyId = [];
+            for (int i = 0; i < countyIds.Count; i++)
+            {
+                code_ByCountyId[countyIds[i]] = codes[i];
+
+                if (!countyIds_ByCode.TryGetValue(codes[i], out List<int>? countyIds_Code) || countyIds_Code is null)
+                {
+                    countyIds_Code = [];
+                    countyIds_ByCode[codes[i]] = countyIds_Code;
+                }
+
+                countyIds_Code.Add(countyIds[i]);
+            }
+
+            // The candidate references under those parts, pruned to the parts in play. A row with no stated reference has
+            // nothing for building_2d to hold, so it cannot be a misfile and is left out of the measurement.
+            string commandText_References = $@"
+                SELECT DISTINCT county_id, reference
+                FROM {TableName}
+                WHERE county_id = ANY(@countyIds)
+                  AND reference IS NOT NULL
+                ORDER BY county_id ASC, reference ASC;";
+
+            Dictionary<int, HashSet<string>> references_ByCountyId = [];
+
+            await using (NpgsqlCommand npgsqlCommand_References = new(commandText_References, npgsqlConnection))
+            {
+                npgsqlCommand_References.CommandTimeout = commandTimeout;
+                npgsqlCommand_References.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds.ToArray() });
+
+                await using NpgsqlDataReader npgsqlDataReader_References = await npgsqlCommand_References.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_References.ReadAsync(cancellationToken))
+                {
+                    int countyId_Read = npgsqlDataReader_References.GetInt32(0);
+                    string reference_Read = npgsqlDataReader_References.GetString(1);
+
+                    if (!references_ByCountyId.TryGetValue(countyId_Read, out HashSet<string>? references_CountyId) || references_CountyId is null)
+                    {
+                        references_CountyId = [];
+                        references_ByCountyId[countyId_Read] = references_CountyId;
+                    }
+
+                    references_CountyId.Add(reference_Read);
+                }
+            }
+
+            if (references_ByCountyId.Count == 0)
+            {
+                return [];
+            }
+
+            // One (part, reference) pair per candidate row, tagged with the part it is held under. The resolver answers the
+            // own-part question pruned by that tag, and only for the pairs it does not hold under their own part does it take
+            // the unpruned leg to find where building_2d holds them - so that leg reads the mismatched subset alone and costs
+            // nothing on a clean estate.
+            List<Building2DReference> building2DReferences_Input = [];
+            foreach (KeyValuePair<int, HashSet<string>> references_County in references_ByCountyId)
+            {
+                foreach (string reference in references_County.Value)
+                {
+                    building2DReferences_Input.Add(new Building2DReference { CountyId = references_County.Key, Reference = reference });
+                }
+            }
+
+            Building2DPostgreSQLConverter building2DPostgreSQLConverter = new(ConnectionData);
+            List<Building2DReference>? building2DReferences_Resolved = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(building2DReferences_Input, true, commandTimeout, cancellationToken);
+            if (building2DReferences_Resolved is null)
+            {
+                return null;
+            }
+
+            // A (part, reference) pair is in the first set exactly when building_2d holds the reference under that part, and a
+            // reference is in the second exactly when building_2d holds it under any part. Together they separate the three
+            // outcomes of a candidate row: held under its own part (not a misfile), held elsewhere (a misfile with a
+            // destination), or held nowhere (an orphan).
+            HashSet<string> references_HeldUnderOwn = [.. building2DReferences_Resolved.Where(x => x.CountyId.HasValue && !string.IsNullOrWhiteSpace(x.Reference)).Select(x => $"{x.CountyId!.Value}_{x.Reference}")];
+            HashSet<string> references_HeldAnywhere = [.. building2DReferences_Resolved.Where(x => !string.IsNullOrWhiteSpace(x.Reference)).Select(x => x.Reference!)];
+
+            List<Building2DReferencedObjectCountyPartMismatchResult> result = [];
+            foreach (int countyId_Part in countyIds)
+            {
+                if (!references_ByCountyId.TryGetValue(countyId_Part, out HashSet<string>? references_Part) || references_Part is null)
+                {
+                    continue;
+                }
+
+                long countHeldElsewhere = 0;
+                long countOrphan = 0;
+                foreach (string reference in references_Part)
+                {
+                    if (references_HeldUnderOwn.Contains($"{countyId_Part}_{reference}"))
+                    {
+                        continue;
+                    }
+
+                    if (references_HeldAnywhere.Contains(reference))
+                    {
+                        countHeldElsewhere++;
+                    }
+                    else
+                    {
+                        countOrphan++;
+                    }
+                }
+
+                long count = countHeldElsewhere + countOrphan;
+                if (count == 0)
+                {
+                    continue;
+                }
+
+                result.Add(new Building2DReferencedObjectCountyPartMismatchResult(code_ByCountyId[countyId_Part], countyId_Part, countyIds_ByCode[code_ByCountyId[countyId_Part]], count, countHeldElsewhere, countOrphan));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously reports, for every polygon part of a multi-part county, the rows of this table held under that part whose reference <c>building_2d</c> does not hold under the same part.
+        /// <para>See the <see cref="GetCountyPartMismatchesAsync(NpgsqlConnection, string, int, CancellationToken)"/> overload for what a mismatch is, how it splits into held elsewhere and orphan, and why only parts holding a mismatched row are returned.</para>
+        /// </summary>
+        /// <param name="code">An optional county code to restrict the measurement to. When null every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to each command executed. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains one entry per part holding a mismatched row, an empty list when no measured part holds a mismatched row, or null when the timeout is negative or the connection could not be created.</returns>
+        public async Task<List<Building2DReferencedObjectCountyPartMismatchResult>?> GetCountyPartMismatchesAsync(string? code = null, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (commandTimeout < 0)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountyPartMismatchesAsync(npgsqlConnection, code, commandTimeout, cancellationToken);
         }
 
         /// <summary>
