@@ -8050,6 +8050,124 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the distinct references held, or null when the connection could not be created\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(NpgsqlConnection, IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Probes for the rows held for the given references under a county row other than [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), and classifies each reference that has at least one such row as movable or blocked\.
+
+This is the read half of [RefreshCountyIdsAsync\(IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.RefreshCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)'). It lifts the mover's stray CTE and asks the one question the mover answers only by writing: which of the references would it move, and which would the destination refuse. Because the classification is the mover's own rule, a dry run reported here and the move that follows it agree by construction - a reference is movable iff the move would report it, and blocked iff the move would report nothing for it.
+
+Blocked means the destination part already holds the stored object: `UNIQUE (county_id, unique_id)` refuses the arrival, and deleting either copy is a decision for a person, so the reference is reported rather than settled. The two sets are disjoint and together hold every reference with at least one stray row.
+
+Nothing is written: not even the destination partition is created, which the move creates and the probe only reads. It can therefore run against a database the move must not touch yet.
+
+<b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition unless [countyIds\_Source](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyIds\_Source') names the parts it can sit under, and it reads every other partition of the table once. Call it once per county with all of that county's references, never once per reference: the references are sent in batches inside, so one call is not one statement to lose on a timeout.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult?> GetStrayReferencesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row every one of those references should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched, which the index cannot serve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\. One statement for a whole county is fewer round trips and a single timeout to lose them all in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result classifies the references with at least one stray row into the ones the move would take and the ones it would refuse, an empty result when the table does not exist, or null when no references were given or the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
+
+Probes for the rows held for the given references under a county row other than [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId'), and classifies each reference that has at least one such row as movable or blocked\.
+
+Read half of [GetStrayReferencesAsync\(NpgsqlConnection, IEnumerable&lt;string&gt;, int, IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)'): see that overload for what movable and blocked mean and for the cost of the read.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult?> GetStrayReferencesAsync(System.Collections.Generic.IEnumerable<string>? references, int countyId, System.Collections.Generic.IEnumerable<int>? countyIds_Source=null, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references known to belong to [countyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetStrayReferencesAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)\.countyId')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row every one of those references should be held under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).countyIds_Source'></a>
+
+`countyIds_Source` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The parts the rows may currently sit under, normally the other parts of the same county code\. When null every part is searched, which the index cannot serve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references sent in one statement\. One statement for a whole county is fewer round trips and a single timeout to lose them all in\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetStrayReferencesAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result classifies the references with at least one stray row into the ones the move would take and the ones it would refuse, an empty result when the table does not exist, or null when no references were given or the connection could not be created\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetUniqueIdsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetUniqueIdsByReferencesAsync\(NpgsqlConnection, IEnumerable\<string\>, Nullable\<int\>, bool, int, CancellationToken\) Method
@@ -8610,6 +8728,128 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult'></a>
+
+## Building2DReferencedObjectStrayResult Class
+
+The outcome of probing one `unique_id`\-keyed table for the rows it holds for the given buildings under a county part other than [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult\.CountyId')\.
+
+A reference in [MovableReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.MovableReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult\.MovableReferences') has at least one stray row the move would take: the destination part does not yet hold its stored object, so the move - `RefreshCountyIdsAsync` on the same converter - reports it. A reference in [BlockedReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.BlockedReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult\.BlockedReferences') has stray rows but none of them can move - the destination already holds the stored object - and is left where it is, for a person to settle.
+
+The two sets are disjoint and together hold every reference with at least one stray row, so their union is the exact answer to "what would this move touch and what would it refuse".
+
+```csharp
+public class Building2DReferencedObjectStrayResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → Building2DReferencedObjectStrayResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult)'></a>
+
+## Building2DReferencedObjectStrayResult\(Building2DReferencedObjectStrayResult\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult') class by copying an existing one\.
+
+```csharp
+public Building2DReferencedObjectStrayResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult? building2DReferencedObjectStrayResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult).building2DReferencedObjectStrayResult'></a>
+
+`building2DReferencedObjectStrayResult` [Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult')
+
+The [Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_)'></a>
+
+## Building2DReferencedObjectStrayResult\(int, IEnumerable\<string\>, IEnumerable\<string\>\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult') class\.
+
+```csharp
+public Building2DReferencedObjectStrayResult(int countyId, System.Collections.Generic.IEnumerable<string>? movableReferences, System.Collections.Generic.IEnumerable<string>? blockedReferences);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The county part the rows belong under, the destination of a move\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).movableReferences'></a>
+
+`movableReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references that would have at least one stray row moved, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).blockedReferences'></a>
+
+`blockedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references whose stray rows cannot move because the destination already holds the stored object, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DReferencedObjectStrayResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [Building2DReferencedObjectStrayResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public Building2DReferencedObjectStrayResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.Building2DReferencedObjectStrayResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.BlockedReferences'></a>
+
+## Building2DReferencedObjectStrayResult\.BlockedReferences Property
+
+Gets the references with stray rows none of which can move, because [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult\.CountyId') already holds the stored object\. Left where they are, for a person to settle\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> BlockedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.CountyId'></a>
+
+## Building2DReferencedObjectStrayResult\.CountyId Property
+
+Gets the county part the rows belong under, the destination of a move\.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.MovableReferences'></a>
+
+## Building2DReferencedObjectStrayResult\.MovableReferences Property
+
+Gets the references that would have at least one stray row moved onto [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectStrayResult\.CountyId'), the same set the move reports\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> MovableReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferenceDuplicate'></a>
 
@@ -14870,6 +15110,482 @@ protected override System.Threading.Tasks.Task<bool> ExecuteAsync();
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true if the table was created successfully; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions Class
+
+Options for carrying the rows of the `unique_id`\-keyed tables \- `building_model`, `year_built_data` and `occupancy_data_building_2d` \- onto the county part their building sits on\.
+
+[DryRun](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.DryRun 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.DryRun') defaults to [true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool'): the run reports, per table, which references would move and which the destination would refuse, and writes nothing until it is turned off deliberately.
+
+```csharp
+public class PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions()'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions') class\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\(PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions postgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions).postgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions'></a>
+
+`postgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions` [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions')
+
+The source options to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object used to initialize the options\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.BatchSize'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.BatchSize Property
+
+Gets or sets the number of references sent in one statement\. Matches the mover's default, so the task and the mover cannot drift apart\.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.Codes'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.Codes Property
+
+Gets or sets the county codes to examine\. When null every code holding more than one polygon part is examined; a named code with a single part is examined as well, because its referenced objects can still sit under another code's part\.
+
+```csharp
+public System.Collections.Generic.List<string>? Codes { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.CommandTimeout'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.CommandTimeout Property
+
+Gets or sets the timeout in seconds for the statements the run executes\. Matches the mover's default\.
+
+```csharp
+public int CommandTimeout { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.DryRun'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.DryRun Property
+
+Gets or sets a value indicating whether the run only reports what it would do\. Defaults to [true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool'); nothing is written until it is turned off\.
+
+The report a dry run produces is what the move should be reviewed against: per table, the references that would move and the ones the destination part would refuse because it already holds the stored object.
+
+```csharp
+public bool DryRun { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.ReportDirectory'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.ReportDirectory Property
+
+Gets or sets the directory the report files are written into\. When null the directory the application was launched from is used\.
+
+```csharp
+public string? ReportDirectory { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult Class
+
+Represents the outcome of carrying the `unique_id`\-keyed referenced objects onto the county part their building sits on\.
+
+[MovableReferenceCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.MovableReferenceCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.MovableReferenceCount') is what the probe found, [MovedReferenceCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.MovedReferenceCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.MovedReferenceCount') what was written: a dry run reports the first and leaves the second at zero. The two also differ on a live run when a move is blocked, which [BlockedReferenceCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.BlockedReferenceCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.BlockedReferenceCount') counts - the destination part already holds the stored object, so the row stays where it is rather than being deleted.
+
+```csharp
+public class PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\(PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult') class by copying an existing instance\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult? postgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult).postgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult'></a>
+
+`postgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult` [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult')
+
+The [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult') instance to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\(long, long, long, long, long, long, long, long, bool\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult') class\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long codeCount, long partCount, long referenceCount, long strayReferenceCount, long movableReferenceCount, long blockedReferenceCount, long movedReferenceCount, long failedCodeCount, bool cancelled);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).codeCount'></a>
+
+`codeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of county codes examined\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).partCount'></a>
+
+`partCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of county polygon parts the buildings were read from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).referenceCount'></a>
+
+`referenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of building references read from `building_2d`\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).strayReferenceCount'></a>
+
+`strayReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of references with at least one row held under a part other than the one their building sits on, summed over the tables\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).movableReferenceCount'></a>
+
+`movableReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of references the probe would have moved\. The live run's moved plus blocked references\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).blockedReferenceCount'></a>
+
+`blockedReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of moves the destination part refused because it already holds the stored object\. On a dry run, what the probe reported as blocked\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).movedReferenceCount'></a>
+
+`movedReferenceCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of references that had at least one row moved\. Zero on a dry run\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).failedCodeCount'></a>
+
+`failedCodeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of counties stepped over after a failure, which the run reports rather than ending on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(long,long,long,long,long,long,long,long,bool).cancelled'></a>
+
+`cancelled` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Whether the run was cancelled before reaching the end\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing serialized properties\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.BlockedReferenceCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.BlockedReferenceCount Property
+
+Gets the number of moves the destination part refused because it already holds the stored object\.
+
+Those rows are left exactly where they are - deleting either copy is a decision for a person - so the figure is the count of references a person still has to settle.
+
+```csharp
+public long BlockedReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.Cancelled'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.Cancelled Property
+
+Gets a value indicating whether the run was cancelled before reaching the end\.
+
+```csharp
+public bool Cancelled { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.CodeCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.CodeCount Property
+
+Gets the number of county codes examined\.
+
+```csharp
+public long CodeCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.FailedCodeCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.FailedCodeCount Property
+
+Gets the number of counties stepped over after a failure\.
+
+A county that fails is logged with the exception that caused it and the run carries on, because the counties are independent of each other. The run does not report success while this is not zero: what it left undone is finished by running it again, and a run reported as successful is a run nobody goes back to.
+
+```csharp
+public long FailedCodeCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.MovableReferenceCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.MovableReferenceCount Property
+
+Gets the number of references the probe found to have at least one movable stray row, summed over the tables\.
+
+```csharp
+public long MovableReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.MovedReferenceCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.MovedReferenceCount Property
+
+Gets the number of references that had at least one row moved\. Zero on a dry run\.
+
+```csharp
+public long MovedReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.PartCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.PartCount Property
+
+Gets the number of county polygon parts the buildings were read from\.
+
+```csharp
+public long PartCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.ReferenceCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.ReferenceCount Property
+
+Gets the number of building references read from `building_2d`, the sweep the run carries rows for\.
+
+```csharp
+public long ReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult.StrayReferenceCount'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult\.StrayReferenceCount Property
+
+Gets the number of references with at least one row held under a part other than the one their building sits on, summed over the tables\. Movable plus blocked\.
+
+```csharp
+public long StrayReferenceCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask Class
+
+Carries the rows of the `unique_id`\-keyed tables \- `building_model`, `year_built_data` and `occupancy_data_building_2d` \- onto the county part their building sits on\.
+
+Every read of those tables filters on `county_id` first, so a row filed under a part other than the one holding its building reads back missing. The mover for those tables is `RefreshCountyIdsAsync` on their converter, and this task is its permanent production caller: unlike the temporary county part repair of issue ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68, which was deleted with a TODO marker once its estate was clean, this is the standing repair path for the rows keyed on a building, and it stays.
+
+Per part it reads the part's buildings from `building_2d` - the sweep covers every building of every part of the county, not only the ones a given run noticed - probes each table for the references that would move and the ones the destination part would refuse, and - unless [DryRun](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.DryRun 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.DryRun') is on - moves the movable ones. A mover only touches a row sitting under a different part, so a run over a healthy county costs the reads and nothing else, and a re-run is the recovery from an interrupted one.
+
+<b>Reports by default and writes nothing.</b>[DryRun](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.DryRun 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.DryRun') defaults to true and has to be turned off deliberately; the report a dry run produces is what the move should be reviewed against.
+
+The report is written into [ReportDirectory](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions.ReportDirectory 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions\.ReportDirectory') as well as to the log: one row per stray reference in `Building2D_ReferencedObjects_CountyPartRefresh.csv` and per-code totals in `Building2D_ReferencedObjects_CountyPartRefresh_Summary.txt`. The row file is flushed per part, so a run interrupted late still leaves everything it had already reported.
+
+Nothing is deleted anywhere. A reference the destination part will not take - it already holds the stored object - stays where it is and is reported as blocked, for a person to settle: deleting either copy is a decision this task does not make.
+
+```csharp
+public class PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask\(GISPostgreSQLConverterManager\) Constructor
+
+Constructor with Dependency Injection\.
+
+```csharp
+public PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS PostgreSQL converter manager holding the converters the run reads and writes through\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.gISPostgreSQLConverterManager'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask\.gISPostgreSQLConverterManager Field
+
+The converter manager the run draws its converters from\.
+
+```csharp
+private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+```
+
+#### Field Value
+[GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions Property
+
+Gets the configuration for the run\. These options are used when the task is started\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult Property
+
+Gets what the last run read, reported and moved\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult? PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult { get; private set; }
+```
+
+#### Property Value
+[PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshResult')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task, carrying the `unique_id`\-keyed referenced objects of every multi\-part county onto the part their building sits on\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter carrying the running total of references the run moved, or would move on a dry run\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true unless the run could not be attempted, was cancelled, or stepped over a county after a failure\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions'></a>
 

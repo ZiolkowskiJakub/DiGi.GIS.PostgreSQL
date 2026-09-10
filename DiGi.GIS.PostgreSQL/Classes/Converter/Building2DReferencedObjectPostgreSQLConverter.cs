@@ -863,6 +863,167 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Probes for the rows held for the given references under a county row other than <paramref name="countyId"/>, and classifies each reference that has at least one such row as movable or blocked.
+        /// <para>This is the read half of <see cref="RefreshCountyIdsAsync(IEnumerable{string}, int, IEnumerable{int}, int, int, CancellationToken)"/>. It lifts the mover's stray CTE and asks the one question the mover answers only by writing: which of the references would it move, and which would the destination refuse. Because the classification is the mover's own rule, a dry run reported here and the move that follows it agree by construction - a reference is movable iff the move would report it, and blocked iff the move would report nothing for it.</para>
+        /// <para>Blocked means the destination part already holds the stored object: <c>UNIQUE (county_id, unique_id)</c> refuses the arrival, and deleting either copy is a decision for a person, so the reference is reported rather than settled. The two sets are disjoint and together hold every reference with at least one stray row.</para>
+        /// <para>Nothing is written: not even the destination partition is created, which the move creates and the probe only reads. It can therefore run against a database the move must not touch yet.</para>
+        /// <para><b>Cost.</b> The county a stray row ended up under is not known, so the statement cannot be pruned to a partition unless <paramref name="countyIds_Source"/> names the parts it can sit under, and it reads every other partition of the table once. Call it once per county with all of that county's references, never once per reference: the references are sent in batches inside, so one call is not one statement to lose on a timeout.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
+        /// <param name="batchSize">The number of references sent in one statement. One statement for a whole county is fewer round trips and a single timeout to lose them all in.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result classifies the references with at least one stray row into the ones the move would take and the ones it would refuse, an empty result when the table does not exist, or null when no references were given or the connection is null.</returns>
+        public async Task<Building2DReferencedObjectStrayResult?> GetStrayReferencesAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || references is null)
+            {
+                return null;
+            }
+
+            // Deduplicating here rather than in the statement keeps the array parameter as small as
+            // the caller's data allows; the server would otherwise carry the repeats through the scan.
+            HashSet<string> references_Unique = [];
+            foreach (string reference in references)
+            {
+                if (!string.IsNullOrWhiteSpace(reference))
+                {
+                    references_Unique.Add(reference);
+                }
+            }
+
+            if (references_Unique.Count == 0)
+            {
+                return new Building2DReferencedObjectStrayResult(countyId, null, null);
+            }
+
+            // Nothing of this type has ever been stored, so there is nothing to report. The probe does
+            // not create the table - a read must not trigger the migration - and it does not create the
+            // destination partition either, which the move creates and the probe only reads.
+            bool exists = await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName);
+            if (!exists)
+            {
+                return new Building2DReferencedObjectStrayResult(countyId, null, null);
+            }
+
+            // The parts the rows can still be sitting under are written into the statement when the caller
+            // knows them, because the index here leads with county_id: without a predicate on it there is
+            // nothing to seek on and every partition is read (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68).
+            int[]? countyIds_Array = countyIds_Source is null ? null : [.. new HashSet<int>(countyIds_Source)];
+
+            string condition_Source = countyIds_Array is null ? string.Empty : "\r\n                      AND t.county_id = ANY(@countyIds)";
+
+            // The stray CTE is the mover's own, minus the two columns the update addresses the row by:
+            // the probe classifies, it does not move.
+            //
+            // The collision test sits on the ranked row rather than in the CTE as in the mover, which is
+            // the same filter: the destination either holds a stored object or it does not, for every row
+            // carrying it, so the mover's NOT EXISTS keeps or drops the whole set of a unique_id. The
+            // top-ranked row of a unique_id passes the mover's CTE iff it passes the test here, and the
+            // two statements therefore agree on every reference by construction.
+            string commandText = $@"
+                WITH stray AS MATERIALIZED (
+                    SELECT t.reference AS reference,
+                           t.unique_id AS unique_id,
+                           ROW_NUMBER() OVER (PARTITION BY t.unique_id ORDER BY t.created_at DESC, t.id DESC) AS move_rank
+                    FROM {TableName} t
+                    WHERE t.reference = ANY(@references)
+                      AND t.county_id <> @countyId{condition_Source}
+                ),
+                movable AS (
+                    SELECT DISTINCT s.reference
+                    FROM stray s
+                    WHERE s.move_rank = 1
+                      AND NOT EXISTS (
+                              SELECT 1
+                              FROM {TableName} t_Target
+                              WHERE t_Target.county_id = @countyId
+                                AND t_Target.unique_id = s.unique_id)
+                )
+                SELECT s.reference AS reference,
+                       s.reference IN (SELECT m.reference FROM movable m) AS movable
+                FROM (SELECT DISTINCT reference FROM stray) s
+                ORDER BY s.reference;";
+
+            // Sent in batches rather than as one statement carrying every reference of the county, for
+            // the same reason the mover is: one statement is fewer round trips, but it is also one
+            // timeout to lose them all in (ZiolkowskiJakub/DiGi.GIS.PostgreSQL#68).
+            int batchSize_Effective = batchSize < 1 ? 1 : batchSize;
+
+            List<string> references_List = [.. references_Unique];
+
+            Building2DReferencedObjectStrayResult result = new(countyId, null, null);
+
+            for (int i = 0; i < references_List.Count; i += batchSize_Effective)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string[] references_Batch = [.. references_List.GetRange(i, System.Math.Min(batchSize_Effective, references_List.Count - i))];
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
+                npgsqlCommand.Parameters.AddWithValue("references", references_Batch);
+
+                if (countyIds_Array is not null)
+                {
+                    npgsqlCommand.Parameters.AddWithValue("countyIds", countyIds_Array);
+                }
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    string reference = npgsqlDataReader.GetString(0);
+
+                    // The classifier is the mover's own rule applied before the write, so the two halves
+                    // of the pair cannot drift into disagreeing about what the move would do.
+                    if (npgsqlDataReader.GetBoolean(1))
+                    {
+                        result.MovableReferences.Add(reference);
+                    }
+                    else
+                    {
+                        result.BlockedReferences.Add(reference);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Probes for the rows held for the given references under a county row other than <paramref name="countyId"/>, and classifies each reference that has at least one such row as movable or blocked.
+        /// <para>Read half of <see cref="GetStrayReferencesAsync(NpgsqlConnection, IEnumerable{string}, int, IEnumerable{int}, int, int, CancellationToken)"/>: see that overload for what movable and blocked mean and for the cost of the read.</para>
+        /// </summary>
+        /// <param name="references">The references known to belong to <paramref name="countyId"/>.</param>
+        /// <param name="countyId">The identifier of the county row every one of those references should be held under.</param>
+        /// <param name="countyIds_Source">The parts the rows may currently sit under, normally the other parts of the same county code. When null every part is searched, which the index cannot serve.</param>
+        /// <param name="batchSize">The number of references sent in one statement. One statement for a whole county is fewer round trips and a single timeout to lose them all in.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result classifies the references with at least one stray row into the ones the move would take and the ones it would refuse, an empty result when the table does not exist, or null when no references were given or the connection could not be created.</returns>
+        public async Task<Building2DReferencedObjectStrayResult?> GetStrayReferencesAsync(IEnumerable<string>? references, int countyId, IEnumerable<int>? countyIds_Source = null, int batchSize = 1000, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            if (references is null)
+            {
+                return null;
+            }
+
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetStrayReferencesAsync(npgsqlConnection, references, countyId, countyIds_Source, batchSize, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Deletes the rows holding the given references under an optional county identifier.
         /// <para>A reference is unique only per <c>county_id</c>: the same building is held once per county row it was imported under, so a delete has to name the row as well as the reference. Deleting by reference alone would take the building out of every part of the county.</para>
         /// <para>It removes data and has no undo - read <c>AI Guidelines/Coding - GIS Administrative Data.md</c> before calling it.</para>
