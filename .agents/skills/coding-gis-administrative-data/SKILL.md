@@ -200,14 +200,6 @@ registration, and the task-bound Facts. Kept, because they are how a county part
 and the `UpdateAsync` three-tier guard. `a418678` (PostgreSQL `0.8.9`), `1e5db1f` (UI `0.8.9`),
 `9d38cee` (Test `0.8.11`).
 
-The `RefreshCountyIdsAsync` on `Building2DReferencedObjectPostgreSQLConverter` - the mover for the
-`unique_id`-keyed tables (`year_built_data`, `building_model`, `occupancy_data_building_2d`) - was the
-one `a418678` left with no caller at all, and stayed unreachable
-([#69](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/69)).
-`PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask` is now its permanent production caller:
-`DryRun` on by default, the move deletes nothing, and a row the destination part already holds is left
-where it is and reported as blocked rather than overwritten.
-
 ---
 
 ## 4. Rules for writing code against this data
