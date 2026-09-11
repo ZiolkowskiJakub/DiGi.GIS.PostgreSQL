@@ -11,7 +11,7 @@ namespace DiGi.GIS.PostgreSQL
     public static partial class Query
     {
         /// <summary>
-        /// Finds the <see cref="StatisticalUnit"/> matching the specified PostgreSQL <see cref="Classes.AdministrativeAreal2D"/> within the provided root statistical unit hierarchy.
+        /// Finds the <see cref="StatisticalUnit"/> matching the specified PostgreSQL <see cref="AdministrativeAreal2D"/> within the provided root statistical unit hierarchy.
         /// </summary>
         /// <param name="rootStatisticalUnit">The root statistical unit hierarchy.</param>
         /// <param name="administrativeAreal2D">The administrative area to match.</param>
@@ -81,8 +81,8 @@ namespace DiGi.GIS.PostgreSQL
 
             AdministrativeArealType? administrativeArealType = administrativeAreal2D switch
             {
-                GIS.Classes.AdministrativeDivision administrativeDivision => (AdministrativeArealType?)administrativeDivision.AdministrativeDivisionType,
-                GIS.Classes.AdministrativeSubdivision => Enums.AdministrativeArealType.Subdivision,
+                AdministrativeDivision administrativeDivision => (AdministrativeArealType?)administrativeDivision.AdministrativeDivisionType,
+                AdministrativeSubdivision => Enums.AdministrativeArealType.Subdivision,
                 _ => null
             };
 
@@ -125,7 +125,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <param name="code">The territorial entity code.</param>
         /// <param name="administrativeArealType">The administrative area type.</param>
         /// <returns>The matching <see cref="StatisticalUnit"/> if found; otherwise, null.</returns>
-        public static StatisticalUnit? Match(this StatisticalUnit? rootStatisticalUnit, string? name, string? code, Enums.AdministrativeArealType administrativeArealType)
+        public static StatisticalUnit? Match(this StatisticalUnit? rootStatisticalUnit, string? name, string? code, AdministrativeArealType administrativeArealType)
         {
             if (rootStatisticalUnit is null)
             {

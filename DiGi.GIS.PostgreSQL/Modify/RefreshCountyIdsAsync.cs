@@ -62,7 +62,7 @@ namespace DiGi.GIS.PostgreSQL
             }
             else if (tableName == Constants.TableName.BuildingData)
             {
-                columnNames_Key = [(Core.IO.Query.UniqueId(GIS.IO.Constants.Column.Reference) ?? "reference", false)];
+                columnNames_Key = [(Core.IO.Query.UniqueId(IO.Constants.Column.Reference) ?? "reference", false)];
             }
             else
             {

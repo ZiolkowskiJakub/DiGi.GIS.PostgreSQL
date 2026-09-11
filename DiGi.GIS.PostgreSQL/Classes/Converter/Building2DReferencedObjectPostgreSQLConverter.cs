@@ -807,7 +807,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                string[] references_Batch = [.. references_List.GetRange(i, System.Math.Min(batchSize_Effective, references_List.Count - i))];
+                string[] references_Batch = [.. references_List.GetRange(i, Math.Min(batchSize_Effective, references_List.Count - i))];
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
@@ -962,7 +962,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                string[] references_Batch = [.. references_List.GetRange(i, System.Math.Min(batchSize_Effective, references_List.Count - i))];
+                string[] references_Batch = [.. references_List.GetRange(i, Math.Min(batchSize_Effective, references_List.Count - i))];
 
                 await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
                 npgsqlCommand.CommandTimeout = commandTimeout;
@@ -1327,7 +1327,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     foreach (TBuilding2DReferencedObject building2DReferencedObject_Rejected in grouping)
                     {
                         rejections.Add(new Rejection(building2DReferencedObject_Rejected.Reference,
-                            Enums.UpdateRejectionReason.MissingCounty));
+                            UpdateRejectionReason.MissingCounty));
                     }
 
                     continue;

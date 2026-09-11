@@ -893,7 +893,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             // Concatenation is plain geometry, and the factory does it in one block copy per county.
             // Gathering the axes here through GetX/GetY/GetZ copied each county three times over.
-            return DiGi.Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
+            return Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
         }
 
         /// <summary>
@@ -1007,7 +1007,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 pointCloud3Ds.Add(await GetPointCloud3DByCircle2DAsync(npgsqlConnection, circle2D, countyId, null, tolerance, commandTimeout, cancellationToken));
             }
 
-            return DiGi.Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
+            return Geometry.PointCloud.Spatial.Create.PointCloud3D(pointCloud3Ds);
         }
 
         /// <summary>

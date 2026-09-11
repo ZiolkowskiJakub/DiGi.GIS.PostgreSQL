@@ -258,7 +258,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 int subdivisionId = administrativeAreal2DReference.Id;
 
                 AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = null;
-                GIS.Classes.AdministrativeSubdivision? administrativeSubdivision = null;
+                AdministrativeSubdivision? administrativeSubdivision = null;
 
                 if (update_General || update_Statistical)
                 {
@@ -271,7 +271,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             // The subdivision is the one member of the chain still read whole, because its occupancy and
                             // its settlement type are not on a reference.
                             List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync([subdivisionId], commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                            administrativeSubdivision = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<GIS.Classes.AdministrativeSubdivision>().FirstOrDefault();
+                            administrativeSubdivision = administrativeAreal2Ds?.Select(x => x.ToDiGi()).OfType<AdministrativeSubdivision>().FirstOrDefault();
                         }
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
