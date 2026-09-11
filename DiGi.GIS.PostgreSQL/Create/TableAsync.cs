@@ -220,10 +220,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building}_{countyId} PARTITION OF {Constants.TableName.Building}
-                    FOR VALUES IN ({countyId});
-                ";
+            string commandText = Query.PartitionCommandText(Constants.TableName.Building, countyId);
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
@@ -308,10 +305,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.Building2D}_{countyId} PARTITION OF {Constants.TableName.Building2D}
-                    FOR VALUES IN ({countyId});
-                ";
+            string commandText = Query.PartitionCommandText(Constants.TableName.Building2D, countyId);
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
@@ -459,10 +453,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {tableName}_{countyId} PARTITION OF {tableName}
-                    FOR VALUES IN ({countyId});
-                ";
+            string commandText = Query.PartitionCommandText(tableName, countyId);
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
@@ -587,10 +578,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.OrtoDatas}_{countyId} PARTITION OF {Constants.TableName.OrtoDatas}
-                    FOR VALUES IN ({countyId});
-                ";
+            string commandText = Query.PartitionCommandText(Constants.TableName.OrtoDatas, countyId);
 
             await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
             npgsqlCommand.CommandTimeout = commandTimeout;
@@ -667,10 +655,7 @@ namespace DiGi.GIS.PostgreSQL
                 return false;
             }
 
-            string commandText = $@"
-                CREATE TABLE IF NOT EXISTS {Constants.TableName.TerrainPoint}_{countyId} PARTITION OF {Constants.TableName.TerrainPoint}
-                    FOR VALUES IN ({countyId});
-                ";
+            string commandText = Query.PartitionCommandText(Constants.TableName.TerrainPoint, countyId);
 
             try
             {

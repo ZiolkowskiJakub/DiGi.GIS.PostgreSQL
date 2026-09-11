@@ -2132,6 +2132,35 @@ The type of the administrative area\.
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
 The name of the parent ID column as a string, or null if no parent column exists for the specified type\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.PartitionCommandText(string,int)'></a>
+
+## Query\.PartitionCommandText\(string, int\) Method
+
+Builds the statement that creates one county partition of a list\-partitioned table and leaves it with statistics\.
+
+A partition PostgreSQL has never analysed reports `reltuples = -1`, and an empty one stays that way for good - autovacuum analyses on modifications, and nothing ever modifies it. Every estimated count then reads it as "not measured" rather than as zero, and one such partition voids the aggregate of the whole voivodeship it sits in. The statement therefore analyses the partition right after creating it, and only then: the check on `reltuples` keeps the analyse off the path of every later write, which creates nothing and would otherwise pay for a statistics pass over the whole partition on each batch.
+
+```csharp
+public static string PartitionCommandText(string tableName, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.PartitionCommandText(string,int).tableName'></a>
+
+`tableName` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The name of the partitioned table\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.PartitionCommandText(string,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county the partition holds; it names the partition and is its single list value\.
+
+#### Returns
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
+The SQL text creating the partition if it is absent and analysing it if it has never been analysed\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.Polygonal2DsByCountyId(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_)'></a>
 
 ## Query\.Polygonal2DsByCountyId\(this IEnumerable\<AdministrativeAreal2D\>\) Method
