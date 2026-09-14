@@ -4181,6 +4181,7 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 Derived  
 ↳ [AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')  
+↳ [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')  
 ↳ [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')  
 ↳ [OrtoDatasReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasReference 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasReference')
 ### Constructors
@@ -4453,6 +4454,92 @@ public System.Nullable<int> SubdivisionId { get; set; }
 
 #### Property Value
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid'></a>
+
+## Building2DCentroid Class
+
+Represents the bounding\-box centre \(centroid\) of a 2D building, keyed by its reference and county partition, for fast 2D dot rendering without loading the full geometry\.
+
+[Reference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference.Reference 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference\.Reference') is unique only in combination with [CountyId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference.CountyId 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference\.CountyId') - a building reference is stored once per county part it was imported under, so the county identifier must travel with the reference for any caller-side join. Row order on the wire is not contractual.
+
+```csharp
+public class Building2DCentroid : DiGi.GIS.PostgreSQL.Classes.Areal2DReference
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [Areal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Areal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Areal2DReference') → Building2DCentroid
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Building2DCentroid()'></a>
+
+## Building2DCentroid\(\) Constructor
+
+Initializes a new instance of the Building2DCentroid class\.
+
+```csharp
+public Building2DCentroid();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Building2DCentroid(DiGi.GIS.PostgreSQL.Classes.Building2DCentroid)'></a>
+
+## Building2DCentroid\(Building2DCentroid\) Constructor
+
+Initializes a new instance of the Building2DCentroid class by copying data from another Building2DCentroid instance\.
+
+```csharp
+public Building2DCentroid(DiGi.GIS.PostgreSQL.Classes.Building2DCentroid? building2DCentroid);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Building2DCentroid(DiGi.GIS.PostgreSQL.Classes.Building2DCentroid).building2DCentroid'></a>
+
+`building2DCentroid` [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')
+
+The Building2DCentroid instance to copy data from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Building2DCentroid(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Building2DCentroid\(JsonObject\) Constructor
+
+Initializes a new instance of the Building2DCentroid class from a JsonObject\.
+
+```csharp
+public Building2DCentroid(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Building2DCentroid(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JsonObject containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.X'></a>
+
+## Building2DCentroid\.X Property
+
+Gets or sets the X coordinate of the centroid\.
+
+```csharp
+public double X { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DCentroid.Y'></a>
+
+## Building2DCentroid\.Y Property
+
+Gets or sets the Y coordinate of the centroid\.
+
+```csharp
+public double Y { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DCountyPartMismatchResult'></a>
 
@@ -4754,6 +4841,47 @@ public Building2DPostgreSQLConverter(DiGi.PostgreSQL.Classes.ConnectionData? con
 The [DiGi\.PostgreSQL\.Classes\.ConnectionData](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.classes.connectiondata 'DiGi\.PostgreSQL\.Classes\.ConnectionData') containing the connection settings for the PostgreSQL database, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
 ### Methods
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.CentroidFromBoundingBox(System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_)'></a>
+
+## Building2DPostgreSQLConverter\.CentroidFromBoundingBox\(Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>\) Method
+
+Computes the centre of a bounding box: `((min_x + max_x) / 2, (min_y + max_y) / 2`\.
+
+The single implementation of the centroid arithmetic shared by [GetPoint2DsByReferencesAsync\(NpgsqlConnection, IEnumerable&lt;string&gt;, Nullable&lt;int&gt;, bool, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetPoint2DsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetPoint2DsByReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)') and [GetBuilding2DCentroidsByCountyIdAsync\(NpgsqlConnection, int, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'). A component that is missing or NaN means the row holds no usable bounding box, so no centre is returned for it.
+
+```csharp
+public static DiGi.Geometry.Planar.Classes.Point2D? CentroidFromBoundingBox(System.Nullable<double> minX, System.Nullable<double> minY, System.Nullable<double> maxX, System.Nullable<double> maxY);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.CentroidFromBoundingBox(System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).minX'></a>
+
+`minX` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The minimum X of the bounding box, or null when the column is NULL\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.CentroidFromBoundingBox(System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).minY'></a>
+
+`minY` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The minimum Y of the bounding box, or null when the column is NULL\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.CentroidFromBoundingBox(System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).maxX'></a>
+
+`maxX` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The maximum X of the bounding box, or null when the column is NULL\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.CentroidFromBoundingBox(System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).maxY'></a>
+
+`maxY` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The maximum Y of the bounding box, or null when the column is NULL\.
+
+#### Returns
+[DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')  
+The centre of the box, or null when any component is missing or NaN\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ClearAsync(int,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.ClearAsync\(int, CancellationToken\) Method
@@ -5049,6 +5177,88 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the [Building2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2D 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2D') instance if found; otherwise, null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync\(IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously retrieves the bounding\-box centres of the buildings associated with the specified administrative areal 2D identifiers, each keyed by its reference and county partition\.
+
+Resolution is identical to [GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'): it goes through <b>Subdivision children</b>, not geometry, so an identifier with no subdivisions yields an empty list, which does <b>not</b> mean the area holds no buildings. Only the bounding-box columns are read - the JSONB `object` column is never touched - which makes this the fast path for 2D dot rendering of a whole area.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>?> GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).administrativeAreal2DIds'></a>
+
+`administrativeAreal2DIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the administrative areal 2D identifiers to filter by\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, or null if the connection or the area lookup fails\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(NpgsqlConnection, int, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously retrieves the bounding\-box centres of the buildings for a specified county, with optional filtering by subdivision identifiers\.
+
+Reads only the bounding-box columns (`min_x`, `min_y`, `max_x`, `max_y`) plus `reference` and `county_id` - the JSONB `object` column is never touched. Rows whose bounding box is NULL or NaN are skipped, exactly as [GetPoint2DsByReferencesAsync\(NpgsqlConnection, IEnumerable&lt;string&gt;, Nullable&lt;int&gt;, bool, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetPoint2DsByReferencesAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetPoint2DsByReferencesAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)') does. Buildings filed under the county without a subdivision (`subdivision_id` NULL) are included whenever a subdivision filter is active, keeping the result set in parity with [GetBuilding2DReferencesByCountyIdAsync\(NpgsqlConnection, int, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByCountyIdAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)').
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>?> GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, System.Collections.Generic.IEnumerable<int>? subdivisionIds=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).subdivisionIds'></a>
+
+`subdivisionIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+An optional collection of integers representing the subdivision identifiers to filter the results\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, or null if the connection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(long,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -6770,6 +6980,41 @@ The cancellation token to observe while waiting for the task to complete\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable\<int\>, CancellationToken\) Method
+
+Resolves administrative areal 2D identifiers to the [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') children that hold their buildings, grouped by the county partition that owns them\.
+
+An identifier that is already a subdivision is used as is; any other identifier is expanded to its subdivision descendants. An identifier with no subdivisions contributes nothing, which does <b>not</b> mean the area holds no buildings.
+
+```csharp
+private static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<int>>?> ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).administrativeAreal2DIds'></a>
+
+`administrativeAreal2DIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+A collection of integers representing the administrative areal 2D identifiers to resolve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a dictionary of county identifier to distinct subdivision identifiers, an empty dictionary when no subdivision resolves, or null when the area lookup itself fails\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,double,int,System.Threading.CancellationToken)'></a>
 
