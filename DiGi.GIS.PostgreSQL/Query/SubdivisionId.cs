@@ -21,8 +21,11 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
+            // Walked twice, so materialised once.
+            List<(int Id, double Area_Intersection, double Area_Container)> tuples_List = [.. tuples];
+
             double area_Intersection_Max = double.NegativeInfinity;
-            foreach ((int Id, double Area_Intersection, double Area_Container) tuple in tuples)
+            foreach ((int Id, double Area_Intersection, double Area_Container) tuple in tuples_List)
             {
                 if (tuple.Area_Intersection > 0 && tuple.Area_Intersection > area_Intersection_Max)
                 {
@@ -38,7 +41,7 @@ namespace DiGi.GIS.PostgreSQL
             int? result = null;
             double area_Container_Result = double.PositiveInfinity;
 
-            foreach ((int Id, double Area_Intersection, double Area_Container) tuple in tuples)
+            foreach ((int Id, double Area_Intersection, double Area_Container) tuple in tuples_List)
             {
                 if (tuple.Area_Intersection <= 0 || tuple.Area_Intersection < area_Intersection_Max - tolerance)
                 {
