@@ -2492,6 +2492,82 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers of every county part to read, an empty set when no county overlaps the box, or null when the connection or the bounding box is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(double,int,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsWithNestedSubdivisionsAsync\(double, int, CancellationToken\) Method
+
+Asynchronously retrieves the identifiers of every county polygon part whose subdivision layer nests\. See [GetCountyIdsWithNestedSubdivisionsAsync\(NpgsqlConnection, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsWithNestedSubdivisionsAsync\(Npgsql\.NpgsqlConnection, double, int, System\.Threading\.CancellationToken\)')\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> GetCountyIdsWithNestedSubdivisionsAsync(double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a container's box is expanded by on every side before the inner box is tested against it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the county parts to scope to, an empty set when no subdivision nests anywhere, or null when the connection could not be established\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsWithNestedSubdivisionsAsync\(NpgsqlConnection, double, int, CancellationToken\) Method
+
+Asynchronously retrieves the identifiers of every county polygon part whose subdivision layer nests \- where a subdivision lies inside another subdivision of the same municipality, as a city holds its districts and their neighbourhoods\.
+
+Decided on the stored bounding boxes: a subdivision counts as nested when its box lies within the strictly larger box of a sibling, expanded by [tolerance](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken).tolerance 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsWithNestedSubdivisionsAsync\(Npgsql\.NpgsqlConnection, double, int, System\.Threading\.CancellationToken\)\.tolerance'). A box inside a box does not prove a polygon inside a polygon, so this over-approximates - which is what a <b>scope</b> wants: every county that might hold a nesting is named, at the cost of the odd county that only looks like one from its boxes. It is not a membership test; [ContainerIds\(this IReadOnlyDictionary&lt;int,PolygonalFace2D&gt;, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double) 'DiGi\.GIS\.PostgreSQL\.Query\.ContainerIds\(this System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double\)') decides nesting on the polygons themselves.
+
+Widened to every part sharing a code with a part named, the [GetCountyIdsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, int, System\.Threading\.CancellationToken\)') rule: a subdivision's `county_id` names one part, and the buildings it holds may be filed under a sibling. See [DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77').
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a container's box is expanded by on every side before the inner box is tested against it\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(Npgsql.NpgsqlConnection,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers of the county parts to scope to, an empty set when no subdivision nests anywhere, or null when the connection is null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetEstimatedCountAsync(bool,int,System.Threading.CancellationToken)'></a>
 
 ## AdministrativeAreal2DPostgreSQLConverter\.GetEstimatedCountAsync\(bool, int, CancellationToken\) Method
@@ -5213,6 +5289,45 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, or null if the connection or the area lookup fails\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(int, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously retrieves the bounding\-box centres of the buildings for a specified county\. See [GetBuilding2DCentroidsByCountyIdAsync\(NpgsqlConnection, int, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)')\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>?> GetBuilding2DCentroidsByCountyIdAsync(int countyId, System.Collections.Generic.IEnumerable<int>? subdivisionIds=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The integer identifier of the county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).subdivisionIds'></a>
+
+`subdivisionIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+An optional collection of integers representing the subdivision identifiers to filter the results\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, or null if the connection could not be established\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(NpgsqlConnection, int, IEnumerable\<int\>, int, CancellationToken\) Method
@@ -6990,7 +7105,9 @@ True when the centre lies strictly inside the polygon; otherwise, false\.
 
 ## Building2DPostgreSQLConverter\.RefreshAsync\(PostgreSQLBuilding2DRefreshOptions, IProgress\<long\>, int, CancellationToken\) Method
 
-Asynchronously refreshes the 2D building data in the PostgreSQL database\.
+Asynchronously refreshes the 2D building data in the PostgreSQL database \- today, the `subdivision_id` of each building, derived from its outline by `GetSubdivisionIdAsync` \(the smallest subdivision containing it\)\.
+
+Walks the table in identifier order in batches, each under `FOR UPDATE SKIP LOCKED`. By default only buildings with no `subdivision_id` are visited; [OverrideExistingSubdivisionIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.OverrideExistingSubdivisionIds') re-derives every one. The walk can be limited to county polygon parts with [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.CountyIds'), or to the parts whose subdivision layer nests with [NestedSubdivisionsOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.NestedSubdivisionsOnly') - the counties where the previous lowest-identifier tie-break produced an arbitrary value ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')), which is nearly all of them: a village and its named parts nest as a city and its districts do. The resolved scope and the rows written per county are logged.
 
 ```csharp
 public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshResult?> RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions? postgreSQLBuilding2DRefreshOptions=null, System.IProgress<long>? progress=null, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -7227,7 +7344,7 @@ A task that represents the asynchronous operation\. The task result contains a d
 
 Resolves the [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') references among the given ones to their polygons, the boundary their buildings are read by\.
 
-The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and `subdivision_id` files each building under a single one of its containers (the lowest identifier among equal overlaps, see `GetSubdivisionIdAsync`). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through [ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable&lt;AdministrativeAreal2DReference&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\>, System\.Threading\.CancellationToken\)').
+The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and `subdivision_id` files each building under a single one of its containers (the smallest one, see `GetSubdivisionIdAsync`). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through [ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable&lt;AdministrativeAreal2DReference&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\>, System\.Threading\.CancellationToken\)').
 
 ```csharp
 private static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.PolygonalFace2D>?> ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference?> administrativeAreal2DReferences, System.Threading.CancellationToken cancellationToken);
@@ -12901,11 +13018,11 @@ public long WithSubdivisionIdCount { get; }
 
 ## OrtoDatasCoverageResult Class
 
-How much of one subdivision's buildings the orthophoto store holds, measured over that subdivision's own buildings rather than over its county's\.
+How much of one area's buildings the orthophoto store holds, measured over the buildings inside that area's polygon rather than over its county's\.
 
 The figure the estimated county-level counts cannot give. `orto_datas` and `building_2d` are partitioned by `county_id`, so a partition estimate describes a whole county and says nothing about any area inside it; this is counted, not estimated.
 
-Counted from the building side alone. `orto_datas` carries a `subdivision_id` column of its own, but it has never been written - not one of the 8 384 055 rows stored across 225 counties carries a value - so grouping the orthophoto side by it answers zero for every subdivision in the country. `building_2d` is the side that knows which subdivision a building belongs to, and it is the side this is measured from.
+Counted from the building side alone, by geometry. A building belongs to an area when its centre lies inside the area's polygon - not when its stored `subdivision_id` names it, which files a building under one subdivision only and so cannot say which buildings a district holds where the subdivision layer nests ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')). `orto_datas` carries a `subdivision_id` column of its own, but it has never been written - not one of the 8 384 055 rows stored across 225 counties carries a value - so grouping the orthophoto side by it answers zero for every subdivision in the country.
 
 ```csharp
 public class OrtoDatasCoverageResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
@@ -12940,7 +13057,7 @@ The [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL
 Initializes a new instance of the [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') class\.
 
 ```csharp
-public OrtoDatasCoverageResult(int countyId, System.Nullable<int> subdivisionId, long building2DCount, long ortoDatasCount);
+public OrtoDatasCoverageResult(int countyId, System.Nullable<int> administrativeAreal2DId, long building2DCount, long ortoDatasCount);
 ```
 #### Parameters
 
@@ -12950,17 +13067,17 @@ public OrtoDatasCoverageResult(int countyId, System.Nullable<int> subdivisionId,
 
 The identifier of the county the coverage was measured in\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).subdivisionId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).administrativeAreal2DId'></a>
 
-`subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+`administrativeAreal2DId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The identifier of the subdivision the coverage describes, or null for the county's buildings that name no subdivision\.
+The identifier of the area the coverage describes, or null for the county's buildings that lie inside none of the areas measured\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).building2DCount'></a>
 
 `building2DCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
-The number of buildings the subdivision holds\.
+The number of buildings the area holds\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.OrtoDatasCoverageResult(int,System.Nullable_int_,long,long).ortoDatasCount'></a>
 
@@ -12986,11 +13103,28 @@ public OrtoDatasCoverageResult(System.Text.Json.Nodes.JsonObject? jsonObject);
 The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
 ### Properties
 
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.AdministrativeAreal2DId'></a>
+
+## OrtoDatasCoverageResult\.AdministrativeAreal2DId Property
+
+Gets the identifier of the area the coverage describes \- whichever polygon the caller asked to be measured: a subdivision, or a municipality measured over its own polygon rather than as a sum of subdivisions\.
+
+Null is not a missing value: it is the county's buildings whose centre lies inside none of the areas measured. Where the areas are the county's subdivisions those buildings belong to no subdivision and to no municipality, so nothing below county level should ever count them, and they are kept apart rather than folded into a neighbour.
+
+Where the areas nest, a building inside a neighbourhood is counted for the neighbourhood, its district and its city alike - the results of nested areas are not disjoint and must not be summed.
+
+```csharp
+public System.Nullable<int> AdministrativeAreal2DId { get; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.Building2DCount'></a>
 
 ## OrtoDatasCoverageResult\.Building2DCount Property
 
-Gets the number of buildings the subdivision holds\. The denominator of the coverage\.
+Gets the number of buildings the area holds\. The denominator of the coverage\.
 
 ```csharp
 public long Building2DCount { get; }
@@ -13018,7 +13152,7 @@ public int CountyId { get; }
 
 ## OrtoDatasCoverageResult\.OrtoDatasCount Property
 
-Gets the number of the subdivision's buildings that have an orthophoto row\. The numerator of the coverage\.
+Gets the number of the area's buildings that have an orthophoto row\. The numerator of the coverage\.
 
 Counted on references present in `orto_datas` for the same county, not on that table's own subdivision column, which has never been written.
 
@@ -13028,21 +13162,6 @@ public long OrtoDatasCount { get; }
 
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
-
-<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.SubdivisionId'></a>
-
-## OrtoDatasCoverageResult\.SubdivisionId Property
-
-Gets the identifier of the subdivision the coverage describes\.
-
-Null is not a missing value: it is the county's buildings that name no subdivision. Those belong to no subdivision and to no municipality, so nothing below county level should ever count them, and they are kept apart rather than folded into a neighbour.
-
-```csharp
-public System.Nullable<int> SubdivisionId { get; }
-```
-
-#### Property Value
-[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter'></a>
 
@@ -16473,6 +16592,36 @@ public int BatchSize { get; set; }
 #### Property Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.CountyIds'></a>
+
+## PostgreSQLBuilding2DRefreshOptions\.CountyIds Property
+
+Gets or sets the county polygon part identifiers the refresh is limited to\. [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') means every county\.
+
+A county code is not a key - a multi-part county has one identifier per polygon part - so name every part that is wanted. Combined with [NestedSubdivisionsOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.NestedSubdivisionsOnly'), only the named parts that also hold a nested subdivision layer are refreshed.
+
+```csharp
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly'></a>
+
+## PostgreSQLBuilding2DRefreshOptions\.NestedSubdivisionsOnly Property
+
+Gets or sets a value indicating whether the refresh is limited to the counties whose subdivision layer nests \- where one subdivision lies inside another of the same municipality, as a city holds its districts and their neighbourhoods\.
+
+Those are the counties where the stored `subdivision_id` depended on the tie-break rather than on the geometry ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')). Expect it to exclude very little: a village and its named parts nest the same way a city and its districts do, and on the development database 404 of 406 county parts qualified. It is a way of naming the affected counties in the log rather than a saving; the re-derivation with [OverrideExistingSubdivisionIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.OverrideExistingSubdivisionIds') is, in practice, national. The scope is resolved when the refresh starts and logged.
+
+```csharp
+public bool NestedSubdivisionsOnly { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds'></a>
 
 ## PostgreSQLBuilding2DRefreshOptions\.OverrideExistingSubdivisionIds Property
@@ -16949,6 +17098,8 @@ public DiGi.Core.Classes.Range<int>? Years { get; set; }
 Represents a background task that fills the building data table from Building2D and the other stored data sources\.
 
 The run is driven by subdivisions: for each one it reads that subdivision's buildings and, according to [BuildingDataUpdateTypes](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions.BuildingDataUpdateTypes 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateOptions\.BuildingDataUpdateTypes'), derives the shape and administrative columns, the occupancy, the database identifier and the radial ratios, then upserts a row per building keyed on county and reference.
+
+A building belongs to exactly one subdivision here: the one its `subdivision_id` names, which is the <b>smallest</b> subdivision containing it. Where the layer nests - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - that is the neighbourhood, so the administrative columns (`Subdivision name`, `Subdivision occupancy`, `Settlement type`) name the most specific unit, and a district or city row reaches only the buildings inside none of its children. The rows of nested subdivisions are therefore not disjoint by geometry but are disjoint by attribution, which is what a per-building table needs; anything wanting "the buildings of district X" reads X's polygon instead ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')).
 
 Buildings the subdivision loop cannot reach - those without a `subdivision_id`, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through `administrative_areal_2d`; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.
 
@@ -19326,12 +19477,29 @@ The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/do
 
 Gets or sets a value indicating whether the existing occupancy data should be cleared before performing the update operation\.
 
+With [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions\.CountyIds') set, the building side is not truncated: only the rows of the buildings in the named counties are removed before they are rewritten, so a building whose subdivision carries no figure does not keep a stale row from an earlier run. The administrative side is always truncated whole when cleared, because its roll-up is always written whole.
+
 ```csharp
 public bool Clear { get; set; }
 ```
 
 #### Property Value
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.CountyIds'></a>
+
+## PostgreSQLUpdateOccupancyOptions\.CountyIds Property
+
+Gets or sets the county polygon part identifiers the building side of the update is limited to\. [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') means every county\.
+
+Scopes [IncludeBuilding2Ds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.IncludeBuilding2Ds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions\.IncludeBuilding2Ds') only. The administrative roll-up - subdivision, municipality, county, voivodeship, country - is a sum over the whole hierarchy and stays nationwide whatever is named here. A county code is not a key - a multi-part county has one identifier per polygon part - so name every part that is wanted.
+
+```csharp
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.IncludeAdministrativeAreal2Ds'></a>
 
@@ -19366,6 +19534,10 @@ public bool IncludeBuilding2Ds { get; set; }
 Represents a background task responsible for updating occupancy data within a PostgreSQL GIS database\.
 
 This class leverages the [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager') to execute the update process based on the provided [PostgreSQLUpdateOccupancyOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.PostgreSQLUpdateOccupancyOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyTask\.PostgreSQLUpdateOccupancyOptions').
+
+<b>Administrative side.</b> Every subdivision keeps its own stored figure - [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the source carries none, never a zero standing in for it. The levels above are sums: a municipality over its subdivisions, a county over its municipalities, and so on. Where the subdivision layer nests - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - only the <b>top-level</b> subdivisions are summed ([ContainerIds\(this IReadOnlyDictionary&lt;int,PolygonalFace2D&gt;, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double) 'DiGi\.GIS\.PostgreSQL\.Query\.ContainerIds\(this System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double\)')), so a city counts once rather than once per level; summing every row wrote Warsaw's municipality as 4.6 million against a city of 1 622 594 ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')).
+
+<b>Building side.</b> Each building is attributed to exactly one subdivision - the one its `subdivision_id` names, which is the smallest subdivision containing it - and that subdivision's figure is distributed over its buildings by floor area. A subdivision whose figure is missing writes nothing for its buildings and is counted in [MissingOccupancySubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.MissingOccupancySubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyTask\.MissingOccupancySubdivisionCount'): a share fabricated from an ancestor would be a number, not data. An explicit zero is a figure and is distributed as one. The building side can be limited to county polygon parts with [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions\.CountyIds').
 
 ```csharp
 public class PostgreSQLUpdateOccupancyTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
@@ -19407,6 +19579,21 @@ private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 #### Field Value
 [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
 ### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.MissingOccupancySubdivisionCount'></a>
+
+## PostgreSQLUpdateOccupancyTask\.MissingOccupancySubdivisionCount Property
+
+Gets the number of subdivisions that held buildings but carried no occupancy figure during the last run, so their buildings were left unwritten\.
+
+Not a failure of the run but a gap in the source: the figure is absent on the subdivision row itself. The same subdivisions come up again next time until the source is completed. Logged one warning each, naming the subdivision and its building count.
+
+```csharp
+public long MissingOccupancySubdivisionCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.PostgreSQLUpdateOccupancyOptions'></a>
 

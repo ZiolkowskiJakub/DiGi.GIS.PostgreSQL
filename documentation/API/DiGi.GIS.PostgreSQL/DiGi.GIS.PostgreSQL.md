@@ -1585,6 +1585,39 @@ The current administrative areal type\.
 [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
 The next level of administrative areal type in the hierarchy, or null if no child exists or the input is undefined\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double)'></a>
+
+## Query\.ContainerIds\(this IReadOnlyDictionary\<int,PolygonalFace2D\>, double\) Method
+
+Finds, for every face, the other faces that contain it \- the nesting of a layer whose areas lie inside one another, as a city holds its districts and their neighbourhoods\.
+
+A face is contained by another when the other is larger, its bounding box holds this face's box within [tolerance](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double).tolerance 'DiGi\.GIS\.PostgreSQL\.Query\.ContainerIds\(this System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double\)\.tolerance'), and a point known to be inside this face ([DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\.GetInternalPoint\(System\.Double\)](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d.getinternalpoint#digi-geometry-planar-classes-polygonalface2d-getinternalpoint(system-double) 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\.GetInternalPoint\(System\.Double\)')) is inside the other by the [IsInside\(PolygonalFace2D, BoundingBox2D, Point2D, double\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.IsInside\(DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, DiGi\.Geometry\.Planar\.Classes\.Point2D, double\)') rule. One interior point rather than a polygon intersection: the areas of one layer do not cross, they nest or they touch, and a point settles which in constant time where an intersection would cost the product of the two rings.
+
+The containers of a face are listed <b>smallest first</b>, so the first is its immediate parent and the last is the outermost. A face with no container is top level; a layer that does not nest at all - every flat county - answers an empty list for every face. That is what the municipality occupancy roll-up sums over, and what makes a nested city count once rather than once per level ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')).
+
+Boxes, areas and interior points are derived once up front. A face whose box or interior point cannot be derived neither contains nor is contained.
+
+```csharp
+public static System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<int>> ContainerIds(this System.Collections.Generic.IReadOnlyDictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+The faces of one layer, keyed by identifier\. May be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null')\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance within which a box edge still counts as inside the container's box, and the tolerance of the interior point test\.
+
+#### Returns
+[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
+Every identifier given mapped to the identifiers of the faces containing it, smallest first; an empty list for a top\-level face\. Empty when nothing was given\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.CountyId(thisSystem.Collections.Generic.IDictionary_int,DiGi.Geometry.Planar.Interfaces.IPolygonal2D_,DiGi.Geometry.Planar.Interfaces.IPolygonal2D,double)'></a>
 
 ## Query\.CountyId\(this IDictionary\<int,IPolygonal2D\>, IPolygonal2D, double\) Method
@@ -1771,6 +1804,71 @@ The candidate county rows, normally every polygon part of one code\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 The identifier of the county row holding each reference\. Empty when nothing could be resolved\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken)'></a>
+
+## Query\.CoveragesAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, IReadOnlyDictionary\<int,PolygonalFace2D\>, double, int, CancellationToken\) Method
+
+Asynchronously measures, for one county, how much of the buildings inside each given polygon the orthophoto store holds\.
+
+What the estimated partition counts cannot answer. Both tables are partitioned by `county_id`, so `reltuples` describes a whole county and there is no figure for any area inside it to be had from it - reporting the county's own factor for a subdivision is [DiGi\.GIS\.WebAPI issue \#8](https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/8 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.WebAPI/issues/8'). This counts instead of estimating, and costs one read per side however many polygons are asked about.
+
+<b>Membership is decided by geometry, not by the stored <c>subdivision_id</c>.</b> A building belongs to a polygon when its bounding-box centre lies inside it ([IsInside\(PolygonalFace2D, BoundingBox2D, Point2D, double\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.IsInside\(DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, DiGi\.Geometry\.Planar\.Classes\.Point2D, double\)')). The column files a building under one subdivision only, so where the subdivision layer nests it cannot say which buildings a district holds - Warsaw's districts counted zero by column while holding 155 307 buildings between them ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')). By polygon, a building inside a neighbourhood counts for the neighbourhood, its district and its city alike; <b>the results of nested polygons therefore overlap and must not be summed</b> - a caller wanting a municipality asks for the municipality's own polygon.
+
+The orthophoto side's own `subdivision_id` is deliberately not used. That column has never been written: not one of the 8 384 055 rows stored across 225 counties carries a value, measured 2026-08-26 through `gis/ortodatas/summariesbycountyids`. The orthophoto side is asked only whether it holds a reference.
+
+The two tables live in different databases - `building_2d` in the main store, `orto_datas` in the storage one - so this cannot be a join and is not one. The building side is read as bounding-box centres ([GetBuilding2DCentroidsByCountyIdAsync\(int, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByCountyIdAsync\(int, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'), the JSONB column untouched), the orthophoto side as references, and the two are matched in memory. Each centre is tested against every polygon whose box holds it.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult>?> CoveragesAsync(this DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter? ortoDatasPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, int countyId, System.Collections.Generic.IReadOnlyDictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_ById, double tolerance=0.001, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).ortoDatasPostgreSQLConverter'></a>
+
+`ortoDatasPostgreSQLConverter` [OrtoDatasPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter')
+
+The converter reading the orthophoto store\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter reading the building store\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county to measure\. One polygon part, not a code \- a multi\-part county is measured a part at a time\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+The polygons to measure, keyed by the identifier the results are reported under\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the containment test\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains one [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') per polygon that holds at least one of the county's buildings, in identifier order, plus one carrying a null [AdministrativeAreal2DId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.AdministrativeAreal2DId 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult\.AdministrativeAreal2DId') for the buildings inside none of them when there are any; or null when either converter or the polygon map is missing, either side could not be read, or the county holds no orthophoto row at all\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.IdColumnName(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 
@@ -2367,48 +2465,56 @@ County references to group\. May be [null](https://docs.microsoft.com/en-us/dotn
 [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
 A map from each county part `Id` to the set of part `Id`s sharing its code; a code\-less part maps to itself\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken)'></a>
 
-## Query\.SubdivisionCoveragesAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, int, CancellationToken\) Method
+## Query\.SubdivisionCoveragesAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, int, double, int, CancellationToken\) Method
 
 Asynchronously measures, for one county, how much of each of its subdivisions' buildings the orthophoto store holds\.
 
-What the estimated partition counts cannot answer. Both tables are partitioned by `county_id`, so `reltuples` describes a whole county and there is no subdivision-level figure to be had from it - reporting the county's own factor for a subdivision is [DiGi\.GIS\.WebAPI issue \#8](https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/8 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.WebAPI/issues/8'). This counts instead of estimating, and costs one read per side however many subdivisions are asked about.
-
-<b>The orthophoto side's own <c>subdivision_id</c> is deliberately not used, and grouping by it would be wrong.</b> That column has never been written: not one of the 8 384 055 rows stored across 225 counties carries a value, measured 2026-08-26 through `gis/ortodatas/summariesbycountyids`. Grouping the orthophoto side by it answers zero for every subdivision in the country - a different wrong number, not an honest one. Populating it is an unfinished migration, and even once it runs the value is a copy of the building's, which is the defect class issues #23, #31 and #36 exist for. `building_2d` is the side that knows which subdivision a building belongs to, so a building is attributed there and the orthophoto side is asked only whether it holds that reference.
-
-The two tables live in different databases - `building_2d` in the main store, `orto_datas` in the storage one - so this cannot be a join and is not one. Each side is read once, cheaply, and matched in memory, the same way [SubdivisionLinksAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.SubdivisionLinksAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.SubdivisionLinksAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, int, int, int, System\.Threading\.CancellationToken\)') does.
+The subdivisions measured are those filed under the county part and under every sibling part sharing its code (the parent lookup widens by code on its own): a subdivision's `county_id` names one part, and the buildings it holds may be filed under another. Each is measured by its polygon through [CoveragesAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, IReadOnlyDictionary&lt;int,PolygonalFace2D&gt;, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.CoveragesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, int, System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double, int, System\.Threading\.CancellationToken\)'), which is where the counting and its caveats live - in particular that where the layer nests, a building is counted for every subdivision containing it, so the results of a city and its districts overlap and must not be summed.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult>?> SubdivisionCoveragesAsync(this DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter? ortoDatasPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult>?> SubdivisionCoveragesAsync(this DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter? ortoDatasPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, int countyId, double tolerance=0.001, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).ortoDatasPostgreSQLConverter'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).ortoDatasPostgreSQLConverter'></a>
 
 `ortoDatasPostgreSQLConverter` [OrtoDatasPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter')
 
 The converter reading the orthophoto store\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
 
 `building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
 
 The converter reading the building store\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter reading the subdivisions and the county parts\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The identifier of the county to measure\. One polygon part, not a code \- a multi\-part county is measured a part at a time\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the containment test\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -2416,7 +2522,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains one [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') per subdivision the county's buildings name, plus one carrying a null [SubdivisionId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.SubdivisionId 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult\.SubdivisionId') for the buildings that name none when there are any; or null when either converter is missing, either side could not be read, or the county holds no orthophoto row at all\.
+A task that represents the asynchronous operation\. The task result contains one [OrtoDatasCoverageResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult') per subdivision holding at least one of the county's buildings, plus one carrying a null [AdministrativeAreal2DId](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasCoverageResult.AdministrativeAreal2DId 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasCoverageResult\.AdministrativeAreal2DId') for the buildings inside no subdivision polygon when there are any; or null when a converter is missing, the subdivisions or either side could not be read, or the county holds no orthophoto row at all\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.SubdivisionLinksAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,int,System.Threading.CancellationToken)'></a>
 

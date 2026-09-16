@@ -1,4 +1,5 @@
 ﻿using DiGi.Core.Classes;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
@@ -38,6 +39,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 IncludeBuilding2Ds = postgreSQLUpdateOccupancyOptions.IncludeBuilding2Ds;
                 IncludeAdministrativeAreal2Ds = postgreSQLUpdateOccupancyOptions.IncludeAdministrativeAreal2Ds;
                 Clear = postgreSQLUpdateOccupancyOptions.Clear;
+                CountyIds = postgreSQLUpdateOccupancyOptions.CountyIds is null ? null : [.. postgreSQLUpdateOccupancyOptions.CountyIds];
             }
         }
 
@@ -55,8 +57,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets or sets a value indicating whether the existing occupancy data should be cleared before performing the update operation.
+        /// <para>With <see cref="CountyIds"/> set, the building side is not truncated: only the rows of the buildings in the named counties are removed before they are rewritten, so a building whose subdivision carries no figure does not keep a stale row from an earlier run. The administrative side is always truncated whole when cleared, because its roll-up is always written whole.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(Clear))]
         public bool Clear { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the county polygon part identifiers the building side of the update is limited to. <see langword="null"/> means every county.
+        /// <para>Scopes <see cref="IncludeBuilding2Ds"/> only. The administrative roll-up - subdivision, municipality, county, voivodeship, country - is a sum over the whole hierarchy and stays nationwide whatever is named here. A county code is not a key - a multi-part county has one identifier per polygon part - so name every part that is wanted.</para>
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(CountyIds))]
+        public HashSet<int>? CountyIds { get; set; } = null;
     }
 }

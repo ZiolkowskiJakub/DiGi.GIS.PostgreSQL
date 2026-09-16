@@ -2297,6 +2297,96 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the identifiers of every county polygon part whose subdivision layer nests - where a subdivision lies inside another subdivision of the same municipality, as a city holds its districts and their neighbourhoods.
+        /// <para>Decided on the stored bounding boxes: a subdivision counts as nested when its box lies within the strictly larger box of a sibling, expanded by <paramref name="tolerance"/>. A box inside a box does not prove a polygon inside a polygon, so this over-approximates - which is what a <b>scope</b> wants: every county that might hold a nesting is named, at the cost of the odd county that only looks like one from its boxes. It is not a membership test; <see cref="Query.ContainerIds(IReadOnlyDictionary{int, PolygonalFace2D}, double)"/> decides nesting on the polygons themselves.</para>
+        /// <para>Widened to every part sharing a code with a part named, the <see cref="GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection?, BoundingBox2D?, double, int, CancellationToken)"/> rule: a subdivision's <c>county_id</c> names one part, and the buildings it holds may be filed under a sibling. See <see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the PostgreSQL database.</param>
+        /// <param name="tolerance">The distance a container's box is expanded by on every side before the inner box is tested against it.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the county parts to scope to, an empty set when no subdivision nests anywhere, or null when the connection is null.</returns>
+        public static async Task<HashSet<int>?> GetCountyIdsWithNestedSubdivisionsAsync(NpgsqlConnection? npgsqlConnection, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // Pairs are formed within a municipality - or within a county for subdivisions filed directly under
+            // one - because a nesting never crosses that boundary, and the pairing is what would otherwise grow
+            // with the square of the layer. The inner box is compared against the container's box grown by the
+            // tolerance, and the container has to be strictly larger, so two rows sharing one box name neither.
+            string commandText = $@"
+                WITH nested AS (
+                    SELECT DISTINCT inner_row.county_id
+                    FROM {TableName.AdministrativeAreal2D} AS inner_row
+                    JOIN {TableName.AdministrativeAreal2D} AS outer_row
+                        ON outer_row.type_id = inner_row.type_id
+                        AND outer_row.id <> inner_row.id
+                        AND outer_row.municipality_id IS NOT DISTINCT FROM inner_row.municipality_id
+                        AND outer_row.county_id IS NOT DISTINCT FROM inner_row.county_id
+                        AND box(point(inner_row.min_x, inner_row.min_y), point(inner_row.max_x, inner_row.max_y)) <@ box(point(outer_row.min_x - @tolerance, outer_row.min_y - @tolerance), point(outer_row.max_x + @tolerance, outer_row.max_y + @tolerance))
+                        AND area(box(point(outer_row.min_x, outer_row.min_y), point(outer_row.max_x, outer_row.max_y))) > area(box(point(inner_row.min_x, inner_row.min_y), point(inner_row.max_x, inner_row.max_y)))
+                    WHERE inner_row.type_id = @typeId_Subdivision
+                        AND inner_row.county_id IS NOT NULL
+                ),
+                named AS (
+                    SELECT county.id, county.code
+                    FROM {TableName.AdministrativeAreal2D} AS county
+                    WHERE county.type_id = @typeId_County
+                        AND county.id IN (SELECT county_id FROM nested)
+                )
+                SELECT id FROM named
+                UNION
+                SELECT sibling.id
+                FROM {TableName.AdministrativeAreal2D} AS sibling
+                WHERE sibling.type_id = @typeId_County
+                    AND sibling.code IN (SELECT code FROM named WHERE code IS NOT NULL)";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("tolerance", NpgsqlDbType.Double) { Value = tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId_Subdivision", NpgsqlDbType.Smallint) { Value = (short)AdministrativeArealType.Subdivision });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("typeId_County", NpgsqlDbType.Smallint) { Value = (short)AdministrativeArealType.County });
+
+            HashSet<int> countyIds = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                if (!await npgsqlDataReader.IsDBNullAsync(0, cancellationToken))
+                {
+                    countyIds.Add(npgsqlDataReader.GetInt32(0));
+                }
+            }
+
+            return countyIds;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the identifiers of every county polygon part whose subdivision layer nests. See <see cref="GetCountyIdsWithNestedSubdivisionsAsync(NpgsqlConnection?, double, int, CancellationToken)"/>.
+        /// </summary>
+        /// <param name="tolerance">The distance a container's box is expanded by on every side before the inner box is tested against it.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers of the county parts to scope to, an empty set when no subdivision nests anywhere, or null when the connection could not be established.</returns>
+        public async Task<HashSet<int>?> GetCountyIdsWithNestedSubdivisionsAsync(double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetCountyIdsWithNestedSubdivisionsAsync(npgsqlConnection, tolerance, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves an estimated count of the administrative areal 2D entities from the database.
         /// </summary>
         /// <param name="analyze">A boolean value indicating whether to analyze the table before retrieving the estimate.</param>

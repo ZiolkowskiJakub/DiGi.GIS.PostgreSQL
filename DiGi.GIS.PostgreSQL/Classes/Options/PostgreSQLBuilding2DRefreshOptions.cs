@@ -1,4 +1,5 @@
 using DiGi.Core.Classes;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
@@ -39,6 +40,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Tolerance = postgreSQLBuilding2DRefreshOptions.Tolerance;
                 OverrideExistingSubdivisionIds = postgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds;
                 StartId = postgreSQLBuilding2DRefreshOptions.StartId;
+                CountyIds = postgreSQLBuilding2DRefreshOptions.CountyIds is null ? null : [.. postgreSQLBuilding2DRefreshOptions.CountyIds];
+                NestedSubdivisionsOnly = postgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly;
             }
         }
 
@@ -47,6 +50,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonInclude, JsonPropertyName("BatchSize")]
         public int BatchSize { get; set; } = 500;
+
+        /// <summary>
+        /// Gets or sets the county polygon part identifiers the refresh is limited to. <see langword="null"/> means every county.
+        /// <para>A county code is not a key - a multi-part county has one identifier per polygon part - so name every part that is wanted. Combined with <see cref="NestedSubdivisionsOnly"/>, only the named parts that also hold a nested subdivision layer are refreshed.</para>
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(CountyIds))]
+        public HashSet<int>? CountyIds { get; set; } = null;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the refresh is limited to the counties whose subdivision layer nests - where one subdivision lies inside another of the same municipality, as a city holds its districts and their neighbourhoods.
+        /// <para>Those are the counties where the stored <c>subdivision_id</c> depended on the tie-break rather than on the geometry (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>). Expect it to exclude very little: a village and its named parts nest the same way a city and its districts do, and on the development database 404 of 406 county parts qualified. It is a way of naming the affected counties in the log rather than a saving; the re-derivation with <see cref="OverrideExistingSubdivisionIds"/> is, in practice, national. The scope is resolved when the refresh starts and logged.</para>
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(NestedSubdivisionsOnly))]
+        public bool NestedSubdivisionsOnly { get; set; } = false;
 
         /// <summary>
         /// Gets or sets a value indicating whether existing subdivision IDs should be overridden during the refresh process.

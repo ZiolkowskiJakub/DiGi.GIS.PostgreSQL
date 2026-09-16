@@ -182,6 +182,27 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the bounding-box centres of the buildings for a specified county. See <see cref="GetBuilding2DCentroidsByCountyIdAsync(NpgsqlConnection?, int, IEnumerable{int}?, int, CancellationToken)"/>.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="subdivisionIds">An optional collection of integers representing the subdivision identifiers to filter the results.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DCentroid" /> objects, or null if the connection could not be established.</returns>
+        public async Task<List<Building2DCentroid>?> GetBuilding2DCentroidsByCountyIdAsync(int countyId, IEnumerable<int>? subdivisionIds = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuilding2DCentroidsByCountyIdAsync(npgsqlConnection, countyId, subdivisionIds, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves the bounding-box centres of the buildings whose centre lies inside the given polygon, each keyed by its reference and county partition.
         /// <para>The geometry path of <see cref="GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync"/>, taken for a <see cref="AdministrativeArealType.Subdivision"/>: the county partitions come from <see cref="AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection?, BoundingBox2D?, double, int, CancellationToken)"/> (every part reaching the polygon's box, never one row's <c>county_id</c> - issue #64), the GiST box index narrows them to the rows overlapping that box, and <see cref="IsInside(PolygonalFace2D?, BoundingBox2D?, Point2D?, double)"/> keeps the ones whose centre the polygon contains. Nothing is filtered by <c>subdivision_id</c>. Only the bounding-box columns are read - the JSONB <c>object</c> column is never touched.</para>
         /// </summary>
@@ -512,7 +533,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Computes the centre of a bounding box: <c>((min_x + max_x) / 2, (min_y + max_y) / 2</c>.
-        /// <para>The single implementation of the centroid arithmetic shared by <see cref="GetPoint2DsByReferencesAsync(NpgsqlConnection?, IEnumerable{string}?, int?, bool, int, CancellationToken)"/> and <see cref="GetBuilding2DCentroidsByCountyIdAsync"/>. A component that is missing or NaN means the row holds no usable bounding box, so no centre is returned for it.</para>
+        /// <para>The single implementation of the centroid arithmetic shared by <see cref="GetPoint2DsByReferencesAsync(NpgsqlConnection?, IEnumerable{string}?, int?, bool, int, CancellationToken)"/> and <see cref="GetBuilding2DCentroidsByCountyIdAsync(NpgsqlConnection?, int, IEnumerable{int}?, int, CancellationToken)"/>. A component that is missing or NaN means the row holds no usable bounding box, so no centre is returned for it.</para>
         /// </summary>
         /// <param name="minX">The minimum X of the bounding box, or null when the column is NULL.</param>
         /// <param name="minY">The minimum Y of the bounding box, or null when the column is NULL.</param>
@@ -1669,7 +1690,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Resolves the <see cref="AdministrativeArealType.Subdivision"/> references among the given ones to their polygons, the boundary their buildings are read by.
-        /// <para>The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and <c>subdivision_id</c> files each building under a single one of its containers (the lowest identifier among equal overlaps, see <c>GetSubdivisionIdAsync</c>). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through <see cref="ResolveSubdivisionIdsByCountyIdAsync"/>.</para>
+        /// <para>The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and <c>subdivision_id</c> files each building under a single one of its containers (the smallest one, see <c>GetSubdivisionIdAsync</c>). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through <see cref="ResolveSubdivisionIdsByCountyIdAsync"/>.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
         /// <param name="administrativeAreal2DReferences">The administrative areal 2D references to resolve.</param>
@@ -2216,7 +2237,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously refreshes the 2D building data in the PostgreSQL database.
+        /// Asynchronously refreshes the 2D building data in the PostgreSQL database - today, the <c>subdivision_id</c> of each building, derived from its outline by <c>GetSubdivisionIdAsync</c> (the smallest subdivision containing it).
+        /// <para>Walks the table in identifier order in batches, each under <c>FOR UPDATE SKIP LOCKED</c>. By default only buildings with no <c>subdivision_id</c> are visited; <see cref="PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds"/> re-derives every one. The walk can be limited to county polygon parts with <see cref="PostgreSQLBuilding2DRefreshOptions.CountyIds"/>, or to the parts whose subdivision layer nests with <see cref="PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly"/> - the counties where the previous lowest-identifier tie-break produced an arbitrary value (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>), which is nearly all of them: a village and its named parts nest as a city and its districts do. The resolved scope and the rows written per county are logged.</para>
         /// </summary>
         /// <param name="postgreSQLBuilding2DRefreshOptions">The options to configure the refresh process for PostgreSQL 2D buildings. Can be null to use default settings.</param>
         /// <param name="progress">The progress reporter used to report the current progress as a long value representing the count of updated buildings. Can be null if no progress reporting is required.</param>
@@ -2237,11 +2259,51 @@ namespace DiGi.GIS.PostgreSQL.Classes
             long failedBatchCount = 0;
             bool cancelled = false;
 
-            Serilog.Modify.Log(
-                "{Type} refresh started: batch size {BatchSize}, start ID {StartId}, override existing subdivision IDs {OverrideExistingSubdivisionIds}, tolerance {Tolerance}",
-                nameof(Building2DPostgreSQLConverter), batchSize, lastProcessedId, overrideExistingSubdivisionIds, tolerance);
+            // The scope is a set of county polygon parts, resolved once before the first batch. Named parts
+            // and the nested-layer parts intersect when both are asked for; either alone is the scope; neither
+            // means the whole table. An empty scope is an answer - nothing to refresh - not the whole table.
+            HashSet<int>? countyIds = postgreSQLBuilding2DRefreshOptions.CountyIds is null ? null : [.. postgreSQLBuilding2DRefreshOptions.CountyIds];
+            if (postgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly)
+            {
+                HashSet<int>? countyIds_Nested;
 
-            while (!cancellationToken.IsCancellationRequested)
+                await using (NpgsqlConnection? npgsqlConnection_Scope = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData))
+                {
+                    if (npgsqlConnection_Scope is null)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type} refresh failed: unable to create database connection", nameof(Building2DPostgreSQLConverter));
+                        return null;
+                    }
+
+                    await npgsqlConnection_Scope.OpenAsync(cancellationToken);
+
+                    countyIds_Nested = await AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsWithNestedSubdivisionsAsync(npgsqlConnection_Scope, tolerance, commandTimeout, cancellationToken);
+                }
+
+                if (countyIds_Nested is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type} refresh failed: the counties with a nested subdivision layer could not be resolved", nameof(Building2DPostgreSQLConverter));
+                    return null;
+                }
+
+                if (countyIds is null)
+                {
+                    countyIds = countyIds_Nested;
+                }
+                else
+                {
+                    countyIds.IntersectWith(countyIds_Nested);
+                }
+            }
+
+            Serilog.Modify.Log(
+                "{Type} refresh started: batch size {BatchSize}, start ID {StartId}, override existing subdivision IDs {OverrideExistingSubdivisionIds}, tolerance {Tolerance}, county scope {CountyScope}",
+                nameof(Building2DPostgreSQLConverter), batchSize, lastProcessedId, overrideExistingSubdivisionIds, tolerance, countyIds is null ? "all" : string.Join(", ", countyIds.OrderBy(x => x)));
+
+            int[]? countyIds_Array = countyIds?.ToArray();
+            Dictionary<int, long> updatedCounts_ByCountyId = [];
+
+            while (!cancellationToken.IsCancellationRequested && (countyIds_Array is null || countyIds_Array.Length != 0))
             {
                 await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
                 if (npgsqlConnection is null)
@@ -2261,6 +2323,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     ? "id > @lastId"
                     : "id > @lastId AND subdivision_id IS NULL";
 
+                if (countyIds_Array is not null)
+                {
+                    // Partition pruning: county_id is the list key, so the scope prunes to its partitions.
+                    filterClause += " AND county_id = ANY(@countyIds)";
+                }
+
                 string commandText_Select = $@"
                     SELECT id, county_id, object
                     FROM {Constants.TableName.Building2D}
@@ -2278,6 +2346,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         npgsqlCommand.CommandTimeout = commandTimeout;
                         npgsqlCommand.Parameters.AddWithValue("batchSize", batchSize);
                         npgsqlCommand.Parameters.AddWithValue("lastId", lastProcessedId);
+                        if (countyIds_Array is not null)
+                        {
+                            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
+                        }
 
                         await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
                         while (await npgsqlDataReader.ReadAsync(cancellationToken))
@@ -2319,6 +2391,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         await ExecuteUpdateBatchAsync(npgsqlConnection, npgsqlTransaction, updates, commandTimeout, cancellationToken);
                         updatedCount += updates.Count;
                         progress?.Report(updatedCount);
+
+                        foreach ((long Id, int CountyId, int SubdivisionId) in updates)
+                        {
+                            updatedCounts_ByCountyId.TryGetValue(CountyId, out long updatedCount_County);
+                            updatedCounts_ByCountyId[CountyId] = updatedCount_County + 1;
+                        }
                     }
 
                     // Commit releases the locks and confirms the batch processing
@@ -2352,8 +2430,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             Serilog.Modify.Log(
                 cancelled || failedBatchCount != 0 ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
-                "{Type} refresh finished{Cancelled}: {ReadCount} records read, {UpdatedCount} subdivision IDs written, {FailedBatchCount} batches stepped over, last ID {LastId}",
-                nameof(Building2DPostgreSQLConverter), cancelled ? " after being cancelled" : string.Empty, readCount, updatedCount, failedBatchCount, lastProcessedId);
+                "{Type} refresh finished{Cancelled}: {ReadCount} records read, {UpdatedCount} subdivision IDs written, {FailedBatchCount} batches stepped over, last ID {LastId}, written per county {UpdatedCountsByCountyId}",
+                nameof(Building2DPostgreSQLConverter), cancelled ? " after being cancelled" : string.Empty, readCount, updatedCount, failedBatchCount, lastProcessedId, string.Join(", ", updatedCounts_ByCountyId.OrderBy(x => x.Key).Select(x => $"{x.Key}: {x.Value}")));
 
             return new PostgreSQLBuilding2DRefreshResult(readCount, updatedCount, failedBatchCount, lastProcessedId, cancelled);
 
@@ -2787,7 +2865,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return tuples_AdministrativeSubdivision[0].Item1.Id;
             }
 
-            tuples_Area = [];
+            // The subdivision layer nests - a city, its districts and their neighbourhoods are all subdivisions of the
+            // one municipality - so a building is usually inside several of them at once, and every container yields
+            // the same intersection: the building's own area. The intersection alone cannot choose between them, and
+            // breaking that tie by the lowest identifier filed 155 307 Warsaw buildings under the 49 lowest ids and
+            // none under any district (DiGi.GIS.PostgreSQL#76). The tie goes to the smallest container instead: the
+            // most specific unit the building sits in, which is what the per-building consumers (occupancy, building
+            // data) need exactly one of (DiGi.GIS.PostgreSQL#77). The identifier stays only as the last resort.
+            List<(int Id, double Area_Intersection, double Area_Container)> tuples_Subdivision = [];
             foreach (Tuple<AdministrativeAreal2D, AdministrativeSubdivision> tuple in tuples_AdministrativeSubdivision)
             {
                 if (tuple?.Item2?.PolygonalFace2D is not PolygonalFace2D polygonalFace2D_AdministrativeSubdivision)
@@ -2797,32 +2882,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 List<PolygonalFace2D>? polygonal2Ds_Intersection = Geometry.Planar.Query.Intersection(polygonalFace2D, polygonalFace2D_AdministrativeSubdivision);
 
-                double area = 0;
+                double area_Intersection = 0;
                 if (polygonal2Ds_Intersection is not null && polygonal2Ds_Intersection.Count != 0)
                 {
-                    area = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
+                    area_Intersection = polygonal2Ds_Intersection.ConvertAll(x => x.GetArea()).Sum();
                 }
 
-                if (area <= tolerance)
+                if (area_Intersection <= tolerance)
                 {
                     continue;
                 }
 
-                tuples_Area.Add(new Tuple<AdministrativeAreal2D, double>(tuple.Item1, area));
+                tuples_Subdivision.Add((tuple.Item1.Id, area_Intersection, polygonalFace2D_AdministrativeSubdivision.GetArea()));
             }
 
-            if (tuples_Area.Count != 0)
-            {
-                tuples_Area.Sort((x, y) =>
-                {
-                    int result = y.Item2.CompareTo(x.Item2);
-                    return result != 0 ? result : x.Item1.Id.CompareTo(y.Item1.Id);
-                });
-
-                return tuples_Area[0].Item1.Id;
-            }
-
-            return null;
+            return Query.SubdivisionId(tuples_Subdivision, tolerance);
         }
 
         private static async Task<List<Building2D>?> ReadAsync_Building2D(NpgsqlCommand npgsqlCommand, CancellationToken cancellationToken = default)

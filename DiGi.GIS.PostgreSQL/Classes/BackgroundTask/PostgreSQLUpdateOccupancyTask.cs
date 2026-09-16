@@ -1,4 +1,5 @@
 using DiGi.Core.Classes;
+using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
@@ -12,9 +13,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
 {
     /// <summary>
     /// Represents a background task responsible for updating occupancy data within a PostgreSQL GIS database.
-    /// <para>
-    /// This class leverages the <see cref="GISPostgreSQLConverterManager"/> to execute the update process based on the provided <see cref="PostgreSQLUpdateOccupancyOptions"/>.
-    /// </para>
+    /// <para>This class leverages the <see cref="GISPostgreSQLConverterManager"/> to execute the update process based on the provided <see cref="PostgreSQLUpdateOccupancyOptions"/>.</para>
+    /// <para><b>Administrative side.</b> Every subdivision keeps its own stored figure - <see langword="null"/> when the source carries none, never a zero standing in for it. The levels above are sums: a municipality over its subdivisions, a county over its municipalities, and so on. Where the subdivision layer nests - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - only the <b>top-level</b> subdivisions are summed (<see cref="Query.ContainerIds(System.Collections.Generic.IReadOnlyDictionary{int, Geometry.Planar.Classes.PolygonalFace2D}, double)"/>), so a city counts once rather than once per level; summing every row wrote Warsaw's municipality as 4.6 million against a city of 1 622 594 (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>).</para>
+    /// <para><b>Building side.</b> Each building is attributed to exactly one subdivision - the one its <c>subdivision_id</c> names, which is the smallest subdivision containing it - and that subdivision's figure is distributed over its buildings by floor area. A subdivision whose figure is missing writes nothing for its buildings and is counted in <see cref="MissingOccupancySubdivisionCount"/>: a share fabricated from an ancestor would be a number, not data. An explicit zero is a figure and is distributed as one. The building side can be limited to county polygon parts with <see cref="PostgreSQLUpdateOccupancyOptions.CountyIds"/>.</para>
     /// </summary>
     public class PostgreSQLUpdateOccupancyTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -27,6 +28,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Gets or sets the options used to configure the PostgreSQL occupancy update process.
         /// </summary>
         public PostgreSQLUpdateOccupancyOptions PostgreSQLUpdateOccupancyOptions { get; set; } = new PostgreSQLUpdateOccupancyOptions();
+
+        /// <summary>
+        /// Gets the number of subdivisions that held buildings but carried no occupancy figure during the last run, so their buildings were left unwritten.
+        /// <para>Not a failure of the run but a gap in the source: the figure is absent on the subdivision row itself. The same subdivisions come up again next time until the source is completed. Logged one warning each, naming the subdivision and its building count.</para>
+        /// </summary>
+        public long MissingOccupancySubdivisionCount { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostgreSQLUpdateOccupancyTask"/> class.
@@ -52,9 +59,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             PostgreSQLUpdateOccupancyOptions ??= new PostgreSQLUpdateOccupancyOptions();
 
+            MissingOccupancySubdivisionCount = 0;
+
             bool includeBuilding2Ds = PostgreSQLUpdateOccupancyOptions.IncludeBuilding2Ds;
             bool includeAdministrativeAreal2Ds = PostgreSQLUpdateOccupancyOptions.IncludeAdministrativeAreal2Ds;
             bool clear = PostgreSQLUpdateOccupancyOptions.Clear;
+            HashSet<int>? countyIds_Scope = PostgreSQLUpdateOccupancyOptions.CountyIds;
 
             // Bulk reads/writes over hundreds of thousands of records exceed the 30s default; allow up to 10 minutes per statement.
             const int commandTimeout = 600;
@@ -96,6 +106,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 Dictionary<int, OccupancyData> occupancyDatas_ById = [];
 
+                // The subdivisions that lie inside another subdivision of their county. A nested layer - a city, its
+                // districts, their neighbourhoods - carries the same people on every level, so the roll-up above
+                // it sums the top level only; summing every row counted Warsaw three times over.
+                HashSet<int> subdivisionIds_Nested = [];
+
                 HashSet<int> countyIds_ForSubdivisions = [.. administrativeAreal2DReferences_Counties?.Select(c => c.Id) ?? []];
                 if (administrativeAreal2DReferences_Subdivisions is not null)
                 {
@@ -118,12 +133,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         continue;
                     }
 
+                    Dictionary<int, PolygonalFace2D> polygonalFace2Ds_ById = [];
+
                     foreach (AdministrativeAreal2D countySubdivision in countySubdivisions)
                     {
                         GIS.Classes.AdministrativeAreal2D? administrativeAreal2D = countySubdivision.ToDiGi();
                         if (administrativeAreal2D is AdministrativeSubdivision administrativeSubdivision)
                         {
-                            occupancyDatas_ById[countySubdivision.Id] = new OccupancyData(countySubdivision.Reference, administrativeAreal2D?.PolygonalFace2D?.GetArea() ?? 0, administrativeSubdivision?.Occupancy ?? 0);
+                            // Read into a local: the property hands back a clone per access.
+                            PolygonalFace2D? polygonalFace2D = administrativeSubdivision.PolygonalFace2D;
+                            if (polygonalFace2D is not null)
+                            {
+                                polygonalFace2Ds_ById[countySubdivision.Id] = polygonalFace2D;
+                            }
+
+                            // A missing figure stays missing. Writing a zero in its place would hand the building
+                            // side a figure to distribute, and it would distribute nothing to every building.
+                            occupancyDatas_ById[countySubdivision.Id] = new OccupancyData(countySubdivision.Reference, polygonalFace2D?.GetArea() ?? 0, administrativeSubdivision.Occupancy);
+                        }
+                    }
+
+                    foreach (KeyValuePair<int, List<int>> keyValuePair in polygonalFace2Ds_ById.ContainerIds())
+                    {
+                        if (keyValuePair.Value.Count != 0)
+                        {
+                            subdivisionIds_Nested.Add(keyValuePair.Key);
                         }
                     }
                 }
@@ -144,6 +178,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             {
                                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Subdivision in subdivisionsByMunicipalityId[municipality.Id])
                                 {
+                                    if (subdivisionIds_Nested.Contains(administrativeAreal2DReference_Subdivision.Id))
+                                    {
+                                        continue;
+                                    }
+
                                     if (occupancyDatas_ById.TryGetValue(administrativeAreal2DReference_Subdivision.Id, out OccupancyData? occupancyData) && occupancyData?.Occupancy is not null)
                                     {
                                         occupancy += occupancyData.Occupancy.Value;
@@ -183,6 +222,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             {
                                 foreach (AdministrativeAreal2DReference administrativeAreal2DReference_DirectSubdivision in directSubdivisionsByCountyId[county.Id])
                                 {
+                                    if (subdivisionIds_Nested.Contains(administrativeAreal2DReference_DirectSubdivision.Id))
+                                    {
+                                        continue;
+                                    }
+
                                     if (occupancyDatas_ById.TryGetValue(administrativeAreal2DReference_DirectSubdivision.Id, out OccupancyData? occupancyData) && occupancyData?.Occupancy is not null)
                                     {
                                         occupancy += occupancyData.Occupancy.Value;
@@ -284,7 +328,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     return false;
                 }
 
-                if (clear)
+                // A scoped run clears per county below, once its buildings are known, rather than truncating the
+                // rows of every county it is not going to rewrite.
+                if (clear && countyIds_Scope is null)
                 {
                     await building2DOccupancyDataPostgreSQLConverter.ClearAsync(commandTimeout, cancellationToken);
 
@@ -325,6 +371,13 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
                 }
 
+                if (countyIds_Scope is not null)
+                {
+                    countyIds.IntersectWith(countyIds_Scope);
+                }
+
+                Serilog.Modify.Log("{Type}: building side starting over {CountyCount} counties, scope {CountyScope}", nameof(PostgreSQLUpdateOccupancyTask), countyIds.Count, countyIds_Scope is null ? "all" : string.Join(", ", countyIds_Scope.OrderBy(x => x)));
+
                 foreach (int countyId in countyIds)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -350,6 +403,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     if (countyBuildings is null || countyBuildings.Count == 0)
                     {
                         continue;
+                    }
+
+                    if (clear && countyIds_Scope is not null)
+                    {
+                        // The scoped clear: exactly the rows of this county's buildings, so a building whose
+                        // subdivision carries no figure does not keep the share an earlier run gave it.
+                        List<string> countyBuildingReferences = [.. countyBuildings.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+                        await building2DOccupancyDataPostgreSQLConverter.RemoveAsync(countyBuildingReferences, countyId, commandTimeout, cancellationToken);
+
+                        cancellationToken.ThrowIfCancellationRequested();
                     }
 
                     List<string> countySubdivisionReferences = [.. countySubdivisions.Where(s => !string.IsNullOrWhiteSpace(s.Reference)).Select(s => s.Reference!)];
@@ -389,6 +452,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         subdivisionOccupancyDatas_ByReference.TryGetValue(subdivisionReference.Reference, out OccupancyData? subdivisionOccupancyData);
 
+                        // No figure, no rows. Distributing a missing figure as zero writes a zero per building
+                        // that reads back as a measurement; borrowing an ancestor's figure over-allocates it to
+                        // whichever children happen to lack one. Neither is data, so the gap is counted instead.
+                        if (subdivisionOccupancyData?.Occupancy is null)
+                        {
+                            MissingOccupancySubdivisionCount++;
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Occupancy not distributed - county {CountyId}, subdivision {SubdivisionId} {SubdivisionName} carries no occupancy figure, its {BuildingCount} buildings left unwritten", countyId, subdivisionReference.Id, subdivisionReference.Name ?? string.Empty, subdivisionBuildings.Count);
+                            continue;
+                        }
+
                         List<Building2DOccupancyData> building2DOccupancyDatas = CalculateBuilding2DOccupancyDatas(countyId, subdivisionBuildings, subdivisionOccupancyData);
                         if (building2DOccupancyDatas.Count > 0)
                         {
@@ -405,6 +478,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         progress.Report(totalUpdated);
                     }
                 }
+
+                Serilog.Modify.Log(
+                    MissingOccupancySubdivisionCount == 0 ? Serilog.Enums.LogEventLevel.Information : Serilog.Enums.LogEventLevel.Warning,
+                    "{Type}: building side finished, {UpdatedCount} rows written, {MissingOccupancySubdivisionCount} subdivisions with buildings but no occupancy figure left unwritten",
+                    nameof(PostgreSQLUpdateOccupancyTask), totalUpdated, MissingOccupancySubdivisionCount);
             }
 
             return true;
