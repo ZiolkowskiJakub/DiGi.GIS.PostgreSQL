@@ -5184,7 +5184,7 @@ A task that represents the asynchronous operation\. The task result contains the
 
 Asynchronously retrieves the bounding\-box centres of the buildings associated with the specified administrative areal 2D identifiers, each keyed by its reference and county partition\.
 
-Resolution is identical to [GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'): it goes through <b>Subdivision children</b>, not geometry, so an identifier with no subdivisions yields an empty list, which does <b>not</b> mean the area holds no buildings. Only the bounding-box columns are read - the JSONB `object` column is never touched - which makes this the fast path for 2D dot rendering of a whole area.
+Resolution is identical to [GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'): an identifier above the subdivision level goes through <b>Subdivision children</b>, not geometry, so one with no subdivisions yields an empty list, which does <b>not</b> mean the area holds no buildings; a [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') identifier goes through its <b>polygon</b> instead, because the subdivision layer is nested and `subdivision_id` membership cannot name the buildings of a district (issue #75). Only the bounding-box columns are read on either path - the JSONB `object` column is never touched - which makes this the fast path for 2D dot rendering of a whole area.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>?> GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -5259,6 +5259,53 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, or null if the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\) Method
+
+Asynchronously retrieves the bounding\-box centres of the buildings whose centre lies inside the given polygon, each keyed by its reference and county partition\.
+
+The geometry path of [GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync\(IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'), taken for a [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision'): the county partitions come from [GetCountyIdsByBoundingBox2DAsync\(NpgsqlConnection, BoundingBox2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetCountyIdsByBoundingBox2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double, int, System\.Threading\.CancellationToken\)') (every part reaching the polygon's box, never one row's `county_id` - issue #64), the GiST box index narrows them to the rows overlapping that box, and [IsInside\(PolygonalFace2D, BoundingBox2D, Point2D, double\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.IsInside\(DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, DiGi\.Geometry\.Planar\.Classes\.Point2D, double\)') keeps the ones whose centre the polygon contains. Nothing is filtered by `subdivision_id`. Only the bounding-box columns are read - the JSONB `object` column is never touched.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>?> GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.PolygonalFace2D? polygonalFace2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).polygonalFace2D'></a>
+
+`polygonalFace2D` [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')
+
+The boundary the building centres are kept inside\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the box overlap and the containment test\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building2DCentroid](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DCentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') objects, empty when no partition reaches the polygon, or null if the connection or the polygon is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(long,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -5390,7 +5437,9 @@ A list of populated Building2DReference objects found in the database\.
 
 Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers\.
 
-Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') descendants and the buildings are then fetched per `county_id` plus `subdivision_id`. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with `GetBuilding2DReferencesByCountyIdAsync` before concluding anything about coverage.
+An identifier above the subdivision level resolves through <b>Subdivision children</b>, not geometry: it is expanded to its [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') descendants and the buildings are then fetched per `county_id` plus `subdivision_id`. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with `GetBuilding2DReferencesByCountyIdAsync` before concluding anything about coverage.
+
+A [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') identifier resolves by <b>geometry</b> instead - the buildings whose bounding-box centre lies inside its polygon, see [GetBuilding2DReferencesByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByPolygonalFace2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, double, int, System\.Threading\.CancellationToken\)'). The subdivision layer is nested (a city, its districts and their neighbourhoods are all subdivisions of one municipality) and `subdivision_id` names a single container per building, chosen by the lowest identifier among equal overlaps - so membership can never answer which buildings a district holds. See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/75.
 
 ```csharp
 public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -5599,6 +5648,53 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, or null if no references are found or an error occurs\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.GetBuilding2DReferencesByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\) Method
+
+Asynchronously retrieves the references of the buildings whose bounding\-box centre lies inside the given polygon\.
+
+The geometry path of [GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'), taken for a [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision'); the resolution is that of [GetBuilding2DCentroidsByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByPolygonalFace2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, double, int, System\.Threading\.CancellationToken\)'), only the projection differs. Nothing is filtered by `subdivision_id` - the value each row carries is returned as stored, and for a nested subdivision layer it names a container other than the polygon asked for.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Building2DReference>?> GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection? npgsqlConnection, DiGi.Geometry.Planar.Classes.PolygonalFace2D? polygonalFace2D, double tolerance=0.001, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).polygonalFace2D'></a>
+
+`polygonalFace2D` [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')
+
+The boundary the building centres are kept inside\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the box overlap and the containment test\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains a list of [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') objects, empty when no partition reaches the polygon, or null if the connection or the polygon is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,int,System.Threading.CancellationToken)'></a>
 
@@ -6781,6 +6877,47 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a [Building2DReferenceUniquenessSummary](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferenceUniquenessSummary 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferenceUniquenessSummary') object containing total, distinct, and duplicate metrics; or null if the connection is null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double)'></a>
+
+## Building2DPostgreSQLConverter\.IsInside\(PolygonalFace2D, BoundingBox2D, Point2D, double\) Method
+
+Decides whether a building centre lies inside an area polygon: a cheap bounding\-box rejection first, then the polygon's own [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\.Inside\(DiGi\.Geometry\.Planar\.Classes\.Point2D,System\.Double\)](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d.inside#digi-geometry-planar-classes-polygonalface2d-inside(digi-geometry-planar-classes-point2d-system-double) 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\.Inside\(DiGi\.Geometry\.Planar\.Classes\.Point2D,System\.Double\)')\.
+
+The single containment rule of the geometry path, shared by [GetBuilding2DCentroidsByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DCentroidsByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DCentroidsByPolygonalFace2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, double, int, System\.Threading\.CancellationToken\)') and [GetBuilding2DReferencesByPolygonalFace2DAsync\(NpgsqlConnection, PolygonalFace2D, double, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.GetBuilding2DReferencesByPolygonalFace2DAsync(Npgsql.NpgsqlConnection,DiGi.Geometry.Planar.Classes.PolygonalFace2D,double,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.GetBuilding2DReferencesByPolygonalFace2DAsync\(Npgsql\.NpgsqlConnection, DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, double, int, System\.Threading\.CancellationToken\)'). A centre on the boundary, within the tolerance, is not inside - a building sitting on the line between two districts belongs to neither by this rule, which is the same answer for both. The bounding box is passed in rather than recomputed because the polygon's is the same for every row.
+
+```csharp
+public static bool IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D? polygonalFace2D, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, DiGi.Geometry.Planar.Classes.Point2D? point2D, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double).polygonalFace2D'></a>
+
+`polygonalFace2D` [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')
+
+The area polygon; null contains nothing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The polygon's bounding box; null skips the rejection step\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double).point2D'></a>
+
+`point2D` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The building centre; null is never inside\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.IsInside(DiGi.Geometry.Planar.Classes.PolygonalFace2D,DiGi.Geometry.Planar.Classes.BoundingBox2D,DiGi.Geometry.Planar.Classes.Point2D,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the containment test\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True when the centre lies strictly inside the polygon; otherwise, false\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.RefreshAsync(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions,System.IProgress_long_,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DPostgreSQLConverter\.RefreshAsync\(PostgreSQLBuilding2DRefreshOptions, IProgress\<long\>, int, CancellationToken\) Method
@@ -6981,32 +7118,32 @@ The cancellation token to observe while waiting for the task to complete\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers of the rows actually deleted, which is how many of the references were really there\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken)'></a>
 
-## Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable\<int\>, CancellationToken\) Method
+## Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable\<AdministrativeAreal2DReference\>, CancellationToken\) Method
 
-Resolves administrative areal 2D identifiers to the [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') children that hold their buildings, grouped by the county partition that owns them\.
+Resolves the administrative areal 2D references above the subdivision level to the [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') children that hold their buildings, grouped by the county partition that owns them\.
 
-An identifier that is already a subdivision is used as is; any other identifier is expanded to its subdivision descendants. An identifier with no subdivisions contributes nothing, which does <b>not</b> mean the area holds no buildings.
+A reference that is itself a subdivision is <b>not</b> resolved here - its buildings come from its polygon, see [ResolveSubdivisionPolygonalFace2DsAsync\(NpgsqlConnection, IEnumerable&lt;AdministrativeAreal2DReference&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.ResolveSubdivisionPolygonalFace2DsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\>, System\.Threading\.CancellationToken\)'). Any other reference is expanded to its subdivision descendants; one with no subdivisions contributes nothing, which does <b>not</b> mean the area holds no buildings.
 
 ```csharp
-private static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<int>>?> ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, System.Threading.CancellationToken cancellationToken);
+private static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<int>>?> ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference?> administrativeAreal2DReferences, System.Threading.CancellationToken cancellationToken);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).npgsqlConnection'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).npgsqlConnection'></a>
 
 `npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
 
 The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the database\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).administrativeAreal2DIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).administrativeAreal2DReferences'></a>
 
-`administrativeAreal2DIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+`administrativeAreal2DReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
-A collection of integers representing the administrative areal 2D identifiers to resolve\.
+The administrative areal 2D references to resolve\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -7014,7 +7151,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result contains a dictionary of county identifier to distinct subdivision identifiers, an empty dictionary when no subdivision resolves, or null when the area lookup itself fails\.
+A task that represents the asynchronous operation\. The task result contains a dictionary of county identifier to distinct subdivision identifiers, an empty dictionary when no subdivision resolves, or null when the connection is missing\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken)'></a>
+
+## Building2DPostgreSQLConverter\.ResolveSubdivisionPolygonalFace2DsAsync\(NpgsqlConnection, IEnumerable\<AdministrativeAreal2DReference\>, CancellationToken\) Method
+
+Resolves the [Subdivision](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.Subdivision 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Subdivision') references among the given ones to their polygons, the boundary their buildings are read by\.
+
+The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and `subdivision_id` files each building under a single one of its containers (the lowest identifier among equal overlaps, see `GetSubdivisionIdAsync`). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through [ResolveSubdivisionIdsByCountyIdAsync\(NpgsqlConnection, IEnumerable&lt;AdministrativeAreal2DReference&gt;, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionIdsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter\.ResolveSubdivisionIdsByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference\>, System\.Threading\.CancellationToken\)').
+
+```csharp
+private static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.PolygonalFace2D>?> ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference?> administrativeAreal2DReferences, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).administrativeAreal2DReferences'></a>
+
+`administrativeAreal2DReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The administrative areal 2D references to resolve\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.ResolveSubdivisionPolygonalFace2DsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DReference_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the polygons of the subdivision references, an empty list when there is none, or null when the connection is missing or the polygon lookup fails\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter.UpdateAsync(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2D_,double,int,System.Threading.CancellationToken)'></a>
 
@@ -25356,7 +25528,7 @@ The connection data used to establish a connection to the PostgreSQL database\.
 
 ## YearBuiltDataPostgreSQLConverter\.TableName Property
 
-Gets the name of the database table associated with year built data\.
+Gets the name of the table in the PostgreSQL database\.
 
 ```csharp
 public override string TableName { get; }
@@ -25416,3 +25588,85 @@ The timestamp when the record was created\.
 #### Returns
 [YearBuiltData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltData 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltData')  
 A new [YearBuiltData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltData 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltData') instance\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.GetUserYearBuiltsByCountyIdAsync\(NpgsqlConnection, Nullable\<int\>, int, CancellationToken\) Method
+
+Retrieves the training labels held under the specified county identifier, projected on the server so the full year history never crosses the connection\.
+
+The label of a record is the year of its user entry where one exists, otherwise the year of its first non-prediction entry - the selection `DiGi.GIS.ML.Query.YearBuiltLabels` makes on the same object. The object holds its entries as a dictionary keyed by source, so of a source the last entry in stored order is what it answers and its values walk in first-seen order of the sources; this query reproduces that record by record, which is also why a record holding nothing but predictions contributes nothing rather than a defaulted year.
+
+A reference holding several rows answers with the year of the <b>oldest</b> row that carries a label, in `(created_at, id)` order: the bulk read of the same rows orders `created_at DESC, id DESC` and the label selection overwrites by reference while walking it, so the last usable record - the oldest one - is what the incumbent path keeps. Reusing that order here is what keeps a projected read and the full read on every sampled county reporting the same dictionary.
+
+The read is pruned to the one county row named, like the rest of this converter: a row filed under a sibling polygon part of a multi-part county is out of scope for it and is read by naming that part. The parts of a county are its own identifiers, and a caller that wants every part names them.
+
+The entry is recognised by its stored `_type` discriminator, not by a `Source` member - that one is a key of the in-memory dictionary the object builds on deserialization and is not a field of the stored JSON, so it is absent from this table. The type names are bound as parameters from `DiGi.Core.Query.FullTypeName` at call time, so a rename of the entry class or its assembly changes the parameters and the query with it instead of matching nothing in silence.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,short>?> GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Nullable<int> countyId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to connect to the PostgreSQL database\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The identifier of the county row to read; if null, labels across all counties are retrieved\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int16](https://learn.microsoft.com/en-us/dotnet/api/system.int16 'System\.Int16')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the year of each labelled reference held, empty when the county holds no label, or null when the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.GetUserYearBuiltsByCountyIdAsync\(Nullable\<int\>, int, CancellationToken\) Method
+
+Retrieves the training labels held under the specified county identifier, projected on the server so the full year history never crosses the connection\.
+
+See [GetUserYearBuiltsByCountyIdAsync\(NpgsqlConnection, Nullable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.GetUserYearBuiltsByCountyIdAsync\(Npgsql\.NpgsqlConnection, System\.Nullable\<int\>, int, System\.Threading\.CancellationToken\)') for the label selection and its order, which is what keeps a projected read and the full read reporting the same dictionary.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,short>?> GetUserYearBuiltsByCountyIdAsync(System.Nullable<int> countyId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(System.Nullable_int_,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The identifier of the county row to read; if null, labels across all counties are retrieved\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int16](https://learn.microsoft.com/en-us/dotnet/api/system.int16 'System\.Int16')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the year of each labelled reference held, empty when the county holds no label, or null when the connection could not be created\.
