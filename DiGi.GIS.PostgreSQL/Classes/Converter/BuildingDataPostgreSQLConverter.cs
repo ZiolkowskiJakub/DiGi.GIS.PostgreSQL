@@ -498,15 +498,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously generates a value distribution histogram for a specific building data column inside a county partition or across all partitions, applying optional dynamic filters.
+        /// <para>The buckets are of equal value width by default; <see cref="HistogramBucketing.EqualCount"/> asks for buckets of equal row count instead, which keeps the resolution of a skewed column (floor areas, heights) where its rows are (ZiolkowskiJakub/DiGi.PostgreSQL#7).</para>
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>
-        /// <param name="bucketCount">The total number of buckets to segment the value range into.</param>
+        /// <param name="bucketCount">The total number of buckets to segment the value range (or the value-ordered rows) into.</param>
         /// <param name="countyId">The optional partition county identifier. If null, histogram is generated across all partitions.</param>
         /// <param name="filterGroup">The optional dynamic hierarchical filters to apply prior to generating the histogram.</param>
+        /// <param name="histogramBucketing">The bucketing rule: equal value width (the default) or equal row count.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the async operation, returning the histogram aggregate result as a <see cref="System.Text.Json.Nodes.JsonArray"/>.</returns>
-        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int? countyId = null, FilterGroup? filterGroup = null, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        public async Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, int? countyId = null, FilterGroup? filterGroup = null, HistogramBucketing histogramBucketing = HistogramBucketing.EqualWidth, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection_Db is null)
@@ -515,7 +517,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
             await npgsqlConnection_Db.OpenAsync(cancellationToken);
 
-            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, bucketCount, countyId, filterGroup, commandTimeout, cancellationToken);
+            return await GetHistogramSummaryAsync<Core.IO.Table.Classes.Column>(npgsqlConnection_Db, columnUniqueId, bucketCount, countyId, filterGroup, histogramBucketing, commandTimeout, cancellationToken);
         }
 
         /// <summary>

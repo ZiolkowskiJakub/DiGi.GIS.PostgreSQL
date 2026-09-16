@@ -10349,48 +10349,56 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the estimated row count, \-1 when the partition exists but has not been analysed, or null when there is no such partition or no connection could be built\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataPostgreSQLConverter\.GetHistogramSummaryAsync\(string, int, Nullable\<int\>, FilterGroup, int, CancellationToken\) Method
+## BuildingDataPostgreSQLConverter\.GetHistogramSummaryAsync\(string, int, Nullable\<int\>, FilterGroup, HistogramBucketing, int, CancellationToken\) Method
 
 Asynchronously generates a value distribution histogram for a specific building data column inside a county partition or across all partitions, applying optional dynamic filters\.
 
+The buckets are of equal value width by default; [DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing.equalcount 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount') asks for buckets of equal row count instead, which keeps the resolution of a skewed column (floor areas, heights) where its rows are (ZiolkowskiJakub/DiGi.PostgreSQL#7).
+
 ```csharp
-public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, System.Nullable<int> countyId=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<System.Text.Json.Nodes.JsonArray?> GetHistogramSummaryAsync(string columnUniqueId, int bucketCount, System.Nullable<int> countyId=null, DiGi.PostgreSQL.Table.Classes.FilterGroup? filterGroup=null, DiGi.PostgreSQL.Table.Enums.HistogramBucketing histogramBucketing=DiGi.PostgreSQL.Table.Enums.HistogramBucketing.EqualWidth, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).columnUniqueId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).columnUniqueId'></a>
 
 `columnUniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier of the column to aggregate\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).bucketCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).bucketCount'></a>
 
 `bucketCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The total number of buckets to segment the value range into\.
+The total number of buckets to segment the value range \(or the value\-ordered rows\) into\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional partition county identifier\. If null, histogram is generated across all partitions\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).filterGroup'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).filterGroup'></a>
 
 `filterGroup` [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
 
 The optional dynamic hierarchical filters to apply prior to generating the histogram\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).histogramBucketing'></a>
+
+`histogramBucketing` [DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing')
+
+The bucketing rule: equal value width \(the default\) or equal row count\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.GetHistogramSummaryAsync(string,int,System.Nullable_int_,DiGi.PostgreSQL.Table.Classes.FilterGroup,DiGi.PostgreSQL.Table.Enums.HistogramBucketing,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
