@@ -182,6 +182,156 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the bounding-box centres of the buildings whose centre lies inside the given polygon, each keyed by its reference and county partition.
+        /// <para>The geometry path of <see cref="GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync"/>, taken for a <see cref="AdministrativeArealType.Subdivision"/>: the county partitions come from <see cref="AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(NpgsqlConnection?, BoundingBox2D?, double, int, CancellationToken)"/> (every part reaching the polygon's box, never one row's <c>county_id</c> - issue #64), the GiST box index narrows them to the rows overlapping that box, and <see cref="IsInside(PolygonalFace2D?, BoundingBox2D?, Point2D?, double)"/> keeps the ones whose centre the polygon contains. Nothing is filtered by <c>subdivision_id</c>. Only the bounding-box columns are read - the JSONB <c>object</c> column is never touched.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
+        /// <param name="polygonalFace2D">The boundary the building centres are kept inside.</param>
+        /// <param name="tolerance">The distance tolerance of the box overlap and the containment test.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DCentroid" /> objects, empty when no partition reaches the polygon, or null if the connection or the polygon is null.</returns>
+        public static async Task<List<Building2DCentroid>?> GetBuilding2DCentroidsByPolygonalFace2DAsync(NpgsqlConnection? npgsqlConnection, PolygonalFace2D? polygonalFace2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || polygonalFace2D is null)
+            {
+                return null;
+            }
+
+            BoundingBox2D? boundingBox2D = polygonalFace2D.GetBoundingBox();
+            if (boundingBox2D is null)
+            {
+                return null;
+            }
+
+            HashSet<int>? countyIds = await AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, commandTimeout, cancellationToken);
+            if (countyIds is null || countyIds.Count == 0)
+            {
+                return [];
+            }
+
+            const string commandText = $@"
+                SELECT min_x, min_y, max_x, max_y, reference, county_id
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = ANY(@county_ids)
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@sMinX, @sMinY), point(@sMaxX, @sMaxY));";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddBoundingBox2DParameters(npgsqlCommand, countyIds, boundingBox2D, tolerance);
+
+            List<Building2DCentroid> building2DCentroids = [];
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                Point2D? point2D = CentroidFromBoundingBox(
+                    npgsqlDataReader.IsDBNull(0) ? null : npgsqlDataReader.GetDouble(0),
+                    npgsqlDataReader.IsDBNull(1) ? null : npgsqlDataReader.GetDouble(1),
+                    npgsqlDataReader.IsDBNull(2) ? null : npgsqlDataReader.GetDouble(2),
+                    npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetDouble(3));
+                if (!IsInside(polygonalFace2D, boundingBox2D, point2D, tolerance))
+                {
+                    continue;
+                }
+
+                building2DCentroids.Add(new Building2DCentroid
+                {
+                    Reference = npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetString(4),
+                    CountyId = npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetInt32(5),
+                    X = point2D!.X,
+                    Y = point2D.Y,
+                });
+            }
+
+            return building2DCentroids;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the references of the buildings whose bounding-box centre lies inside the given polygon.
+        /// <para>The geometry path of <see cref="GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync"/>, taken for a <see cref="AdministrativeArealType.Subdivision"/>; the resolution is that of <see cref="GetBuilding2DCentroidsByPolygonalFace2DAsync(NpgsqlConnection?, PolygonalFace2D?, double, int, CancellationToken)"/>, only the projection differs. Nothing is filtered by <c>subdivision_id</c> - the value each row carries is returned as stored, and for a nested subdivision layer it names a container other than the polygon asked for.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
+        /// <param name="polygonalFace2D">The boundary the building centres are kept inside.</param>
+        /// <param name="tolerance">The distance tolerance of the box overlap and the containment test.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of <see cref="Building2DReference" /> objects, empty when no partition reaches the polygon, or null if the connection or the polygon is null.</returns>
+        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesByPolygonalFace2DAsync(NpgsqlConnection? npgsqlConnection, PolygonalFace2D? polygonalFace2D, double tolerance = Core.Constants.Tolerance.MacroDistance, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || polygonalFace2D is null)
+            {
+                return null;
+            }
+
+            BoundingBox2D? boundingBox2D = polygonalFace2D.GetBoundingBox();
+            if (boundingBox2D is null)
+            {
+                return null;
+            }
+
+            HashSet<int>? countyIds = await AdministrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D, tolerance, commandTimeout, cancellationToken);
+            if (countyIds is null || countyIds.Count == 0)
+            {
+                return [];
+            }
+
+            const string commandText = $@"
+                SELECT id, county_id, reference, subdivision_id, min_x, min_y, max_x, max_y
+                FROM {Constants.TableName.Building2D}
+                WHERE county_id = ANY(@county_ids)
+                    AND box(point(min_x, min_y), point(max_x, max_y)) && box(point(@sMinX, @sMinY), point(@sMaxX, @sMaxY));";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            AddBoundingBox2DParameters(npgsqlCommand, countyIds, boundingBox2D, tolerance);
+
+            List<Building2DReference> building2DReferences = [];
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                Point2D? point2D = CentroidFromBoundingBox(
+                    npgsqlDataReader.IsDBNull(4) ? null : npgsqlDataReader.GetDouble(4),
+                    npgsqlDataReader.IsDBNull(5) ? null : npgsqlDataReader.GetDouble(5),
+                    npgsqlDataReader.IsDBNull(6) ? null : npgsqlDataReader.GetDouble(6),
+                    npgsqlDataReader.IsDBNull(7) ? null : npgsqlDataReader.GetDouble(7));
+                if (!IsInside(polygonalFace2D, boundingBox2D, point2D, tolerance))
+                {
+                    continue;
+                }
+
+                building2DReferences.Add(Create_Building2DReference(npgsqlDataReader));
+            }
+
+            return building2DReferences;
+        }
+
+        /// <summary>
+        /// Decides whether a building centre lies inside an area polygon: a cheap bounding-box rejection first, then the polygon's own <see cref="PolygonalFace2D.Inside(Point2D?, double)"/>.
+        /// <para>The single containment rule of the geometry path, shared by <see cref="GetBuilding2DCentroidsByPolygonalFace2DAsync(NpgsqlConnection?, PolygonalFace2D?, double, int, CancellationToken)"/> and <see cref="GetBuilding2DReferencesByPolygonalFace2DAsync(NpgsqlConnection?, PolygonalFace2D?, double, int, CancellationToken)"/>. A centre on the boundary, within the tolerance, is not inside - a building sitting on the line between two districts belongs to neither by this rule, which is the same answer for both. The bounding box is passed in rather than recomputed because the polygon's is the same for every row.</para>
+        /// </summary>
+        /// <param name="polygonalFace2D">The area polygon; null contains nothing.</param>
+        /// <param name="boundingBox2D">The polygon's bounding box; null skips the rejection step.</param>
+        /// <param name="point2D">The building centre; null is never inside.</param>
+        /// <param name="tolerance">The distance tolerance of the containment test.</param>
+        /// <returns>True when the centre lies strictly inside the polygon; otherwise, false.</returns>
+        public static bool IsInside(PolygonalFace2D? polygonalFace2D, BoundingBox2D? boundingBox2D, Point2D? point2D, double tolerance = Core.Constants.Tolerance.MacroDistance)
+        {
+            if (polygonalFace2D is null || point2D is null)
+            {
+                return false;
+            }
+
+            if (boundingBox2D is not null && !boundingBox2D.InRange(point2D, tolerance))
+            {
+                return false;
+            }
+
+            return polygonalFace2D.Inside(point2D, tolerance);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a list of 2D buildings for a specified county, with optional filtering by subdivision identifiers.
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection" /> used to connect to the PostgreSQL database.</param>
@@ -1329,7 +1479,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously retrieves a list of building 2D references associated with the specified administrative areal 2D identifiers.
-        /// <para>Resolution goes through <b>Subdivision children</b>, not geometry: each identifier is expanded to its <see cref="AdministrativeArealType.Subdivision"/> descendants and the buildings are then fetched per <c>county_id</c> plus <c>subdivision_id</c>. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with <c>GetBuilding2DReferencesByCountyIdAsync</c> before concluding anything about coverage.</para>
+        /// <para>An identifier above the subdivision level resolves through <b>Subdivision children</b>, not geometry: it is expanded to its <see cref="AdministrativeArealType.Subdivision"/> descendants and the buildings are then fetched per <c>county_id</c> plus <c>subdivision_id</c>. An identifier with no subdivisions therefore yields an empty list, which does <b>not</b> mean the area holds no buildings - compare with <c>GetBuilding2DReferencesByCountyIdAsync</c> before concluding anything about coverage.</para>
+        /// <para>A <see cref="AdministrativeArealType.Subdivision"/> identifier resolves by <b>geometry</b> instead - the buildings whose bounding-box centre lies inside its polygon, see <see cref="GetBuilding2DReferencesByPolygonalFace2DAsync(NpgsqlConnection?, PolygonalFace2D?, double, int, CancellationToken)"/>. The subdivision layer is nested (a city, its districts and their neighbourhoods are all subdivisions of one municipality) and <c>subdivision_id</c> names a single container per building, chosen by the lowest identifier among equal overlaps - so membership can never answer which buildings a district holds. See https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/75.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to filter by.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
@@ -1345,15 +1496,16 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            Dictionary<int, List<int>>? subdivisionIdsByCountyId = await ResolveSubdivisionIdsByCountyIdAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken);
-            if (subdivisionIdsByCountyId is null)
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken: cancellationToken);
+            if (administrativeAreal2DReferences is null)
             {
                 return null;
             }
 
-            if (subdivisionIdsByCountyId.Count == 0)
+            Dictionary<int, List<int>>? subdivisionIdsByCountyId = await ResolveSubdivisionIdsByCountyIdAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            if (subdivisionIdsByCountyId is null)
             {
-                return [];
+                return null;
             }
 
             Dictionary<long, Building2DReference> dictionary = [];
@@ -1369,12 +1521,30 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
+            List<PolygonalFace2D>? polygonalFace2Ds = await ResolveSubdivisionPolygonalFace2DsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            if (polygonalFace2Ds is null)
+            {
+                return null;
+            }
+
+            foreach (PolygonalFace2D polygonalFace2D in polygonalFace2Ds)
+            {
+                List<Building2DReference>? building2DReferences = await GetBuilding2DReferencesByPolygonalFace2DAsync(npgsqlConnection, polygonalFace2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (building2DReferences is not null)
+                {
+                    foreach (Building2DReference building2DReference in building2DReferences)
+                    {
+                        dictionary[building2DReference.Id] = building2DReference;
+                    }
+                }
+            }
+
             return [.. dictionary.Values];
         }
 
         /// <summary>
         /// Asynchronously retrieves the bounding-box centres of the buildings associated with the specified administrative areal 2D identifiers, each keyed by its reference and county partition.
-        /// <para>Resolution is identical to <see cref="GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync"/>: it goes through <b>Subdivision children</b>, not geometry, so an identifier with no subdivisions yields an empty list, which does <b>not</b> mean the area holds no buildings. Only the bounding-box columns are read - the JSONB <c>object</c> column is never touched - which makes this the fast path for 2D dot rendering of a whole area.</para>
+        /// <para>Resolution is identical to <see cref="GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync"/>: an identifier above the subdivision level goes through <b>Subdivision children</b>, not geometry, so one with no subdivisions yields an empty list, which does <b>not</b> mean the area holds no buildings; a <see cref="AdministrativeArealType.Subdivision"/> identifier goes through its <b>polygon</b> instead, because the subdivision layer is nested and <c>subdivision_id</c> membership cannot name the buildings of a district (issue #75). Only the bounding-box columns are read on either path - the JSONB <c>object</c> column is never touched - which makes this the fast path for 2D dot rendering of a whole area.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to filter by.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
@@ -1390,74 +1560,86 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            Dictionary<int, List<int>>? subdivisionIdsByCountyId = await ResolveSubdivisionIdsByCountyIdAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken);
-            if (subdivisionIdsByCountyId is null)
-            {
-                return null;
-            }
-
-            if (subdivisionIdsByCountyId.Count == 0)
-            {
-                return [];
-            }
-
-            List<Building2DCentroid> building2DCentroids = [];
-            foreach (KeyValuePair<int, List<int>> pair in subdivisionIdsByCountyId)
-            {
-                List<Building2DCentroid>? building2DCentroids_Temp = await GetBuilding2DCentroidsByCountyIdAsync(npgsqlConnection, pair.Key, pair.Value, commandTimeout, cancellationToken);
-                if (building2DCentroids_Temp is not null)
-                {
-                    building2DCentroids.AddRange(building2DCentroids_Temp);
-                }
-            }
-
-            return building2DCentroids;
-        }
-
-        /// <summary>
-        /// Resolves administrative areal 2D identifiers to the <see cref="AdministrativeArealType.Subdivision"/> children that hold their buildings, grouped by the county partition that owns them.
-        /// <para>An identifier that is already a subdivision is used as is; any other identifier is expanded to its subdivision descendants. An identifier with no subdivisions contributes nothing, which does <b>not</b> mean the area holds no buildings.</para>
-        /// </summary>
-        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
-        /// <param name="administrativeAreal2DIds">A collection of integers representing the administrative areal 2D identifiers to resolve.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary of county identifier to distinct subdivision identifiers, an empty dictionary when no subdivision resolves, or null when the area lookup itself fails.</returns>
-        private static async Task<Dictionary<int, List<int>>?> ResolveSubdivisionIdsByCountyIdAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int> administrativeAreal2DIds, CancellationToken cancellationToken)
-        {
-            if (npgsqlConnection is null)
-            {
-                return null;
-            }
-
             List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(npgsqlConnection, administrativeAreal2DIds, cancellationToken: cancellationToken);
             if (administrativeAreal2DReferences is null)
             {
                 return null;
             }
 
-            administrativeAreal2DReferences.Filter(x => x?.AdministrativeArealType == AdministrativeArealType.Subdivision, out administrativeAreal2DReferences, out List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Out);
-
-            administrativeAreal2DReferences ??= [];
-
-            if (administrativeAreal2DReferences_Out is not null && administrativeAreal2DReferences_Out.Count != 0)
+            Dictionary<int, List<int>>? subdivisionIdsByCountyId = await ResolveSubdivisionIdsByCountyIdAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            if (subdivisionIdsByCountyId is null)
             {
-                foreach (AdministrativeAreal2DReference administrativeAreal2DReference_Out in administrativeAreal2DReferences_Out)
+                return null;
+            }
+
+            // Keyed on county part + reference: a reference is unique only within its part, and the two paths can
+            // both reach the same row when a subdivision and its parent are requested together.
+            Dictionary<string, Building2DCentroid> dictionary = [];
+            foreach (KeyValuePair<int, List<int>> pair in subdivisionIdsByCountyId)
+            {
+                List<Building2DCentroid>? building2DCentroids = await GetBuilding2DCentroidsByCountyIdAsync(npgsqlConnection, pair.Key, pair.Value, commandTimeout, cancellationToken);
+                if (building2DCentroids is not null)
                 {
-                    List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivision, administrativeAreal2DReference_Out.Id, false, cancellationToken: cancellationToken);
-                    if (administrativeAreal2DReferences_Temp is not null)
+                    foreach (Building2DCentroid building2DCentroid in building2DCentroids)
                     {
-                        administrativeAreal2DReferences.AddRange(administrativeAreal2DReferences_Temp);
+                        dictionary[$"{building2DCentroid.CountyId}_{building2DCentroid.Reference}"] = building2DCentroid;
                     }
                 }
             }
 
-            if (administrativeAreal2DReferences.Count == 0)
+            List<PolygonalFace2D>? polygonalFace2Ds = await ResolveSubdivisionPolygonalFace2DsAsync(npgsqlConnection, administrativeAreal2DReferences, cancellationToken);
+            if (polygonalFace2Ds is null)
             {
-                return [];
+                return null;
+            }
+
+            foreach (PolygonalFace2D polygonalFace2D in polygonalFace2Ds)
+            {
+                List<Building2DCentroid>? building2DCentroids = await GetBuilding2DCentroidsByPolygonalFace2DAsync(npgsqlConnection, polygonalFace2D, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (building2DCentroids is not null)
+                {
+                    foreach (Building2DCentroid building2DCentroid in building2DCentroids)
+                    {
+                        dictionary[$"{building2DCentroid.CountyId}_{building2DCentroid.Reference}"] = building2DCentroid;
+                    }
+                }
+            }
+
+            return [.. dictionary.Values];
+        }
+
+        /// <summary>
+        /// Resolves the administrative areal 2D references above the subdivision level to the <see cref="AdministrativeArealType.Subdivision"/> children that hold their buildings, grouped by the county partition that owns them.
+        /// <para>A reference that is itself a subdivision is <b>not</b> resolved here - its buildings come from its polygon, see <see cref="ResolveSubdivisionPolygonalFace2DsAsync"/>. Any other reference is expanded to its subdivision descendants; one with no subdivisions contributes nothing, which does <b>not</b> mean the area holds no buildings.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="administrativeAreal2DReferences">The administrative areal 2D references to resolve.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary of county identifier to distinct subdivision identifiers, an empty dictionary when no subdivision resolves, or null when the connection is missing.</returns>
+        private static async Task<Dictionary<int, List<int>>?> ResolveSubdivisionIdsByCountyIdAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<AdministrativeAreal2DReference?> administrativeAreal2DReferences, CancellationToken cancellationToken)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            List<AdministrativeAreal2DReference> administrativeAreal2DReferences_Subdivision = [];
+            foreach (AdministrativeAreal2DReference? administrativeAreal2DReference in administrativeAreal2DReferences)
+            {
+                if (administrativeAreal2DReference is null || administrativeAreal2DReference.AdministrativeArealType == AdministrativeArealType.Subdivision)
+                {
+                    continue;
+                }
+
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences_Temp = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.Subdivision, administrativeAreal2DReference.Id, false, cancellationToken: cancellationToken);
+                if (administrativeAreal2DReferences_Temp is not null)
+                {
+                    administrativeAreal2DReferences_Subdivision.AddRange(administrativeAreal2DReferences_Temp);
+                }
             }
 
             Dictionary<int, List<int>> subdivisionIdsByCountyId = [];
-            foreach (AdministrativeAreal2DReference? administrativeAreal2DReference in administrativeAreal2DReferences)
+            foreach (AdministrativeAreal2DReference? administrativeAreal2DReference in administrativeAreal2DReferences_Subdivision)
             {
                 if (administrativeAreal2DReference is null)
                 {
@@ -1483,6 +1665,53 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return subdivisionIdsByCountyId;
+        }
+
+        /// <summary>
+        /// Resolves the <see cref="AdministrativeArealType.Subdivision"/> references among the given ones to their polygons, the boundary their buildings are read by.
+        /// <para>The subdivision layer is nested - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - and <c>subdivision_id</c> files each building under a single one of its containers (the lowest identifier among equal overlaps, see <c>GetSubdivisionIdAsync</c>). Membership therefore cannot answer which buildings a district holds; its polygon can. References above the subdivision level are skipped - they resolve through <see cref="ResolveSubdivisionIdsByCountyIdAsync"/>.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to connect to the database.</param>
+        /// <param name="administrativeAreal2DReferences">The administrative areal 2D references to resolve.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the polygons of the subdivision references, an empty list when there is none, or null when the connection is missing or the polygon lookup fails.</returns>
+        private static async Task<List<PolygonalFace2D>?> ResolveSubdivisionPolygonalFace2DsAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<AdministrativeAreal2DReference?> administrativeAreal2DReferences, CancellationToken cancellationToken)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            List<int> ids = [];
+            foreach (AdministrativeAreal2DReference? administrativeAreal2DReference in administrativeAreal2DReferences)
+            {
+                if (administrativeAreal2DReference is not null && administrativeAreal2DReference.AdministrativeArealType == AdministrativeArealType.Subdivision && !ids.Contains(administrativeAreal2DReference.Id))
+                {
+                    ids.Add(administrativeAreal2DReference.Id);
+                }
+            }
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(npgsqlConnection, ids, cancellationToken: cancellationToken);
+            if (administrativeAreal2Ds is null)
+            {
+                return null;
+            }
+
+            List<PolygonalFace2D> result = [];
+            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
+            {
+                if (administrativeAreal2D?.ToDiGi()?.PolygonalFace2D is PolygonalFace2D polygonalFace2D)
+                {
+                    result.Add(polygonalFace2D);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -2391,6 +2620,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Object = npgsqlDataReader.IsDBNull(9) ? null : JsonNode.Parse(npgsqlDataReader.GetString(9)) as JsonObject,
                 CreatedAt = npgsqlDataReader.IsDBNull(10) ? null : npgsqlDataReader.GetDateTime(10),
             };
+        }
+
+        private static void AddBoundingBox2DParameters(NpgsqlCommand npgsqlCommand, HashSet<int> countyIds, BoundingBox2D boundingBox2D, double tolerance)
+        {
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds.ToArray() });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinX", NpgsqlDbType.Double) { Value = boundingBox2D.Min.X - tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxX", NpgsqlDbType.Double) { Value = boundingBox2D.Max.X + tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMinY", NpgsqlDbType.Double) { Value = boundingBox2D.Min.Y - tolerance });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("sMaxY", NpgsqlDbType.Double) { Value = boundingBox2D.Max.Y + tolerance });
         }
 
         private static Building2DReference Create_Building2DReference(NpgsqlDataReader npgsqlDataReader)
