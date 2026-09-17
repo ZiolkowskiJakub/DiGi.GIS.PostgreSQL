@@ -1393,6 +1393,41 @@ The distance tolerance used by the containment checks\.
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 True if a parent was found and the IDs were updated; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Modify.Update_ExternalComponentsArea(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.BuildingModel_)'></a>
+
+## Modify\.Update\_ExternalComponentsArea\(this Table, IEnumerable\<BuildingModel\>\) Method
+
+Classifies the components of the stored [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')s into the 35 “External Components Area” columns of the given table, keyed by county identifier and reference\.
+
+A wall is filed under the sector of its outward normal’s azimuth, a roof under its tilt band (flat below 5°, then [5°, 20°], (20°, 45°] and above 45°) crossed with the same sectors, and a floor under the floor column; the total column is the sum of the 34 breakdowns. A building that arrives with a stored model gets a row in which every empty bucket is 0, so a zero row and an absent row stay distinguishable.
+
+The outward direction of a wall is resolved against the building’s interior, and the interior is the internal point of the model’s first floor: a point on a floor face lies inside the building volume, which a bounding-box centre does not (an L-shaped footprint puts the centre in the notch). A component the method cannot classify - one that does not yield a [DiGi\.Geometry\.Spatial\.Classes\.PolygonalFace3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.polygonalface3d 'DiGi\.Geometry\.Spatial\.Classes\.PolygonalFace3D'), a face without an internal point or a usable area, a face without a usable normal, or a model without a floor - is a defect in the stored model and throws [System\.InvalidOperationException](https://learn.microsoft.com/en-us/dotnet/api/system.invalidoperationexception 'System\.InvalidOperationException') naming the building, so the failure is loud rather than a silently missing area.
+
+A component that is geometrically valid but has no definable target bucket - a wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the interior is degenerate - is skipped and counted in the result.
+
+A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.
+
+```csharp
+public static long Update_ExternalComponentsArea(this DiGi.Core.IO.Table.Classes.Table? table, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.BuildingModel>? buildingModels);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Modify.Update_ExternalComponentsArea(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.BuildingModel_).table'></a>
+
+`table` [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')
+
+The table to fill with the classification\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.Update_ExternalComponentsArea(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.BuildingModel_).buildingModels'></a>
+
+`buildingModels` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[BuildingModel](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingModel 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The envelopes of stored building models, most preferred record first\.
+
+#### Returns
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')  
+The number of components skipped because their target bucket is undefined; 0 when every component was classified\.
+
 <a name='DiGi.GIS.PostgreSQL.Modify.Update_Id(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_)'></a>
 
 ## Modify\.Update\_Id\(this Table, IEnumerable\<Building2DReference\>\) Method

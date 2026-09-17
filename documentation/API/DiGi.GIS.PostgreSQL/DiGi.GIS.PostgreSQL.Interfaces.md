@@ -79,6 +79,7 @@ Derived
 ↳ [PostgreSQLBuilding2DCreateTableTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DCreateTableTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DCreateTableTask')  
 ↳ [PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DReferencedObjectsCountyPartRefreshTask')  
 ↳ [PostgreSQLBuilding2DRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshTask')  
+↳ [PostgreSQLBuildingDataExternalComponentsUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask')  
 ↳ [PostgreSQLBuildingDataUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask')  
 ↳ [PostgreSQLOrtoDatasCreateDatabaseTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasCreateDatabaseTask')  
 ↳ [PostgreSQLOrtoDatasRefreshTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasRefreshTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLOrtoDatasRefreshTask')  

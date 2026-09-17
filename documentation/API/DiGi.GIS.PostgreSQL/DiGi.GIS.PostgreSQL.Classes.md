@@ -16962,6 +16962,265 @@ A cancellation token that can be used to cancel the operation\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation\. Returns true if the refresh was successful; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions Class
+
+Provides options for updating the external components area columns of the building data table from the stored building models\.
+
+```csharp
+public class PostgreSQLBuildingDataExternalComponentsUpdateOptions : DiGi.Core.Classes.SerializableOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableoptions 'DiGi\.Core\.Classes\.SerializableOptions') → PostgreSQLBuildingDataExternalComponentsUpdateOptions
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.PostgreSQLBuildingDataExternalComponentsUpdateOptions()'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\(\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingDataExternalComponentsUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions') class\.
+
+```csharp
+public PostgreSQLBuildingDataExternalComponentsUpdateOptions();
+```
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.PostgreSQLBuildingDataExternalComponentsUpdateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions)'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\(PostgreSQLBuildingDataExternalComponentsUpdateOptions\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingDataExternalComponentsUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions') class by copying an existing options instance\.
+
+```csharp
+public PostgreSQLBuildingDataExternalComponentsUpdateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions postgreSQLBuildingDataExternalComponentsUpdateOptions);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.PostgreSQLBuildingDataExternalComponentsUpdateOptions(DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions).postgreSQLBuildingDataExternalComponentsUpdateOptions'></a>
+
+`postgreSQLBuildingDataExternalComponentsUpdateOptions` [PostgreSQLBuildingDataExternalComponentsUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions')
+
+The source options instance to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.PostgreSQLBuildingDataExternalComponentsUpdateOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingDataExternalComponentsUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions') class using a JSON object\.
+
+```csharp
+public PostgreSQLBuildingDataExternalComponentsUpdateOptions(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.PostgreSQLBuildingDataExternalComponentsUpdateOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the configuration settings\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.CommandTimeout'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\.CommandTimeout Property
+
+Gets or sets the timeout in seconds applied to every statement the update issues\. A value of 0 disables the timeout\.
+
+Well above the 30 second default, because these are bulk reads and writes over a partitioned table: a county can carry tens of thousands of building models, and the push writes every external components column of each of them.
+
+```csharp
+public int CommandTimeout { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.CountyIds'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\.CountyIds Property
+
+Gets or sets the set of county identifiers the run is limited to\. Null updates every county\.
+
+Identifiers rather than codes: a county whose territory is in several pieces is held as one row per piece, each with its own identifier, so a code names several of them.
+
+```csharp
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask Class
+
+Represents a background task that fills the external components area columns of the building data table from the stored building models\.
+
+The run is driven by counties: for each one it reads the stored building models, classifies the components of every model into the wall, roof and floor buckets, and upserts one building data row per building keyed on county and reference.
+
+A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be classified - a component without a planar face, a model without a floor - is failed and logged with the exception, and the run keeps going over the other counties. [FailedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedCountyCount') is what tells the two apart, and a run with a failed county reports itself as not succeeded.
+
+A component that is valid but has no definable bucket - a wall whose normal is vertical - is skipped and counted in [SkippedComponentCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.SkippedComponentCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.SkippedComponentCount') rather than failing the county.
+
+The run is idempotent: the read is deterministic (the latest stored version of a model wins), the classification is pure, and the push upserts on county and reference, so a re-run writes the same values.
+
+```csharp
+public class PostgreSQLBuildingDataExternalComponentsUpdateTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.BackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.backgroundtask 'DiGi\.Core\.Classes\.BackgroundTask') → [DiGi\.Core\.Classes\.CancelableBackgroundTask](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.cancelablebackgroundtask 'DiGi\.Core\.Classes\.CancelableBackgroundTask') → [DiGi\.Core\.Classes\.ReportableBackgroundTask&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.reportablebackgroundtask-1 'DiGi\.Core\.Classes\.ReportableBackgroundTask\`1') → PostgreSQLBuildingDataExternalComponentsUpdateTask
+
+Implements [IGISPostgreSQLObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.PostgreSQLBuildingDataExternalComponentsUpdateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager)'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\(GISPostgreSQLConverterManager\) Constructor
+
+Initializes a new instance of the [PostgreSQLBuildingDataExternalComponentsUpdateTask](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask') class\.
+
+```csharp
+public PostgreSQLBuildingDataExternalComponentsUpdateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager gISPostgreSQLConverterManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.PostgreSQLBuildingDataExternalComponentsUpdateTask(DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager).gISPostgreSQLConverterManager'></a>
+
+`gISPostgreSQLConverterManager` [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+
+The GIS PostgreSQL converter manager used to retrieve converters and execute operations\.
+### Fields
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.gISPostgreSQLConverterManager'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.gISPostgreSQLConverterManager Field
+
+The GIS PostgreSQL converter manager used to retrieve converters and execute operations\.
+
+```csharp
+protected readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
+```
+
+#### Field Value
+[GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedCountyCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedCountyCount Property
+
+Gets the number of counties that failed outright and were stepped over during the last run\.
+
+Each one is logged with the exception that caused it, so this figure is a count of entries to go and read rather than the whole of what is known.
+
+```csharp
+public long FailedCountyCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.PostgreSQLBuildingDataExternalComponentsUpdateOptions'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.PostgreSQLBuildingDataExternalComponentsUpdateOptions Property
+
+Gets or sets the options used to configure the run\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions PostgreSQLBuildingDataExternalComponentsUpdateOptions { get; set; }
+```
+
+#### Property Value
+[PostgreSQLBuildingDataExternalComponentsUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.ProcessedCountyCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.ProcessedCountyCount Property
+
+Gets the number of counties that were processed during the last run\.
+
+A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there.
+
+```csharp
+public long ProcessedCountyCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.ProcessedModelCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.ProcessedModelCount Property
+
+Gets the number of building models read and classified during the last run\.
+
+Models rather than records: a reference with several stored versions is read as the latest one only, and that one is what is counted.
+
+```csharp
+public long ProcessedModelCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.SkippedComponentCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.SkippedComponentCount Property
+
+Gets the number of components skipped because their target bucket is undefined during the last run\.
+
+A wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the building interior is degenerate. A component that cannot be classified at all does not count here - that is a data defect and fails the county.
+
+```csharp
+public long SkippedComponentCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.UpdatedRowCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.UpdatedRowCount Property
+
+Gets the number of building data rows written during the last run\.
+
+Rows rather than buildings: the same building is counted again on a later run.
+
+```csharp
+public long UpdatedRowCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.ExecuteAsync\(IProgress\<long\>, CancellationToken\) Method
+
+Executes the background task that fills the external components area columns of the building data table from the stored building models\.
+
+```csharp
+protected override System.Threading.Tasks.Task<bool> ExecuteAsync(System.IProgress<long> progress, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).progress'></a>
+
+`progress` [System\.IProgress&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iprogress-1 'System\.IProgress\`1')
+
+A progress reporter for reporting the number of rows written\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used to cancel the operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation\. Returns true when every county in scope was processed without error; otherwise, false \- including when a county’s stored models cannot be classified\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions'></a>
 
 ## PostgreSQLBuildingDataUpdateOptions Class
