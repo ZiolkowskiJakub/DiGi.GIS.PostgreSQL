@@ -7105,7 +7105,9 @@ True when the centre lies strictly inside the polygon; otherwise, false\.
 
 ## Building2DPostgreSQLConverter\.RefreshAsync\(PostgreSQLBuilding2DRefreshOptions, IProgress\<long\>, int, CancellationToken\) Method
 
-Asynchronously refreshes the 2D building data in the PostgreSQL database \- today, the `subdivision_id` of each building, derived from its outline by `GetSubdivisionIdAsync` \(the smallest subdivision containing it\)\.
+Asynchronously refreshes the 2D building data in the PostgreSQL database \- today, the `subdivision_id` of each building, derived from its outline \(the smallest subdivision containing it\)\.
+
+The pick is made in memory by a [SubdivisionIdSolver](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver') built once per county over the subdivisions whose boxes meet the county's; a building the layer cannot place - outside it, or covered only by an [DiGi\.GIS\.Classes\.AdministrativeDivision](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativedivision 'DiGi\.GIS\.Classes\.AdministrativeDivision') row - goes through `GetSubdivisionIdAsync` against the database, the path every building took before (26 buildings a second in Warsaw, where each one re-read the 412 KB city outline; [DiGi\.GIS\.PostgreSQL\#79](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/79 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/79')). The layers loaded and the buildings that fell back are logged.
 
 Walks the table in identifier order in batches, each under `FOR UPDATE SKIP LOCKED`. By default only buildings with no `subdivision_id` are visited; [OverrideExistingSubdivisionIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.OverrideExistingSubdivisionIds') re-derives every one. The walk can be limited to county polygon parts with [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.CountyIds'), or to the parts whose subdivision layer nests with [NestedSubdivisionsOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuilding2DRefreshOptions\.NestedSubdivisionsOnly') - the counties where the previous lowest-identifier tie-break produced an arbitrary value ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')), which is nearly all of them: a village and its named parts nest as a city and its districts do. The resolved scope and the rows written per county are logged.
 
@@ -21257,6 +21259,111 @@ The cancellation token\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 True if population succeeded; otherwise, false\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver'></a>
+
+## SubdivisionIdSolver Class
+
+Picks the `subdivision_id` of a building from a subdivision layer held in memory \- the same pick `Building2DPostgreSQLConverter.GetSubdivisionIdAsync` makes against the database, without the round trip\.
+
+Built once per county over the subdivision rows whose boxes meet the county's, and reused for every building of that county: set [Input](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Input 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Input') to the building, call [Solve\(\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Solve() 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Solve\(\)'), read [Output](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Output 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Output'). The database path re-read and deserialised every overlapping subdivision polygon per building - in Warsaw the 412 KB city outline 155 307 times - and intersected the building with each; that ran at about 26 buildings a second, a week for the estate ([DiGi\.GIS\.PostgreSQL\#79](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/79 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/79')).
+
+The pick is the one of `Query.SubdivisionId`: among the candidates whose box meets the building's, the largest overlap wins, ties go to the smallest container, then the lowest identifier; a single candidate is taken as it stands. Containment is decided from the building's outline vertices through a [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2DPointRelationSolver](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2dpointrelationsolver 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2DPointRelationSolver') per subdivision - every vertex inside or on the polygon means the overlap is the building's own area, which is what every container of a nested layer scores - and only a building straddling a boundary is intersected. A concavity of a subdivision boundary narrower than a building could slip between two inside vertices unseen; the pick is a rule for attributing a building to one unit, not a survey, and that is accepted.
+
+[Solve\(\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Solve() 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Solve\(\)') answers false when the layer holds no subdivision whose box meets the building's - the building may sit outside the layer loaded, or in a place only an [DiGi\.GIS\.Classes\.AdministrativeDivision](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativedivision 'DiGi\.GIS\.Classes\.AdministrativeDivision') covers - and the caller falls back to the database path for it. Not thread-safe.
+
+```csharp
+public class SubdivisionIdSolver : DiGi.Core.Interfaces.IOneToOneSolver<DiGi.GIS.Classes.Building2D, System.Nullable<int>>, DiGi.Core.Interfaces.ISolver, DiGi.Core.Interfaces.IEvaluator
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → SubdivisionIdSolver
+
+Implements [DiGi\.Core\.Interfaces\.IOneToOneSolver&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ionetoonesolver-2 'DiGi\.Core\.Interfaces\.IOneToOneSolver\`2')[DiGi\.GIS\.Classes\.Building2D](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.building2d 'DiGi\.GIS\.Classes\.Building2D')[,](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ionetoonesolver-2 'DiGi\.Core\.Interfaces\.IOneToOneSolver\`2')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ionetoonesolver-2 'DiGi\.Core\.Interfaces\.IOneToOneSolver\`2'), [DiGi\.Core\.Interfaces\.ISolver](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.isolver 'DiGi\.Core\.Interfaces\.ISolver'), [DiGi\.Core\.Interfaces\.IEvaluator](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ievaluator 'DiGi\.Core\.Interfaces\.IEvaluator')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.SubdivisionIdSolver(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double)'></a>
+
+## SubdivisionIdSolver\(IEnumerable\<AdministrativeAreal2D\>, double\) Constructor
+
+Initializes a new instance of the [SubdivisionIdSolver](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver') class over the given administrative rows\.
+
+```csharp
+public SubdivisionIdSolver(System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D>? administrativeAreal2Ds, double tolerance=0.001);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.SubdivisionIdSolver(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double).administrativeAreal2Ds'></a>
+
+`administrativeAreal2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[AdministrativeAreal2D](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The rows of the layer\. Rows that are not an [DiGi\.GIS\.Classes\.AdministrativeSubdivision](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativesubdivision 'DiGi\.GIS\.Classes\.AdministrativeSubdivision') with a polygon are skipped \- the [DiGi\.GIS\.Classes\.AdministrativeDivision](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.administrativedivision 'DiGi\.GIS\.Classes\.AdministrativeDivision') rows stored under the subdivision type are the database path's last resort, not a candidate here\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.SubdivisionIdSolver(System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D_,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance of the box test and the containment test, and the area tolerance of the pick\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Count'></a>
+
+## SubdivisionIdSolver\.Count Property
+
+Gets the number of subdivisions the layer holds\.
+
+```csharp
+public int Count { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Input'></a>
+
+## SubdivisionIdSolver\.Input Property
+
+Sets the building to attribute on the next [Solve\(\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Solve() 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Solve\(\)') call\.
+
+```csharp
+public DiGi.GIS.Classes.Building2D? Input { set; }
+```
+
+Implements [Input](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ionetoonesolver-2.input 'DiGi\.Core\.Interfaces\.IOneToOneSolver\`2\.Input')
+
+#### Property Value
+[DiGi\.GIS\.Classes\.Building2D](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.building2d 'DiGi\.GIS\.Classes\.Building2D')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Output'></a>
+
+## SubdivisionIdSolver\.Output Property
+
+Gets the subdivision identifier picked by the last successful [Solve\(\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Solve() 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Solve\(\)'), or null when the candidates met the building's box but none overlapped it\.
+
+```csharp
+public System.Nullable<int> Output { get; }
+```
+
+Implements [Output](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ionetoonesolver-2.output 'DiGi\.Core\.Interfaces\.IOneToOneSolver\`2\.Output')
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+### Methods
+
+<a name='DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Solve()'></a>
+
+## SubdivisionIdSolver\.Solve\(\) Method
+
+Attributes [Input](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Input 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Input') to one subdivision of the layer and stores the pick in [Output](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Output 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Output')\.
+
+```csharp
+public bool Solve();
+```
+
+Implements [Solve\(\)](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.isolver.solve 'DiGi\.Core\.Interfaces\.ISolver\.Solve')
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True if the layer could answer \- including a null [Output](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.SubdivisionIdSolver.Output 'DiGi\.GIS\.PostgreSQL\.Classes\.SubdivisionIdSolver\.Output') for a building overlapping none of the candidates whose box it meets; false if the building has no polygon or no subdivision's box meets it, in which case the database path decides\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.TableSerializableObject_TSerializableObject_'></a>
 

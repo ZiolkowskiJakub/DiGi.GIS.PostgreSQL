@@ -2237,7 +2237,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
-        /// Asynchronously refreshes the 2D building data in the PostgreSQL database - today, the <c>subdivision_id</c> of each building, derived from its outline by <c>GetSubdivisionIdAsync</c> (the smallest subdivision containing it).
+        /// Asynchronously refreshes the 2D building data in the PostgreSQL database - today, the <c>subdivision_id</c> of each building, derived from its outline (the smallest subdivision containing it).
+        /// <para>The pick is made in memory by a <see cref="SubdivisionIdSolver"/> built once per county over the subdivisions whose boxes meet the county's; a building the layer cannot place - outside it, or covered only by an <see cref="GIS.Classes.AdministrativeDivision"/> row - goes through <c>GetSubdivisionIdAsync</c> against the database, the path every building took before (26 buildings a second in Warsaw, where each one re-read the 412 KB city outline; <see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/79">DiGi.GIS.PostgreSQL#79</see>). The layers loaded and the buildings that fell back are logged.</para>
         /// <para>Walks the table in identifier order in batches, each under <c>FOR UPDATE SKIP LOCKED</c>. By default only buildings with no <c>subdivision_id</c> are visited; <see cref="PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds"/> re-derives every one. The walk can be limited to county polygon parts with <see cref="PostgreSQLBuilding2DRefreshOptions.CountyIds"/>, or to the parts whose subdivision layer nests with <see cref="PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly"/> - the counties where the previous lowest-identifier tie-break produced an arbitrary value (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>), which is nearly all of them: a village and its named parts nest as a city and its districts do. The resolved scope and the rows written per county are logged.</para>
         /// </summary>
         /// <param name="postgreSQLBuilding2DRefreshOptions">The options to configure the refresh process for PostgreSQL 2D buildings. Can be null to use default settings.</param>
@@ -2302,6 +2303,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             int[]? countyIds_Array = countyIds?.ToArray();
             Dictionary<int, long> updatedCounts_ByCountyId = [];
+
+            // One subdivision layer per county part, kept for as long as its buildings keep arriving. Rows come in
+            // identifier order and a county's buildings were loaded together, so a batch rarely spans more than
+            // two counties; the few most recent layers are kept and the oldest dropped, since Warsaw's alone is
+            // 217 polygons.
+            Dictionary<int, SubdivisionIdSolver> subdivisionIdSolvers_ByCountyId = [];
+            List<int> countyIds_Loaded = [];
+            long fallbackCount = 0;
 
             while (!cancellationToken.IsCancellationRequested && (countyIds_Array is null || countyIds_Array.Length != 0))
             {
@@ -2378,7 +2387,32 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             continue;
                         }
 
-                        int? subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, tolerance);
+                        if (!subdivisionIdSolvers_ByCountyId.TryGetValue(CountyId, out SubdivisionIdSolver? subdivisionIdSolver))
+                        {
+                            subdivisionIdSolver = await CreateSubdivisionIdSolverAsync(npgsqlConnection, CountyId, tolerance, commandTimeout, cancellationToken);
+                            subdivisionIdSolvers_ByCountyId[CountyId] = subdivisionIdSolver;
+                            countyIds_Loaded.Add(CountyId);
+
+                            if (countyIds_Loaded.Count > 4)
+                            {
+                                subdivisionIdSolvers_ByCountyId.Remove(countyIds_Loaded[0]);
+                                countyIds_Loaded.RemoveAt(0);
+                            }
+                        }
+
+                        int? subdivisionId;
+
+                        subdivisionIdSolver.Input = building;
+                        if (subdivisionIdSolver.Solve())
+                        {
+                            subdivisionId = subdivisionIdSolver.Output;
+                        }
+                        else
+                        {
+                            fallbackCount++;
+                            subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, tolerance);
+                        }
+
                         if (subdivisionId.HasValue)
                         {
                             updates.Add((Id, CountyId, subdivisionId.Value));
@@ -2430,10 +2464,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             Serilog.Modify.Log(
                 cancelled || failedBatchCount != 0 ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
-                "{Type} refresh finished{Cancelled}: {ReadCount} records read, {UpdatedCount} subdivision IDs written, {FailedBatchCount} batches stepped over, last ID {LastId}, written per county {UpdatedCountsByCountyId}",
-                nameof(Building2DPostgreSQLConverter), cancelled ? " after being cancelled" : string.Empty, readCount, updatedCount, failedBatchCount, lastProcessedId, string.Join(", ", updatedCounts_ByCountyId.OrderBy(x => x.Key).Select(x => $"{x.Key}: {x.Value}")));
+                "{Type} refresh finished{Cancelled}: {ReadCount} records read, {UpdatedCount} subdivision IDs written, {FallbackCount} resolved against the database, {FailedBatchCount} batches stepped over, last ID {LastId}, written per county {UpdatedCountsByCountyId}",
+                nameof(Building2DPostgreSQLConverter), cancelled ? " after being cancelled" : string.Empty, readCount, updatedCount, fallbackCount, failedBatchCount, lastProcessedId, string.Join(", ", updatedCounts_ByCountyId.OrderBy(x => x.Key).Select(x => $"{x.Key}: {x.Value}")));
 
             return new PostgreSQLBuilding2DRefreshResult(readCount, updatedCount, failedBatchCount, lastProcessedId, cancelled);
+
+            // The layer is every subdivision whose box meets the county part's own box - the neighbours' border
+            // units included, since the database path never asked which county a subdivision belongs to and a
+            // building on the border may well sit in one of them. A county row without a box gives an empty layer,
+            // and every building of that county then takes the database path.
+            async static Task<SubdivisionIdSolver> CreateSubdivisionIdSolverAsync(NpgsqlConnection npgsqlConnection, int countyId, double tolerance, int commandTimeout, CancellationToken cancellationToken)
+            {
+                AdministrativeAreal2D? administrativeAreal2D_County = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+
+                List<AdministrativeAreal2D>? administrativeAreal2Ds = null;
+                if (administrativeAreal2D_County?.BoundingBox2D is BoundingBox2D boundingBox2D_County)
+                {
+                    administrativeAreal2Ds = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(npgsqlConnection, boundingBox2D_County, [AdministrativeArealType.Subdivision], tolerance, commandTimeout, cancellationToken);
+                }
+
+                SubdivisionIdSolver subdivisionIdSolver = new(administrativeAreal2Ds, tolerance);
+
+                Serilog.Modify.Log("{Type} refresh loaded the subdivision layer of county {CountyId}: {Count} subdivisions", nameof(Building2DPostgreSQLConverter), countyId, subdivisionIdSolver.Count);
+
+                return subdivisionIdSolver;
+            }
 
             async static Task ExecuteUpdateBatchAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, List<(long Id, int CountyId, int SubdivisionId)> updates, int commandTimeout, CancellationToken cancellationToken)
             {
