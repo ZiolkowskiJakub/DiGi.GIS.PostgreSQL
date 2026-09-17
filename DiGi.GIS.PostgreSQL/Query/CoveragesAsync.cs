@@ -1,3 +1,4 @@
+using DiGi.Geometry.Core.Enums;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Classes;
 using System.Collections.Generic;
@@ -12,9 +13,9 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Asynchronously measures, for one county, how much of the buildings inside each given polygon the orthophoto store holds.
         /// <para>What the estimated partition counts cannot answer. Both tables are partitioned by <c>county_id</c>, so <c>reltuples</c> describes a whole county and there is no figure for any area inside it to be had from it - reporting the county's own factor for a subdivision is <see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/8">DiGi.GIS.WebAPI issue #8</see>. This counts instead of estimating, and costs one read per side however many polygons are asked about.</para>
-        /// <para><b>Membership is decided by geometry, not by the stored <c>subdivision_id</c>.</b> A building belongs to a polygon when its bounding-box centre lies inside it (<see cref="Building2DPostgreSQLConverter.IsInside(PolygonalFace2D?, BoundingBox2D?, Point2D?, double)"/>). The column files a building under one subdivision only, so where the subdivision layer nests it cannot say which buildings a district holds - Warsaw's districts counted zero by column while holding 155 307 buildings between them (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>). By polygon, a building inside a neighbourhood counts for the neighbourhood, its district and its city alike; <b>the results of nested polygons therefore overlap and must not be summed</b> - a caller wanting a municipality asks for the municipality's own polygon.</para>
+        /// <para><b>Membership is decided by geometry, not by the stored <c>subdivision_id</c>.</b> A building belongs to a polygon when its bounding-box centre lies strictly inside it - what <see cref="PolygonalFace2D.Inside(Point2D, double)"/> answers, asked through a <see cref="PolygonalFace2DPointRelationSolver"/> built once per polygon, because a city outline of 4 000 vertices tested against 155 000 centres through the face itself took 52 seconds on the deployed host (<see href="https://github.com/ZiolkowskiJakub/DiGi.Geometry/issues/5">DiGi.Geometry#5</see>). The column files a building under one subdivision only, so where the subdivision layer nests it cannot say which buildings a district holds - Warsaw's districts counted zero by column while holding 155 307 buildings between them (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>). By polygon, a building inside a neighbourhood counts for the neighbourhood, its district and its city alike; <b>the results of nested polygons therefore overlap and must not be summed</b> - a caller wanting a municipality asks for the municipality's own polygon.</para>
         /// <para>The orthophoto side's own <c>subdivision_id</c> is deliberately not used. That column has never been written: not one of the 8 384 055 rows stored across 225 counties carries a value, measured 2026-08-26 through <c>gis/ortodatas/summariesbycountyids</c>. The orthophoto side is asked only whether it holds a reference.</para>
-        /// <para>The two tables live in different databases - <c>building_2d</c> in the main store, <c>orto_datas</c> in the storage one - so this cannot be a join and is not one. The building side is read as bounding-box centres (<see cref="Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int, IEnumerable{int}?, int, CancellationToken)"/>, the JSONB column untouched), the orthophoto side as references, and the two are matched in memory. Each centre is tested against every polygon whose box holds it.</para>
+        /// <para>The two tables live in different databases - <c>building_2d</c> in the main store, <c>orto_datas</c> in the storage one - so this cannot be a join and is not one. The building side is read as bounding-box centres (<see cref="Building2DPostgreSQLConverter.GetBuilding2DCentroidsByCountyIdAsync(int, IEnumerable{int}?, int, CancellationToken)"/>, the JSONB column untouched), the orthophoto side as references, and the two are matched in memory. Each centre is tested against every polygon.</para>
         /// </summary>
         /// <param name="ortoDatasPostgreSQLConverter">The converter reading the orthophoto store.</param>
         /// <param name="building2DPostgreSQLConverter">The converter reading the building store.</param>
@@ -52,14 +53,19 @@ namespace DiGi.GIS.PostgreSQL
                 return null;
             }
 
-            // The boxes are derived once: the property behind a face hands back a clone per access, and every
-            // centre is tested against every box.
-            List<(int Id, PolygonalFace2D PolygonalFace2D, BoundingBox2D BoundingBox2D)> tuples = [];
+            // One index per polygon, built once: it reads the rings into flat arrays and answers each centre from
+            // the few edges whose vertical span covers it, with the box check inside. Every centre is tested
+            // against every polygon, so this is the loop's whole cost.
+            List<(int Id, PolygonalFace2DPointRelationSolver PolygonalFace2DPointRelationSolver)> tuples = [];
             foreach (KeyValuePair<int, PolygonalFace2D> keyValuePair in polygonalFace2Ds_ById)
             {
-                if (keyValuePair.Value is PolygonalFace2D polygonalFace2D && polygonalFace2D.GetBoundingBox() is BoundingBox2D boundingBox2D)
+                if (keyValuePair.Value is PolygonalFace2D polygonalFace2D)
                 {
-                    tuples.Add((keyValuePair.Key, polygonalFace2D, boundingBox2D));
+                    PolygonalFace2DPointRelationSolver polygonalFace2DPointRelationSolver = new(polygonalFace2D, tolerance);
+                    if (polygonalFace2DPointRelationSolver.EdgeCount != 0)
+                    {
+                        tuples.Add((keyValuePair.Key, polygonalFace2DPointRelationSolver));
+                    }
                 }
             }
 
@@ -92,9 +98,10 @@ namespace DiGi.GIS.PostgreSQL
                 Point2D point2D = new(building2DCentroid.X, building2DCentroid.Y);
 
                 bool assigned = false;
-                foreach ((int Id, PolygonalFace2D PolygonalFace2D, BoundingBox2D BoundingBox2D) tuple in tuples)
+                foreach ((int Id, PolygonalFace2DPointRelationSolver PolygonalFace2DPointRelationSolver) tuple in tuples)
                 {
-                    if (!Building2DPostgreSQLConverter.IsInside(tuple.PolygonalFace2D, tuple.BoundingBox2D, point2D, tolerance))
+                    tuple.PolygonalFace2DPointRelationSolver.Input = point2D;
+                    if (!tuple.PolygonalFace2DPointRelationSolver.Solve() || tuple.PolygonalFace2DPointRelationSolver.Output != PointRelation.Inside)
                     {
                         continue;
                     }
