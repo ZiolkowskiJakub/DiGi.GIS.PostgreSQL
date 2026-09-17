@@ -2186,6 +2186,41 @@ The administrative area type\.
 [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit')  
 The matching [DiGi\.GIS\.Classes\.StatisticalUnit](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalunit 'DiGi\.GIS\.Classes\.StatisticalUnit') if found; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.OccupancySubdivisionId(int,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.List_int__,System.Collections.Generic.IReadOnlyDictionary_int,System.Nullable_uint__)'></a>
+
+## Query\.OccupancySubdivisionId\(int, IReadOnlyDictionary\<int,List\<int\>\>, IReadOnlyDictionary\<int,Nullable\<uint\>\>\) Method
+
+Names the subdivision whose occupancy figure a building filed under the given subdivision takes its share from: the subdivision itself when it carries a figure, otherwise the smallest of its containers that does\.
+
+The subdivision layer nests and the source figures are patchy at the deeper levels - in Warsaw 13 neighbourhoods carry none while their districts do - so a building in Jelonki, which has no figure, takes Bemowo's density rather than nothing ([DiGi\.GIS\.PostgreSQL\#80](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/80 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/80')). An explicit zero is a figure. A subdivision with no figure anywhere up its chain of containers answers [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null'), and its buildings stay unwritten.
+
+```csharp
+public static System.Nullable<int> OccupancySubdivisionId(int subdivisionId, System.Collections.Generic.IReadOnlyDictionary<int,System.Collections.Generic.List<int>>? containerIds_ById, System.Collections.Generic.IReadOnlyDictionary<int,System.Nullable<uint>>? occupancies_BySubdivisionId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.OccupancySubdivisionId(int,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.List_int__,System.Collections.Generic.IReadOnlyDictionary_int,System.Nullable_uint__).subdivisionId'></a>
+
+`subdivisionId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the subdivision the building is filed under\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.OccupancySubdivisionId(int,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.List_int__,System.Collections.Generic.IReadOnlyDictionary_int,System.Nullable_uint__).containerIds_ById'></a>
+
+`containerIds_ById` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+The containers of each subdivision, smallest first, as [ContainerIds\(this IReadOnlyDictionary&lt;int,PolygonalFace2D&gt;, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double) 'DiGi\.GIS\.PostgreSQL\.Query\.ContainerIds\(this System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double\)') gives them\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.OccupancySubdivisionId(int,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.List_int__,System.Collections.Generic.IReadOnlyDictionary_int,System.Nullable_uint__).occupancies_BySubdivisionId'></a>
+
+`occupancies_BySubdivisionId` [System\.Collections\.Generic\.IReadOnlyDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.UInt32](https://learn.microsoft.com/en-us/dotnet/api/system.uint32 'System\.UInt32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlydictionary-2 'System\.Collections\.Generic\.IReadOnlyDictionary\`2')
+
+The stored figure of each subdivision, [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') where the source carries none\.
+
+#### Returns
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')  
+The identifier of the subdivision whose figure applies, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when neither the subdivision nor any of its containers carries one\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.ParentAdministrativeArealType(thisDiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
 
 ## Query\.ParentAdministrativeArealType\(this AdministrativeArealType\) Method

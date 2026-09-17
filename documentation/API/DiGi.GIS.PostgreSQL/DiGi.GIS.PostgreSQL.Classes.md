@@ -19539,7 +19539,7 @@ This class leverages the [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Cla
 
 <b>Administrative side.</b> Every subdivision keeps its own stored figure - [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the source carries none, never a zero standing in for it. The levels above are sums: a municipality over its subdivisions, a county over its municipalities, and so on. Where the subdivision layer nests - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - only the <b>top-level</b> subdivisions are summed ([ContainerIds\(this IReadOnlyDictionary&lt;int,PolygonalFace2D&gt;, double\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.ContainerIds(thisSystem.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double) 'DiGi\.GIS\.PostgreSQL\.Query\.ContainerIds\(this System\.Collections\.Generic\.IReadOnlyDictionary\<int,DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>, double\)')), so a city counts once rather than once per level; summing every row wrote Warsaw's municipality as 4.6 million against a city of 1 622 594 ([DiGi\.GIS\.PostgreSQL\#77](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/77')).
 
-<b>Building side.</b> Each building is attributed to exactly one subdivision - the one its `subdivision_id` names, which is the smallest subdivision containing it - and that subdivision's own stored figure (read off its `administrative_areal_2d` row, not off the occupancy table this task writes) is distributed over its buildings by floor area. A subdivision whose figure is missing writes nothing for its buildings and is counted in [MissingOccupancySubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.MissingOccupancySubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyTask\.MissingOccupancySubdivisionCount'): a share fabricated from an ancestor would be a number, not data. An explicit zero is a figure and is distributed as one. The building side can be limited to county polygon parts with [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions\.CountyIds').
+<b>Building side.</b> Each building is attributed to exactly one subdivision - the one its `subdivision_id` names, which is the smallest subdivision containing it - and takes its share from the figure of the <b>smallest figured subdivision containing it</b> ([OccupancySubdivisionId\(int, IReadOnlyDictionary&lt;int,List&lt;int&gt;&gt;, IReadOnlyDictionary&lt;int,Nullable&lt;uint&gt;&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.OccupancySubdivisionId(int,System.Collections.Generic.IReadOnlyDictionary_int,System.Collections.Generic.List_int__,System.Collections.Generic.IReadOnlyDictionary_int,System.Nullable_uint__) 'DiGi\.GIS\.PostgreSQL\.Query\.OccupancySubdivisionId\(int, System\.Collections\.Generic\.IReadOnlyDictionary\<int,System\.Collections\.Generic\.List\<int\>\>, System\.Collections\.Generic\.IReadOnlyDictionary\<int,System\.Nullable\<uint\>\>\)')): its own when the row carries one, otherwise the nearest container's. A figured subdivision's figure is spread by floor area over <b>every</b> building inside it - its own and its descendants' alike - and each building keeps the share of the smallest figured subdivision it sits in; so a district's figure gives a district density to the buildings outside its figured neighbourhoods, rather than the whole district figure landing on the few buildings filed directly under it (Białołęka's 123 668 over 76 buildings) and rather than nothing at all for a neighbourhood without a figure (Jelonki's 2 237 buildings). Figures are read off the `administrative_areal_2d` rows, never off the occupancy table this task writes. A subdivision with no figure anywhere up its chain writes nothing for its buildings and is counted in [MissingOccupancySubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.MissingOccupancySubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyTask\.MissingOccupancySubdivisionCount'); one that borrowed a container's figure is counted in [BorrowedOccupancySubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.BorrowedOccupancySubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyTask\.BorrowedOccupancySubdivisionCount'). An explicit zero is a figure and is distributed as one. The building side can be limited to county polygon parts with [CountyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyOptions.CountyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateOccupancyOptions\.CountyIds').
 
 ```csharp
 public class PostgreSQLUpdateOccupancyTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
@@ -19582,13 +19582,28 @@ private readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
 ### Properties
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.BorrowedOccupancySubdivisionCount'></a>
+
+## PostgreSQLUpdateOccupancyTask\.BorrowedOccupancySubdivisionCount Property
+
+Gets the number of subdivisions that held buildings but carried no occupancy figure of their own during the last run, so their buildings took the share of the smallest figured subdivision containing them\.
+
+Logged one line each, naming the subdivision, the one whose figure applied and the building count.
+
+```csharp
+public long BorrowedOccupancySubdivisionCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateOccupancyTask.MissingOccupancySubdivisionCount'></a>
 
 ## PostgreSQLUpdateOccupancyTask\.MissingOccupancySubdivisionCount Property
 
-Gets the number of subdivisions that held buildings but carried no occupancy figure during the last run, so their buildings were left unwritten\.
+Gets the number of subdivisions that held buildings but carried no occupancy figure, and had no container carrying one either, during the last run \- so their buildings were left unwritten\.
 
-Not a failure of the run but a gap in the source: the figure is absent on the subdivision row itself. The same subdivisions come up again next time until the source is completed. Logged one warning each, naming the subdivision and its building count.
+Not a failure of the run but a gap in the source: the figure is absent on the subdivision row and on every subdivision around it. The same subdivisions come up again next time until the source is completed. Logged one warning each, naming the subdivision and its building count.
 
 ```csharp
 public long MissingOccupancySubdivisionCount { get; private set; }
