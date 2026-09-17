@@ -88,7 +88,10 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return false;
             }
 
+            // One counter per side: the progress report runs over both, the finish line of each side names its own rows.
             long totalUpdated = 0;
+            long updatedCount_AdministrativeAreal2Ds = 0;
+            long updatedCount_Building2Ds = 0;
 
             if (includeAdministrativeAreal2Ds)
             {
@@ -316,9 +319,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     cancellationToken.ThrowIfCancellationRequested();
                     await administrativeAreal2DOccupancyDataPostgreSQLConverter.UpdateAsync(administrativeAreal2DOccupancyDatas, commandTimeout);
 
+                    updatedCount_AdministrativeAreal2Ds += administrativeAreal2DOccupancyDatas.Count;
                     totalUpdated += administrativeAreal2DOccupancyDatas.Count;
                     progress.Report(totalUpdated);
                 }
+
+                Serilog.Modify.Log("{Type}: administrative side finished, {UpdatedCount} rows written", nameof(PostgreSQLUpdateOccupancyTask), updatedCount_AdministrativeAreal2Ds);
             }
 
             if (includeBuilding2Ds)
@@ -552,6 +558,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         cancellationToken.ThrowIfCancellationRequested();
                         await building2DOccupancyDataPostgreSQLConverter.UpdateAsync(countyBuilding2DOccupancyDatas, commandTimeout, cancellationToken);
 
+                        updatedCount_Building2Ds += countyBuilding2DOccupancyDatas.Count;
                         totalUpdated += countyBuilding2DOccupancyDatas.Count;
                         progress.Report(totalUpdated);
                     }
@@ -560,7 +567,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Serilog.Modify.Log(
                     MissingOccupancySubdivisionCount == 0 ? Serilog.Enums.LogEventLevel.Information : Serilog.Enums.LogEventLevel.Warning,
                     "{Type}: building side finished, {UpdatedCount} rows written, {BorrowedOccupancySubdivisionCount} subdivisions without a figure of their own took a container's, {MissingOccupancySubdivisionCount} subdivisions with buildings but no occupancy figure anywhere up their chain left unwritten",
-                    nameof(PostgreSQLUpdateOccupancyTask), totalUpdated, BorrowedOccupancySubdivisionCount, MissingOccupancySubdivisionCount);
+                    nameof(PostgreSQLUpdateOccupancyTask), updatedCount_Building2Ds, BorrowedOccupancySubdivisionCount, MissingOccupancySubdivisionCount);
             }
 
             return true;
