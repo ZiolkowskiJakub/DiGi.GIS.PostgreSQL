@@ -13,13 +13,13 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Classifies the components of the stored <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/>s into the 35 “External Components Area” columns of the given table, keyed by county identifier and reference.
         /// <para>A wall is filed under the sector of its outward normal’s azimuth, a roof under its tilt band (flat below 5°, then [5°, 20°], (20°, 45°] and above 45°) crossed with the same sectors, and a floor under the floor column; the total column is the sum of the 34 breakdowns. A building that arrives with a stored model gets a row in which every empty bucket is 0, so a zero row and an absent row stay distinguishable.</para>
-        /// <para>The wall outward and roof upward normals are the normals of the shell faces of the model’s spaces, built with <see cref="DiGi.Geometry.Core.Enums.Side.External"/> so each face direction is resolved by the shell construction over the space’s face set instead of being guessed from the component’s stored geometry. Every shell face carries the <see cref="DiGi.Core.Interfaces.IUniqueReference"/> of the component it was built from, which is how a face is matched back to its component; a component in one shell face is classified from it, a component in two or more is an internal partition and is excluded from the external area and counted in the result, and a component no shell face carries is a defect in the model’s space structure, so it throws.</para>
+        /// <para>The wall outward and roof upward normals are the normals of the faces of the model’s external envelope, built by <see cref="DiGi.Analytical.Building.Classes.BuildingModel.GetExternalShell(DiGi.Geometry.Core.Enums.Side?, DiGi.Geometry.Core.Enums.Orientation?, DiGi.Geometry.Core.Enums.Orientation?, double)"/> with <see cref="DiGi.Geometry.Core.Enums.Side.External"/>, so each face direction is resolved once over the envelope instead of being guessed from the component’s stored geometry. That method states the selection rule for every consumer: a component bounding exactly one space is external, one bounding two is an internal partition, one bounding none is part of no envelope. Every envelope face carries the <see cref="DiGi.Core.Interfaces.IUniqueReference"/> of the component it was built from, which is how a face is matched back to its component; a component the envelope carries is classified from its face, one it does not carry is excluded from the external area and counted in the result when it bounds two spaces, and is a defect in the model’s space structure otherwise, so it throws - a component bounding one space that the envelope still leaves out has no polygonal face, or belongs to a model with fewer than the four external faces a closed solid needs.</para>
         /// <para>A component the method cannot classify - a wall whose normal is vertical, so its azimuth is undefined - is skipped and counted in the result.</para>
         /// <para>A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.</para>
         /// </summary>
         /// <param name="table">The table to fill with the classification.</param>
         /// <param name="buildingModels">The envelopes of stored building models, most preferred record first.</param>
-        /// <returns>The number of components skipped because they bound two or more spaces or their target bucket is undefined; 0 when every component was classified.</returns>
+        /// <returns>The number of components skipped because they bound two spaces or their target bucket is undefined; 0 when every component was classified.</returns>
         public static long Update_ExternalComponentsArea(this Table? table, IEnumerable<BuildingModel>? buildingModels)
         {
             // Must stay in sync with the DiGi.GIS.IO column descriptions: flat is strictly below 5°,
@@ -54,6 +54,18 @@ namespace DiGi.GIS.PostgreSQL
                 }
 
                 return normal_Unit;
+            }
+
+            // The number of spaces a component bounds - the same count the selection rule of GetExternalShell reads.
+            // Only reached for a component the envelope does not carry, so the clone GetRelation returns is paid a few times per model at most.
+            int SpaceCount(DiGi.Analytical.Building.Classes.BuildingModel buildingModel, IComponent component)
+            {
+                DiGi.Analytical.Building.Classes.SpaceRelation? spaceRelation = buildingModel.GetRelation<DiGi.Analytical.Building.Classes.SpaceRelation>(component);
+
+                // The getter clones the reference list, so it is read once.
+                List<DiGi.Core.Interfaces.IUniqueReference>? uniqueReferences = spaceRelation?.UniqueReferences_To;
+
+                return uniqueReferences?.Count ?? 0;
             }
 
             // Wall sectors, in the order of the columns: north, northeast, east, southeast, south, southwest, west, northwest.
@@ -154,29 +166,18 @@ namespace DiGi.GIS.PostgreSQL
                 bool hasComponent = (walls is not null && walls.Count > 0) || (roofs is not null && roofs.Count > 0) || (floors is not null && floors.Count > 0);
                 if (hasComponent)
                 {
-                    // The external side of the space shells: the shell construction resolves every face direction over the space's face set,
-                    // so a stored normal that points into the building is flipped by topology rather than by guesswork.
-                    // A space with relations but no polygonal face throws here (the model's own throw); a model with no space at all answers null.
-                    List<DiGi.Analytical.Classes.Shell>? shells = buildingModel.GetShells<DiGi.Analytical.Building.Classes.Space>(DiGi.Geometry.Core.Enums.Side.External);
-                    if (shells is null)
-                    {
-                        throw new InvalidOperationException($"Building {reference} of county {countyId}: the stored model carries components but no space, so no shell face carries their outward normals and they cannot be classified.");
-                    }
+                    // The external envelope of the whole model: every component bounding exactly one space, oriented once over the envelope by ray parity,
+                    // so a stored normal that points into the building is flipped by topology rather than by guesswork (GetExternalShell states the selection rule).
+                    // Null when the model has no space relation at all or fewer than four external faces; either way every component is then absent from the envelope.
+                    DiGi.Analytical.Classes.Shell? shell = buildingModel.GetExternalShell(DiGi.Geometry.Core.Enums.Side.External);
 
-                    // Every shell face carries the GuidReference of the component it was built from.
-                    // A component in exactly one shell face is classified from it; one in two or more is an internal partition.
+                    // Every envelope face carries the GuidReference of the component it was built from; a component appears at most once.
                     Dictionary<Guid, DiGi.Analytical.Classes.Face> face_ByComponentGuid = [];
-                    HashSet<Guid> sharedComponentGuids = [];
 
-                    foreach (DiGi.Analytical.Classes.Shell shell in shells)
+                    // The getter clones on access, so the list is read once.
+                    List<DiGi.Analytical.Classes.Face>? faces = shell?.PolygonalFaces;
+                    if (faces is not null)
                     {
-                        // The getter clones on access, so the list is read once per shell.
-                        List<DiGi.Analytical.Classes.Face>? faces = shell.PolygonalFaces;
-                        if (faces is null || faces.Count == 0)
-                        {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: a space shell carries no face, so the model's space structure is defective and its components cannot be classified.");
-                        }
-
                         foreach (DiGi.Analytical.Classes.Face face in faces)
                         {
                             // Face.UniqueReference is a fresh clone on every call - read it once, and match on the Guid the reference carries.
@@ -186,15 +187,9 @@ namespace DiGi.GIS.PostgreSQL
                                 continue;
                             }
 
-                            Guid guid_Component = guidReference_Face.Guid;
-                            if (face_ByComponentGuid.ContainsKey(guid_Component))
+                            if (!face_ByComponentGuid.TryAdd(guidReference_Face.Guid, face))
                             {
-                                face_ByComponentGuid.Remove(guid_Component);
-                                sharedComponentGuids.Add(guid_Component);
-                            }
-                            else
-                            {
-                                face_ByComponentGuid.Add(guid_Component, face);
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the component {guidReference_Face.Guid} appears twice in the external envelope, so the model's space structure is defective and its components cannot be classified.");
                             }
                         }
                     }
@@ -209,16 +204,17 @@ namespace DiGi.GIS.PostgreSQL
                             }
 
                             Guid guid_Component = wall.Guid;
-                            if (sharedComponentGuids.Contains(guid_Component))
-                            {
-                                // Bounds two or more spaces: an internal partition, not an external component.
-                                skippedComponentCount++;
-                                continue;
-                            }
-
                             if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
                             {
-                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall component {guid_Component} bounds no space, so no shell face carries its outward normal and it cannot be classified.");
+                                int spaceCount = SpaceCount(buildingModel, wall);
+                                if (spaceCount == 2)
+                                {
+                                    // Bounds two spaces: an internal partition, not an external component.
+                                    skippedComponentCount++;
+                                    continue;
+                                }
+
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall component {guid_Component} bounds {spaceCount} space(s) and is not part of the external envelope, so its outward normal is not available and it cannot be classified.");
                             }
 
                             double area = Area(reference, countyId, face_Shell, "wall");
@@ -248,16 +244,17 @@ namespace DiGi.GIS.PostgreSQL
                             }
 
                             Guid guid_Component = roof.Guid;
-                            if (sharedComponentGuids.Contains(guid_Component))
-                            {
-                                // Bounds two or more spaces: an internal partition, not an external component.
-                                skippedComponentCount++;
-                                continue;
-                            }
-
                             if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
                             {
-                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the roof component {guid_Component} bounds no space, so no shell face carries its upward normal and it cannot be classified.");
+                                int spaceCount = SpaceCount(buildingModel, roof);
+                                if (spaceCount == 2)
+                                {
+                                    // Bounds two spaces: an internal partition, not an external component.
+                                    skippedComponentCount++;
+                                    continue;
+                                }
+
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the roof component {guid_Component} bounds {spaceCount} space(s) and is not part of the external envelope, so its upward normal is not available and it cannot be classified.");
                             }
 
                             double area = Area(reference, countyId, face_Shell, "roof");
@@ -296,16 +293,17 @@ namespace DiGi.GIS.PostgreSQL
                             }
 
                             Guid guid_Component = floor_Temp.Guid;
-                            if (sharedComponentGuids.Contains(guid_Component))
-                            {
-                                // Bounds two or more spaces: an internal partition, not an external component.
-                                skippedComponentCount++;
-                                continue;
-                            }
-
                             if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
                             {
-                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the floor component {guid_Component} bounds no space, so its shell face is not available and it cannot be classified.");
+                                int spaceCount = SpaceCount(buildingModel, floor_Temp);
+                                if (spaceCount == 2)
+                                {
+                                    // Bounds two spaces: an internal partition, not an external component.
+                                    skippedComponentCount++;
+                                    continue;
+                                }
+
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the floor component {guid_Component} bounds {spaceCount} space(s) and is not part of the external envelope, so its envelope face is not available and it cannot be classified.");
                             }
 
                             areas[index_Floor] += Area(reference, countyId, face_Shell, "floor");
