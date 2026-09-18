@@ -19,7 +19,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <para>A building belongs to exactly one subdivision here: the one its <c>subdivision_id</c> names, which is the <b>smallest</b> subdivision containing it. Where the layer nests - a city, its districts and their neighbourhoods are all subdivisions of the one municipality - that is the neighbourhood, so the administrative columns (<c>Subdivision name</c>, <c>Subdivision occupancy</c>, <c>Settlement type</c>) name the most specific unit, and a district or city row reaches only the buildings inside none of its children. The rows of nested subdivisions are therefore not disjoint by geometry but are disjoint by attribution, which is what a per-building table needs; anything wanting "the buildings of district X" reads X's polygon instead (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>).</para>
     /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through <c>administrative_areal_2d</c>; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; <see cref="UnfulfilledUpdateTypeCount"/> counts those, and the run is reported as not succeeded while it is above zero.</para>
-    /// <para>The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. <see cref="RadialRatiosUnmeasuredSubdivisionCount"/> counts the subdivisions that happened to, and also stops the run being reported as succeeded.</para>
+    /// <para>The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. <see cref="RadialRatiosUnmeasuredSubdivisionCount"/> counts the subdivisions that happened to, and stops the run being reported as succeeded; <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/> counts the same miss on a county's unassigned buildings and is reported without failing the run, because at one or two buildings the miss cannot be told apart from a stored box that does not match its own geometry.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -84,17 +84,24 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets the number of subdivisions whose radial ratios could not be measured during the last run, so the radial columns were left as they stood.
-        /// <para>Either no building in the subdivision carries an outline, or the read of their surroundings brought back none of the subjects themselves - and every subject is inside the area read by construction, so none of them coming back means the read is not reaching the partition they are filed under. A read that brings back some but not all of them is a different fault, per building rather than per partition, and is logged without being counted here: it understates a few ratios rather than leaving a subdivision unwritten. Counted once per subdivision, and once per county for the pass that picks up the buildings the subdivision loop cannot reach.</para>
+        /// <para>Either no building in the subdivision carries an outline, or the read of their surroundings brought back none of the subjects themselves - and every subject is inside the area read by construction, so none of them coming back means the read is not reaching the partition they are filed under. A read that brings back some but not all of them is a different fault, per building rather than per partition, and is logged without being counted here: it understates a few ratios rather than leaving a subdivision unwritten. Counted once per subdivision; the pass that picks up the buildings the subdivision loop cannot reach counts the same miss against <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/>.</para>
         /// <para>Unlike <see cref="SkippedSubdivisionCount"/> this does make the run incomplete. It is the partial-write counterpart of <see cref="UnfulfilledUpdateTypeCount"/>, which only catches an update type that wrote nothing at all: before this counter existed, a subdivision whose surroundings could not be read wrote every other column normally and left the radial ones untouched, so a county could be most of the way empty while the run reported success.</para>
+        /// <para>The same miss on a county's unassigned buildings is counted separately, against <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/>: at one or two buildings "none of them came back" cannot be told apart from a stored box that does not match its own geometry, so it is reported and does not fail the run.</para>
         /// </summary>
         public long RadialRatiosUnmeasuredSubdivisionCount { get; private set; }
+
+        /// <summary>
+        /// Gets the number of a county's unassigned-building buckets whose radial ratios could not be measured during the last run, so the radial columns of those buildings were left as they stood.
+        /// <para>Unlike <see cref="RadialRatiosUnmeasuredSubdivisionCount"/> this does not make the run incomplete and does not stop it being reported as succeeded. A bucket holds one or two buildings, and for that size "none of them came back" is indistinguishable, by the <c>SubjectCount</c> rule, from "a stored bounding box does not match its own geometry" - so the miss is a warning to read, not a failure to act on. The run's result is judged on the subdivision counter alone.</para>
+        /// </summary>
+        public long RadialRatiosUnmeasuredUnassignedCountyCount { get; private set; }
 
         /// <summary>
         /// Executes the background task to update building data from AdministrativeAreal2D and Building2D sources.
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/> or a subdivision against <see cref="RadialRatiosUnmeasuredSubdivisionCount"/>.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/> or a subdivision against <see cref="RadialRatiosUnmeasuredSubdivisionCount"/>. A county's unassigned buildings whose radial ratios could not be measured are counted against <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/> and do not affect the result.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             FailedSubdivisionCount = 0;
@@ -105,6 +112,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             UpdatedRowCount = 0;
             UnfulfilledUpdateTypeCount = 0;
             RadialRatiosUnmeasuredSubdivisionCount = 0;
+            RadialRatiosUnmeasuredUnassignedCountyCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
 
@@ -593,7 +601,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                         if (boundingBox2Ds.Count == 0)
                         {
-                            RadialRatiosUnmeasuredSubdivisionCount++;
+                            RadialRatiosUnmeasuredUnassignedCountyCount++;
                             Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured for unassigned buildings - county {CountyId}, none of its {BuildingCount} unassigned buildings carries an outline", countyId, building2Ds_Unassigned.Count);
                         }
                         else
@@ -614,7 +622,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                             if (count_Subject == 0)
                             {
-                                RadialRatiosUnmeasuredSubdivisionCount++;
+                                RadialRatiosUnmeasuredUnassignedCountyCount++;
                                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data radial ratios not measured for unassigned buildings - county {CountyId}, the surroundings came back as {NeighbourCount} buildings and none of the {BuildingCount} subjects is among them", countyId, building2Ds_Neighbour.Count, building2Ds_Unassigned.Count);
                             }
                             else
@@ -807,7 +815,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled, {UnmeasuredCount} subdivisions left without radial ratios",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled, {UnmeasuredSubdivisionCount} subdivisions and {UnmeasuredUnassignedCountyCount} unassigned buckets left without radial ratios",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
                 UnassignedSubdivisionBuildingCount,
@@ -816,7 +824,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 FailedSubdivisionCount,
                 SkippedSubdivisionCount,
                 UnfulfilledUpdateTypeCount,
-                RadialRatiosUnmeasuredSubdivisionCount);
+                RadialRatiosUnmeasuredSubdivisionCount,
+                RadialRatiosUnmeasuredUnassignedCountyCount);
 
             return FailedSubdivisionCount == 0 && UnfulfilledUpdateTypeCount == 0 && RadialRatiosUnmeasuredSubdivisionCount == 0;
         }
