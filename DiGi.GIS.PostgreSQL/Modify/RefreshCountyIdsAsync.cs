@@ -94,7 +94,7 @@ namespace DiGi.GIS.PostgreSQL
             // Every identifier the statement will carry is resolved against the columns the table actually
             // has. They are constants a few lines above rather than caller input, but a column list is the
             // only guard that can be relied on for an identifier, which cannot be a parameter.
-            List<string>? columnNames = await DiGi.PostgreSQL.Query.ColumnNamesAsync(npgsqlConnection, tableName, cancellationToken);
+            List<string>? columnNames = await DiGi.PostgreSQL.Query.ColumnNamesAsync(npgsqlConnection, tableName, cancellationToken: cancellationToken);
             if (columnNames is null)
             {
                 return null;
