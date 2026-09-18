@@ -13,13 +13,13 @@ namespace DiGi.GIS.PostgreSQL
         /// <summary>
         /// Classifies the components of the stored <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/>s into the 35 “External Components Area” columns of the given table, keyed by county identifier and reference.
         /// <para>A wall is filed under the sector of its outward normal’s azimuth, a roof under its tilt band (flat below 5°, then [5°, 20°], (20°, 45°] and above 45°) crossed with the same sectors, and a floor under the floor column; the total column is the sum of the 34 breakdowns. A building that arrives with a stored model gets a row in which every empty bucket is 0, so a zero row and an absent row stay distinguishable.</para>
-        /// <para>The outward direction of a wall is resolved against the building’s interior, and the interior is the internal point of the model’s first floor: a point on a floor face lies inside the building volume, which a bounding-box centre does not (an L-shaped footprint puts the centre in the notch). A component the method cannot classify - one that does not yield a <see cref="PolygonalFace3D"/>, a face without an internal point or a usable area, a face without a usable normal, or a model without a floor - is a defect in the stored model and throws <see cref="InvalidOperationException"/> naming the building, so the failure is loud rather than a silently missing area.</para>
-        /// <para>A component that is geometrically valid but has no definable target bucket - a wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the interior is degenerate - is skipped and counted in the result.</para>
+        /// <para>The wall outward and roof upward normals are the normals of the shell faces of the model’s spaces, built with <see cref="DiGi.Geometry.Core.Enums.Side.External"/> so each face direction is resolved by the shell construction over the space’s face set instead of being guessed from the component’s stored geometry. Every shell face carries the <see cref="DiGi.Core.Interfaces.IUniqueReference"/> of the component it was built from, which is how a face is matched back to its component; a component in one shell face is classified from it, a component in two or more is an internal partition and is excluded from the external area and counted in the result, and a component no shell face carries is a defect in the model’s space structure, so it throws.</para>
+        /// <para>A component the method cannot classify - a wall whose normal is vertical, so its azimuth is undefined - is skipped and counted in the result.</para>
         /// <para>A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.</para>
         /// </summary>
         /// <param name="table">The table to fill with the classification.</param>
         /// <param name="buildingModels">The envelopes of stored building models, most preferred record first.</param>
-        /// <returns>The number of components skipped because their target bucket is undefined; 0 when every component was classified.</returns>
+        /// <returns>The number of components skipped because they bound two or more spaces or their target bucket is undefined; 0 when every component was classified.</returns>
         public static long Update_ExternalComponentsArea(this Table? table, IEnumerable<BuildingModel>? buildingModels)
         {
             // Must stay in sync with the DiGi.GIS.IO column descriptions: flat is strictly below 5°,
@@ -27,17 +27,6 @@ namespace DiGi.GIS.PostgreSQL
             const double tilt_FlatDegrees = 5.0;
             const double tilt_UpTo20Degrees = 20.0;
             const double tilt_Between45Degrees = 45.0;
-
-            PolygonalFace3D Face(string reference, int countyId, IComponent component, string componentKind)
-            {
-                PolygonalFace3D? face = DiGi.Analytical.Building.Query.Geometry3D<PolygonalFace3D>(component);
-                if (face is null)
-                {
-                    throw new InvalidOperationException($"Building {reference} of county {countyId}: the {componentKind} component does not yield a PolygonalFace3D face, so it cannot be classified.");
-                }
-
-                return face;
-            }
 
             double Area(string reference, int countyId, PolygonalFace3D face, string componentKind)
             {
@@ -48,6 +37,23 @@ namespace DiGi.GIS.PostgreSQL
                 }
 
                 return area;
+            }
+
+            Vector3D? NormalUnit(string reference, int countyId, DiGi.Analytical.Classes.Face face_Shell, string componentKind)
+            {
+                Vector3D? normal = face_Shell.Plane?.Normal;
+                if (normal is null || normal.Length <= 0)
+                {
+                    throw new InvalidOperationException($"Building {reference} of county {countyId}: the {componentKind} face has no usable normal, so it cannot be classified.");
+                }
+
+                Vector3D? normal_Unit = normal.Unit;
+                if (normal_Unit is null)
+                {
+                    throw new InvalidOperationException($"Building {reference} of county {countyId}: the {componentKind} face has no usable normal, so it cannot be classified.");
+                }
+
+                return normal_Unit;
             }
 
             // Wall sectors, in the order of the columns: north, northeast, east, southeast, south, southwest, west, northwest.
@@ -143,154 +149,167 @@ namespace DiGi.GIS.PostgreSQL
                 List<IRoof>? roofs = buildingModel.GetComponents<IRoof>();
                 List<IFloor>? floors = buildingModel.GetComponents<IFloor>();
 
-                if (floors is null || floors.Count == 0)
-                {
-                    throw new InvalidOperationException($"Building {reference} of county {countyId}: the stored model carries no floor, so the interior reference point the wall normals are oriented against is not available.");
-                }
-
-                IFloor? floor = floors[0];
-
-                PolygonalFace3D face_Floor = Face(reference, countyId, floor, "floor");
-                Point3D? interiorPoint = face_Floor.GetInternalPoint();
-                if (interiorPoint is null)
-                {
-                    throw new InvalidOperationException($"Building {reference} of county {countyId}: the floor face has no internal point, so the interior reference point the wall normals are oriented against is not available.");
-                }
-
                 double[] areas = new double[count_Breakdown];
 
-                if (walls is not null)
+                bool hasComponent = (walls is not null && walls.Count > 0) || (roofs is not null && roofs.Count > 0) || (floors is not null && floors.Count > 0);
+                if (hasComponent)
                 {
-                    foreach (IWall? wall in walls)
+                    // The external side of the space shells: the shell construction resolves every face direction over the space's face set,
+                    // so a stored normal that points into the building is flipped by topology rather than by guesswork.
+                    // A space with relations but no polygonal face throws here (the model's own throw); a model with no space at all answers null.
+                    List<DiGi.Analytical.Classes.Shell>? shells = buildingModel.GetShells<DiGi.Analytical.Building.Classes.Space>(DiGi.Geometry.Core.Enums.Side.External);
+                    if (shells is null)
                     {
-                        if (wall is null)
-                        {
-                            continue;
-                        }
-
-                        PolygonalFace3D face_Wall = Face(reference, countyId, wall, "wall");
-
-                        Point3D? facePoint = face_Wall.GetInternalPoint();
-                        if (facePoint is null)
-                        {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall face has no internal point, so the wall normal cannot be oriented.");
-                        }
-
-                        double area = Area(reference, countyId, face_Wall, "wall");
-
-                        Vector3D? normal = face_Wall.Plane?.Normal;
-                        if (normal is null || normal.Length <= 0)
-                        {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall face has no usable normal, so the wall cannot be classified.");
-                        }
-
-                        Vector3D? normal_Unit = normal.Unit;
-                        if (normal_Unit is null)
-                        {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall face has no usable normal, so the wall cannot be classified.");
-                        }
-
-                        Vector3D interior = new(interiorPoint.X - facePoint.X, interiorPoint.Y - facePoint.Y, interiorPoint.Z - facePoint.Z);
-                        Vector3D? interior_Unit = interior.Unit;
-                        if (interior_Unit is null)
-                        {
-                            // The wall point and the interior point coincide: the side of the wall the building is on is undefined.
-                            skippedComponentCount++;
-                            continue;
-                        }
-
-                        // A normal pointing into the interior is flipped so the azimuth is measured off the outward side.
-                        double cosine = normal_Unit.DotProduct(interior_Unit);
-                        if (Math.Abs(cosine) <= Core.Constants.Tolerance.MicroDistance)
-                        {
-                            // The interior point sits in the wall plane: either side is as defensible as the other, so the sector is not guessed at.
-                            skippedComponentCount++;
-                            continue;
-                        }
-
-                        if (cosine > 0)
-                        {
-                            normal_Unit = normal_Unit.GetInversed();
-                        }
-
-                        double azimuth = (Math.Atan2(normal_Unit.X, normal_Unit.Y) * 180.0 / Math.PI + 360.0) % 360.0;
-
-                        int index = SectorIndex(DiGi.GIS.Query.CardinalDirection(azimuth));
-                        if (index < 0)
-                        {
-                            // CardinalDirection answered Undefined: the azimuth is out of range, so the sector is not guessed at.
-                            skippedComponentCount++;
-                            continue;
-                        }
-
-                        areas[index] += area;
+                        throw new InvalidOperationException($"Building {reference} of county {countyId}: the stored model carries components but no space, so no shell face carries their outward normals and they cannot be classified.");
                     }
-                }
 
-                if (roofs is not null)
-                {
-                    foreach (IRoof? roof in roofs)
+                    // Every shell face carries the GuidReference of the component it was built from.
+                    // A component in exactly one shell face is classified from it; one in two or more is an internal partition.
+                    Dictionary<Guid, DiGi.Analytical.Classes.Face> face_ByComponentGuid = [];
+                    HashSet<Guid> sharedComponentGuids = [];
+
+                    foreach (DiGi.Analytical.Classes.Shell shell in shells)
                     {
-                        if (roof is null)
+                        // The getter clones on access, so the list is read once per shell.
+                        List<DiGi.Analytical.Classes.Face>? faces = shell.PolygonalFaces;
+                        if (faces is null || faces.Count == 0)
                         {
-                            continue;
+                            throw new InvalidOperationException($"Building {reference} of county {countyId}: a space shell carries no face, so the model's space structure is defective and its components cannot be classified.");
                         }
 
-                        PolygonalFace3D face_Roof = Face(reference, countyId, roof, "roof");
-                        double area = Area(reference, countyId, face_Roof, "roof");
-
-                        Vector3D? normal = face_Roof.Plane?.Normal;
-                        if (normal is null || normal.Length <= 0)
+                        foreach (DiGi.Analytical.Classes.Face face in faces)
                         {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: the roof face has no usable normal, so the roof cannot be classified.");
+                            // Face.UniqueReference is a fresh clone on every call - read it once, and match on the Guid the reference carries.
+                            DiGi.Core.Interfaces.IUniqueReference? uniqueReference_Face = face.UniqueReference;
+                            if (uniqueReference_Face is not DiGi.Core.Classes.GuidReference guidReference_Face)
+                            {
+                                continue;
+                            }
+
+                            Guid guid_Component = guidReference_Face.Guid;
+                            if (face_ByComponentGuid.ContainsKey(guid_Component))
+                            {
+                                face_ByComponentGuid.Remove(guid_Component);
+                                sharedComponentGuids.Add(guid_Component);
+                            }
+                            else
+                            {
+                                face_ByComponentGuid.Add(guid_Component, face);
+                            }
                         }
-
-                        Vector3D? normal_Unit = normal.Unit;
-                        if (normal_Unit is null)
-                        {
-                            throw new InvalidOperationException($"Building {reference} of county {countyId}: the roof face has no usable normal, so the roof cannot be classified.");
-                        }
-
-                        // A roof normal pointing down is flipped so the tilt is measured against the upward side.
-                        if (normal_Unit.Z < 0)
-                        {
-                            normal_Unit = normal_Unit.GetInversed();
-                        }
-
-                        // Angle answers in radians; convert explicitly rather than through Math.ToDegrees, which the target BCL does not carry.
-                        double tilt = normal_Unit.Angle(DiGi.Geometry.Spatial.Constants.Vector3D.WorldZ) * 180.0 / Math.PI;
-                        if (tilt < tilt_FlatDegrees)
-                        {
-                            areas[index_FlatRoof] += area;
-                            continue;
-                        }
-
-                        double azimuth = (Math.Atan2(normal_Unit.X, normal_Unit.Y) * 180.0 / Math.PI + 360.0) % 360.0;
-
-                        int index = SectorIndex(DiGi.GIS.Query.CardinalDirection(azimuth));
-                        if (index < 0)
-                        {
-                            // CardinalDirection answered Undefined: the azimuth is out of range, so the sector is not guessed at.
-                            skippedComponentCount++;
-                            continue;
-                        }
-
-                        int band = tilt <= tilt_UpTo20Degrees ? 0 : tilt <= tilt_Between45Degrees ? 1 : 2;
-                        areas[index_TiltedRoof + 8 * band + index] += area;
                     }
-                }
 
-                if (floors is not null)
-                {
-                    foreach (IFloor? floor_Temp in floors)
+                    if (walls is not null)
                     {
-                        if (floor_Temp is null)
+                        foreach (IWall? wall in walls)
                         {
-                            continue;
-                        }
+                            if (wall is null)
+                            {
+                                continue;
+                            }
 
-                        PolygonalFace3D face_FloorArea = Face(reference, countyId, floor_Temp, "floor");
-                        areas[index_Floor] += Area(reference, countyId, face_FloorArea, "floor");
+                            Guid guid_Component = wall.Guid;
+                            if (sharedComponentGuids.Contains(guid_Component))
+                            {
+                                // Bounds two or more spaces: an internal partition, not an external component.
+                                skippedComponentCount++;
+                                continue;
+                            }
+
+                            if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
+                            {
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the wall component {guid_Component} bounds no space, so no shell face carries its outward normal and it cannot be classified.");
+                            }
+
+                            double area = Area(reference, countyId, face_Shell, "wall");
+                            Vector3D normal_Unit = NormalUnit(reference, countyId, face_Shell, "wall")!;
+
+                            double azimuth = (Math.Atan2(normal_Unit.X, normal_Unit.Y) * 180.0 / Math.PI + 360.0) % 360.0;
+
+                            int index = SectorIndex(DiGi.GIS.Query.CardinalDirection(azimuth));
+                            if (index < 0)
+                            {
+                                // CardinalDirection answered Undefined: the normal is vertical, so the sector is not guessed at.
+                                skippedComponentCount++;
+                                continue;
+                            }
+
+                            areas[index] += area;
+                        }
+                    }
+
+                    if (roofs is not null)
+                    {
+                        foreach (IRoof? roof in roofs)
+                        {
+                            if (roof is null)
+                            {
+                                continue;
+                            }
+
+                            Guid guid_Component = roof.Guid;
+                            if (sharedComponentGuids.Contains(guid_Component))
+                            {
+                                // Bounds two or more spaces: an internal partition, not an external component.
+                                skippedComponentCount++;
+                                continue;
+                            }
+
+                            if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
+                            {
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the roof component {guid_Component} bounds no space, so no shell face carries its upward normal and it cannot be classified.");
+                            }
+
+                            double area = Area(reference, countyId, face_Shell, "roof");
+                            Vector3D normal_Unit = NormalUnit(reference, countyId, face_Shell, "roof")!;
+
+                            // The shell normal is the roof's upward direction; no flip is applied.
+                            double tilt = normal_Unit.Angle(DiGi.Geometry.Spatial.Constants.Vector3D.WorldZ) * 180.0 / Math.PI;
+                            if (tilt < tilt_FlatDegrees)
+                            {
+                                areas[index_FlatRoof] += area;
+                                continue;
+                            }
+
+                            double azimuth = (Math.Atan2(normal_Unit.X, normal_Unit.Y) * 180.0 / Math.PI + 360.0) % 360.0;
+
+                            int index = SectorIndex(DiGi.GIS.Query.CardinalDirection(azimuth));
+                            if (index < 0)
+                            {
+                                // CardinalDirection answered Undefined: the normal is vertical, so the sector is not guessed at.
+                                skippedComponentCount++;
+                                continue;
+                            }
+
+                            int band = tilt <= tilt_UpTo20Degrees ? 0 : tilt <= tilt_Between45Degrees ? 1 : 2;
+                            areas[index_TiltedRoof + 8 * band + index] += area;
+                        }
+                    }
+
+                    if (floors is not null)
+                    {
+                        foreach (IFloor? floor_Temp in floors)
+                        {
+                            if (floor_Temp is null)
+                            {
+                                continue;
+                            }
+
+                            Guid guid_Component = floor_Temp.Guid;
+                            if (sharedComponentGuids.Contains(guid_Component))
+                            {
+                                // Bounds two or more spaces: an internal partition, not an external component.
+                                skippedComponentCount++;
+                                continue;
+                            }
+
+                            if (!face_ByComponentGuid.TryGetValue(guid_Component, out DiGi.Analytical.Classes.Face? face_Shell))
+                            {
+                                throw new InvalidOperationException($"Building {reference} of county {countyId}: the floor component {guid_Component} bounds no space, so its shell face is not available and it cannot be classified.");
+                            }
+
+                            areas[index_Floor] += Area(reference, countyId, face_Shell, "floor");
+                        }
                     }
                 }
 

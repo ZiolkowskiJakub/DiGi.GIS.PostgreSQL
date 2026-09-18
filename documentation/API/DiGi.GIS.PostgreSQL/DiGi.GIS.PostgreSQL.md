@@ -1401,9 +1401,9 @@ Classifies the components of the stored [DiGi\.Analytical\.Building\.Classes\.Bu
 
 A wall is filed under the sector of its outward normal’s azimuth, a roof under its tilt band (flat below 5°, then [5°, 20°], (20°, 45°] and above 45°) crossed with the same sectors, and a floor under the floor column; the total column is the sum of the 34 breakdowns. A building that arrives with a stored model gets a row in which every empty bucket is 0, so a zero row and an absent row stay distinguishable.
 
-The outward direction of a wall is resolved against the building’s interior, and the interior is the internal point of the model’s first floor: a point on a floor face lies inside the building volume, which a bounding-box centre does not (an L-shaped footprint puts the centre in the notch). A component the method cannot classify - one that does not yield a [DiGi\.Geometry\.Spatial\.Classes\.PolygonalFace3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.polygonalface3d 'DiGi\.Geometry\.Spatial\.Classes\.PolygonalFace3D'), a face without an internal point or a usable area, a face without a usable normal, or a model without a floor - is a defect in the stored model and throws [System\.InvalidOperationException](https://learn.microsoft.com/en-us/dotnet/api/system.invalidoperationexception 'System\.InvalidOperationException') naming the building, so the failure is loud rather than a silently missing area.
+The wall outward and roof upward normals are the normals of the shell faces of the model’s spaces, built with [DiGi\.Geometry\.Core\.Enums\.Side\.External](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.core.enums.side.external 'DiGi\.Geometry\.Core\.Enums\.Side\.External') so each face direction is resolved by the shell construction over the space’s face set instead of being guessed from the component’s stored geometry. Every shell face carries the [DiGi\.Core\.Interfaces\.IUniqueReference](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iuniquereference 'DiGi\.Core\.Interfaces\.IUniqueReference') of the component it was built from, which is how a face is matched back to its component; a component in one shell face is classified from it, a component in two or more is an internal partition and is excluded from the external area and counted in the result, and a component no shell face carries is a defect in the model’s space structure, so it throws.
 
-A component that is geometrically valid but has no definable target bucket - a wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the interior is degenerate - is skipped and counted in the result.
+A component the method cannot classify - a wall whose normal is vertical, so its azimuth is undefined - is skipped and counted in the result.
 
 A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.
 
@@ -1426,7 +1426,7 @@ The envelopes of stored building models, most preferred record first\.
 
 #### Returns
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')  
-The number of components skipped because their target bucket is undefined; 0 when every component was classified\.
+The number of components skipped because they bound two or more spaces or their target bucket is undefined; 0 when every component was classified\.
 
 <a name='DiGi.GIS.PostgreSQL.Modify.Update_Id(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_)'></a>
 
