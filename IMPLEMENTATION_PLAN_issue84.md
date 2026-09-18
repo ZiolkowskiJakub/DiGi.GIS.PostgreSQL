@@ -262,3 +262,43 @@ Read-only, manual, **not** added to `DiGi.Test` (Deployed WebAPI guideline):
 5. Deployed-models verification (§4.3) — 27 models, radius 100, sequential GETs; same rows as #82, total = sum of the 34 per row.
 6. Full build, zero warnings; facts green.
 7. Commit on `0.8.10` (or the branch the maintainer designates); update #84's checkboxes; leave #83's status to the maintainer.
+
+---
+
+## 8. Switch-over to `BuildingModel.GetExternalShell` (2026-09-18)
+
+### Why
+
+After §1–§7 landed (`5eecc6f`), the issue was re-scoped: the shell-based, `normalSide`-oriented face extraction is implemented **once** in `DiGi.Analytical.Building` and consumed here and by the glTF converter (DiGi.GLTF#1). That blocker, DiGi.Analytical#3, is closed — `BuildingModel.GetExternalShell(Side?, Orientation?, Orientation?, double) → Shell?` is on DiGi.Analytical `0.8.8` (`e90fa42`, `c4ede4e`), and DiGi.Geometry#6 (`cc87da1`, `0.8.9`) fixed the mirroring `Planar.Flip` applied to every turned face on both paths. This section records the switch; §3 stays as the record of the per-space design it replaces.
+
+### What changed
+
+- `Modify/Update_ExternalComponentsArea.cs` — the `GetShells<Space>(Side.External)` loop and the `face_ByComponentGuid` / `sharedComponentGuids` rebuild collapse to one `GetExternalShell(Side.External)` call and one `Guid → Face` map (`TryAdd`; a component twice in the envelope throws). The selection rule is read from where `GetExternalShell` states it; a component the envelope does not carry is resolved by its space count, taken from `GetRelation<SpaceRelation>(component).UniqueReferences_To.Count` — the same field the selection rule reads (`GetSpaces(component)` filters missing spaces and could disagree with it on a dangling reference). The clone `GetRelation` returns is paid only for components absent from the envelope.
+- Sector and tilt rules, the 35 columns, total = sum of the 34, 0-vs-NULL, the `long` return and the background task are untouched.
+
+| Component | Decision (§1 table, restated for the envelope) |
+|---|---|
+| In the envelope | classify from that face's normal and area |
+| Absent, bounds 2 spaces | internal partition → counted skip (was: "in two shells") |
+| Absent, bounds 0 spaces | throw (was: "no shell face carries it") |
+| Absent, bounds 1 space — no polygonal face, or `GetExternalShell` answered `null` because the model has fewer than four external faces | throw; the message states the count, so this case is told apart from the orphan |
+| Absent, bounds ≥ 3 spaces | throw (defect) |
+| `null` envelope, no components | zero row (unchanged) |
+| `null` envelope, only partitions | every component a counted skip, zero row — the per-component rule applied uniformly |
+
+### Facts (DiGi.Test `0.8.11`)
+
+- New: `Update_ExternalComponentsArea_EnvelopeBelowFourFacesThrows` — one space with a floor and two walls; asserts the throw names the reference and `bounds 1 space`. **Differential recorded against `5eecc6f`:** the pre-switch path threw as well, but with "a space shell carries no face" — the `Polyhedron` constructor silently keeps no face below four — so the fact distinguishes the two implementations by the message on the space count, not by throw-versus-classify (the plan's §4 expectation that the old path would classify a three-face shell was wrong; corrected here).
+- Existing 9 runnable Facts unchanged in their assertions; two `<summary>` wordings updated. Suite: **10 passed / 1 conf-driven skip.**
+
+### Deployed-model parity (read-only)
+
+`GET https://api.digiproject.uk/gis/buildingmodel/itemsbycircle?x=638000&y=486000&radius=100` — the 27-model sample of §4.3 — classified by the pre-switch build (`5eecc6f`, rebuilt against DiGi.Analytical `c4ede4e` / DiGi.Geometry `cc87da1`) and by the post-switch build, 35 columns per row compared:
+
+- 27/27 rows on both sides, **0 throws**, skip count **104 = 104** (the same partitions), every total equal to the sum of its 34 breakdowns, **every total identical** between the two builds.
+- **6 of 27 envelopes are open** (`Query.ClosingTolerance` over the ladder `1e-6 … 0.2` answers `null`) — the one-in-six of `c4ede4e`. The closed ones close at 1e-6 (most), 0.001, 0.01, 0.02 and 0.05.
+- **4 cells differ, all on one open-envelope model** (`38F62225-DEFC-F520-E053-CA2BA8C0BE14`, county 55417, total 6347.23 m² on both sides): two roof slivers of 0.077 m² and 0.023 m² move from the "above 45" band into the "up to 20" band of the same sectors — the envelope orients those two faces the other way than the per-space shell did. This is the §6.1 arbitrariness on an open face set, at sliver scale; it does not move a sector area and the row total is unchanged.
+
+### Deferred (user decision: switch-over only)
+
+The open-envelope signal — recording `ClosingTolerance == null` per model so a county's share of arbitrary-side faces is known — is not added here because it changes the `Modify` return contract and the task's counters. It is filed as a follow-up issue (see the closing comment on #84).
