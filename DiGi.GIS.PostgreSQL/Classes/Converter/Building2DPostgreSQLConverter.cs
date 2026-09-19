@@ -2239,7 +2239,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <summary>
         /// Asynchronously refreshes the 2D building data in the PostgreSQL database - today, the <c>subdivision_id</c> of each building, derived from its outline (the smallest subdivision containing it).
         /// <para>The pick is made in memory by a <see cref="SubdivisionIdSolver"/> built once per county over the subdivisions whose boxes meet the county's; a building the layer cannot place - outside it, or covered only by an <see cref="GIS.Classes.AdministrativeDivision"/> row - goes through <c>GetSubdivisionIdAsync</c> against the database, the path every building took before (26 buildings a second in Warsaw, where each one re-read the 412 KB city outline; <see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/79">DiGi.GIS.PostgreSQL#79</see>). The layers loaded and the buildings that fell back are logged.</para>
-        /// <para>Walks the table in identifier order in batches, each under <c>FOR UPDATE SKIP LOCKED</c>. By default only buildings with no <c>subdivision_id</c> are visited; <see cref="PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds"/> re-derives every one. The walk can be limited to county polygon parts with <see cref="PostgreSQLBuilding2DRefreshOptions.CountyIds"/>, or to the parts whose subdivision layer nests with <see cref="PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly"/> - the counties where the previous lowest-identifier tie-break produced an arbitrary value (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>), which is nearly all of them: a village and its named parts nest as a city and its districts do. The resolved scope and the rows written per county are logged.</para>
+        /// <para>Walks the table one county polygon part at a time, each part in identifier order in batches, each batch under <c>FOR UPDATE SKIP LOCKED</c>. A part is one partition, so a batch is bounded by that partition's own index no matter how many parts are in scope, and the part's subdivision layer is loaded once for the whole part rather than being dropped and rebuilt as its buildings interleave with the others'. By default only buildings with no <c>subdivision_id</c> are visited; <see cref="PostgreSQLBuilding2DRefreshOptions.OverrideExistingSubdivisionIds"/> re-derives every one. The walk can be limited to county polygon parts with <see cref="PostgreSQLBuilding2DRefreshOptions.CountyIds"/>, or to the parts whose subdivision layer nests with <see cref="PostgreSQLBuilding2DRefreshOptions.NestedSubdivisionsOnly"/> - the counties where the previous lowest-identifier tie-break produced an arbitrary value (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/77">DiGi.GIS.PostgreSQL#77</see>), which is nearly all of them: a village and its named parts nest as a city and its districts do. The parts visited and the rows written per part are logged.</para>
         /// </summary>
         /// <param name="postgreSQLBuilding2DRefreshOptions">The options to configure the refresh process for PostgreSQL 2D buildings. Can be null to use default settings.</param>
         /// <param name="progress">The progress reporter used to report the current progress as a long value representing the count of updated buildings. Can be null if no progress reporting is required.</param>
@@ -2297,167 +2297,215 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
             }
 
-            Serilog.Modify.Log(
-                "{Type} refresh started: batch size {BatchSize}, start ID {StartId}, override existing subdivision IDs {OverrideExistingSubdivisionIds}, tolerance {Tolerance}, county scope {CountyScope}",
-                nameof(Building2DPostgreSQLConverter), batchSize, lastProcessedId, overrideExistingSubdivisionIds, tolerance, countyIds is null ? "all" : string.Join(", ", countyIds.OrderBy(x => x)));
+            // The walk is per part: each part is one partition with its own identifier index, so a batch is
+            // bounded by that partition no matter how many parts are in scope, and the part's subdivision layer
+            // is loaded once for the whole part instead of being dropped and rebuilt as its buildings interleave
+            // with the others' in a global identifier walk.
+            List<int> countyIds_Parts;
 
-            int[]? countyIds_Array = countyIds?.ToArray();
-            Dictionary<int, long> updatedCounts_ByCountyId = [];
-
-            // One subdivision layer per county part, kept for as long as its buildings keep arriving. Rows come in
-            // identifier order and a county's buildings were loaded together, so a batch rarely spans more than
-            // two counties; the few most recent layers are kept and the oldest dropped, since Warsaw's alone is
-            // 217 polygons.
-            Dictionary<int, SubdivisionIdSolver> subdivisionIdSolvers_ByCountyId = [];
-            List<int> countyIds_Loaded = [];
-            long fallbackCount = 0;
-
-            while (!cancellationToken.IsCancellationRequested && (countyIds_Array is null || countyIds_Array.Length != 0))
+            if (countyIds is null)
             {
-                await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
-                if (npgsqlConnection is null)
+                // The whole table: exactly the parts that hold rows, so a part with no building costs nothing,
+                // and the visit order is stable from run to run.
+                await using NpgsqlConnection? npgsqlConnection_Parts = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+                if (npgsqlConnection_Parts is null)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type} refresh failed: unable to create database connection", nameof(Building2DPostgreSQLConverter));
                     return null;
                 }
 
-                await npgsqlConnection.OpenAsync(cancellationToken);
+                await npgsqlConnection_Parts.OpenAsync(cancellationToken);
 
-                // Open transaction to maintain FOR UPDATE SKIP LOCKED locks during the batch
-                await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
+                string commandText_Parts = $@"SELECT DISTINCT county_id FROM {Constants.TableName.Building2D} ORDER BY county_id";
+                await using NpgsqlCommand npgsqlCommand_Parts = new(commandText_Parts, npgsqlConnection_Parts);
+                npgsqlCommand_Parts.CommandTimeout = commandTimeout;
 
-                // We combine the ID anchor with the optional NULL check.
-                // This ensures we always move forward in the table, regardless of update success.
-                string filterClause = overrideExistingSubdivisionIds
-                    ? "id > @lastId"
-                    : "id > @lastId AND subdivision_id IS NULL";
-
-                if (countyIds_Array is not null)
+                countyIds_Parts = [];
+                await using NpgsqlDataReader npgsqlDataReader_Parts = await npgsqlCommand_Parts.ExecuteReaderAsync(cancellationToken);
+                while (await npgsqlDataReader_Parts.ReadAsync(cancellationToken))
                 {
-                    // Partition pruning: county_id is the list key, so the scope prunes to its partitions.
-                    filterClause += " AND county_id = ANY(@countyIds)";
+                    countyIds_Parts.Add(npgsqlDataReader_Parts.GetInt32(0));
+                }
+            }
+            else
+            {
+                countyIds_Parts = [.. countyIds.OrderBy(x => x)];
+            }
+
+            Serilog.Modify.Log(
+                "{Type} refresh started: {PartsTotal} parts, batch size {BatchSize}, start ID {StartId}, override existing subdivision IDs {OverrideExistingSubdivisionIds}, tolerance {Tolerance}",
+                nameof(Building2DPostgreSQLConverter), countyIds_Parts.Count, batchSize, lastProcessedId, overrideExistingSubdivisionIds, tolerance);
+
+            Dictionary<int, long> updatedCounts_ByCountyId = [];
+            long fallbackCount = 0;
+            int partIndex = 0;
+
+            foreach (int countyId in countyIds_Parts)
+            {
+                if (cancelled)
+                {
+                    break;
                 }
 
-                string commandText_Select = $@"
-                    SELECT id, county_id, object
-                    FROM {Constants.TableName.Building2D}
-                    WHERE {filterClause}
-                    ORDER BY id ASC
-                    FOR UPDATE SKIP LOCKED
-                    LIMIT @batchSize";
+                partIndex++;
 
-                List<(long Id, int CountyId, string Json)> records = [];
+                // The anchor is per part: a part skips its rows at or below StartId and visits the rest, so a
+                // part that ends below the anchor is simply done. This is what a cancelled run restarts with -
+                // the parts it already finished redo nothing below their rows, and the part it stopped in
+                // resumes at the anchor.
+                long lastId = postgreSQLBuilding2DRefreshOptions.StartId;
+                long partReadCount = 0;
+                long partUpdatedCount = 0;
+                long partFallbackCount = 0;
 
-                try
+                // One subdivision layer for the whole part, built on the part's first batch and dropped when the
+                // part ends: the layer loads once per part instead of being kept warm while its buildings
+                // interleave with the others', and nothing has to be evicted.
+                SubdivisionIdSolver? subdivisionIdSolver = null;
+
+                while (!cancellationToken.IsCancellationRequested && !cancelled)
                 {
-                    await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
+                    await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+                    if (npgsqlConnection is null)
                     {
-                        npgsqlCommand.CommandTimeout = commandTimeout;
-                        npgsqlCommand.Parameters.AddWithValue("batchSize", batchSize);
-                        npgsqlCommand.Parameters.AddWithValue("lastId", lastProcessedId);
-                        if (countyIds_Array is not null)
-                        {
-                            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
-                        }
-
-                        await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
-                        while (await npgsqlDataReader.ReadAsync(cancellationToken))
-                        {
-                            records.Add((npgsqlDataReader.GetInt64(0), npgsqlDataReader.GetInt32(1), npgsqlDataReader.GetString(2)));
-                        }
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "{Type} refresh failed: unable to create database connection", nameof(Building2DPostgreSQLConverter));
+                        return null;
                     }
 
-                    // If the query returns no records matching (id > lastId AND condition), we are done.
-                    if (records.Count == 0)
+                    await npgsqlConnection.OpenAsync(cancellationToken);
+
+                    // Open transaction to maintain FOR UPDATE SKIP LOCKED locks during the batch
+                    await using NpgsqlTransaction npgsqlTransaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
+
+                    // The part is fixed, so county_id prunes the batch to one partition and id > @lastId walks
+                    // that partition's own index. We combine the ID anchor with the optional NULL check.
+                    // This ensures we always move forward in the part, regardless of update success.
+                    string filterClause = overrideExistingSubdivisionIds
+                        ? "county_id = @countyId AND id > @lastId"
+                        : "county_id = @countyId AND id > @lastId AND subdivision_id IS NULL";
+
+                    string commandText_Select = $@"
+                        SELECT id, county_id, object
+                        FROM {Constants.TableName.Building2D}
+                        WHERE {filterClause}
+                        ORDER BY id ASC
+                        FOR UPDATE SKIP LOCKED
+                        LIMIT @batchSize";
+
+                    List<(long Id, int CountyId, string Json)> records = [];
+
+                    try
                     {
-                        break;
-                    }
-
-                    readCount += records.Count;
-
-                    List<(long Id, int CountyId, int SubdivisionId)> updates = [];
-
-                    foreach ((long Id, int CountyId, string Json) in records)
-                    {
-                        if (cancellationToken.IsCancellationRequested) break;
-
-                        GIS.Classes.Building2D? building = Core.Convert.ToDiGi<GIS.Classes.Building2D>(Json)?.FirstOrDefault();
-                        if (building is null)
+                        await using (NpgsqlCommand npgsqlCommand = new(commandText_Select, npgsqlConnection, npgsqlTransaction))
                         {
-                            continue;
-                        }
+                            npgsqlCommand.CommandTimeout = commandTimeout;
+                            npgsqlCommand.Parameters.AddWithValue("batchSize", batchSize);
+                            npgsqlCommand.Parameters.AddWithValue("lastId", lastId);
+                            npgsqlCommand.Parameters.AddWithValue("countyId", countyId);
 
-                        if (!subdivisionIdSolvers_ByCountyId.TryGetValue(CountyId, out SubdivisionIdSolver? subdivisionIdSolver))
-                        {
-                            subdivisionIdSolver = await CreateSubdivisionIdSolverAsync(npgsqlConnection, CountyId, tolerance, commandTimeout, cancellationToken);
-                            subdivisionIdSolvers_ByCountyId[CountyId] = subdivisionIdSolver;
-                            countyIds_Loaded.Add(CountyId);
-
-                            if (countyIds_Loaded.Count > 4)
+                            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
+                            while (await npgsqlDataReader.ReadAsync(cancellationToken))
                             {
-                                subdivisionIdSolvers_ByCountyId.Remove(countyIds_Loaded[0]);
-                                countyIds_Loaded.RemoveAt(0);
+                                records.Add((npgsqlDataReader.GetInt64(0), npgsqlDataReader.GetInt32(1), npgsqlDataReader.GetString(2)));
                             }
                         }
 
-                        int? subdivisionId;
-
-                        subdivisionIdSolver.Input = building;
-                        if (subdivisionIdSolver.Solve())
+                        // If the query returns no rows past the anchor, the part is done - the next part,
+                        // not the end of the run.
+                        if (records.Count == 0)
                         {
-                            subdivisionId = subdivisionIdSolver.Output;
+                            break;
+                        }
+
+                        readCount += records.Count;
+                        partReadCount += records.Count;
+
+                        if (subdivisionIdSolver is null)
+                        {
+                            subdivisionIdSolver = await CreateSubdivisionIdSolverAsync(npgsqlConnection, countyId, tolerance, commandTimeout, cancellationToken);
+                        }
+
+                        List<(long Id, int CountyId, int SubdivisionId)> updates = [];
+
+                        foreach ((long Id, int CountyId, string Json) in records)
+                        {
+                            if (cancellationToken.IsCancellationRequested) break;
+
+                            GIS.Classes.Building2D? building = Core.Convert.ToDiGi<GIS.Classes.Building2D>(Json)?.FirstOrDefault();
+                            if (building is null)
+                            {
+                                continue;
+                            }
+
+                            int? subdivisionId;
+
+                            subdivisionIdSolver.Input = building;
+                            if (subdivisionIdSolver.Solve())
+                            {
+                                subdivisionId = subdivisionIdSolver.Output;
+                            }
+                            else
+                            {
+                                partFallbackCount++;
+                                fallbackCount++;
+                                subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, tolerance);
+                            }
+
+                            if (subdivisionId.HasValue)
+                            {
+                                updates.Add((Id, CountyId, subdivisionId.Value));
+                            }
+                        }
+
+                        // Execute batch update for successfully resolved records
+                        if (updates.Count > 0 && !cancellationToken.IsCancellationRequested)
+                        {
+                            await ExecuteUpdateBatchAsync(npgsqlConnection, npgsqlTransaction, updates, commandTimeout, cancellationToken);
+                            updatedCount += updates.Count;
+                            partUpdatedCount += updates.Count;
+                            progress?.Report(updatedCount);
+
+                            updatedCounts_ByCountyId.TryGetValue(countyId, out long updatedCount_County);
+                            updatedCounts_ByCountyId[countyId] = updatedCount_County + updates.Count;
+                        }
+
+                        // Commit releases the locks and confirms the batch processing
+                        await npgsqlTransaction.CommitAsync(cancellationToken);
+
+                        // Update anchor after successful batch transaction
+                        lastId = records[^1].Id;
+                        lastProcessedId = records[^1].Id;
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        cancelled = true;
+                    }
+                    catch (Exception exception)
+                    {
+                        failedBatchCount++;
+                        Serilog.Modify.Log(exception, "{Type} refresh batch failed around part {CountyId} last ID {LastId}", nameof(Building2DPostgreSQLConverter), countyId, lastId);
+
+                        if (records.Count > 0)
+                        {
+                            lastId = records[^1].Id;
+                            lastProcessedId = records[^1].Id;
                         }
                         else
                         {
-                            fallbackCount++;
-                            subdivisionId = await GetSubdivisionIdAsync(npgsqlConnection, building, tolerance);
-                        }
-
-                        if (subdivisionId.HasValue)
-                        {
-                            updates.Add((Id, CountyId, subdivisionId.Value));
+                            // A batch that failed before reading a single row is stepped over, as before.
+                            cancelled = true;
                         }
                     }
-
-                    // Execute batch update for successfully resolved records
-                    if (updates.Count > 0 && !cancellationToken.IsCancellationRequested)
-                    {
-                        await ExecuteUpdateBatchAsync(npgsqlConnection, npgsqlTransaction, updates, commandTimeout, cancellationToken);
-                        updatedCount += updates.Count;
-                        progress?.Report(updatedCount);
-
-                        foreach ((long Id, int CountyId, int SubdivisionId) in updates)
-                        {
-                            updatedCounts_ByCountyId.TryGetValue(CountyId, out long updatedCount_County);
-                            updatedCounts_ByCountyId[CountyId] = updatedCount_County + 1;
-                        }
-                    }
-
-                    // Commit releases the locks and confirms the batch processing
-                    await npgsqlTransaction.CommitAsync(cancellationToken);
-
-                    // Update anchor after successful batch transaction
-                    lastProcessedId = records[^1].Id;
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+                if (cancelled)
                 {
-                    cancelled = true;
                     break;
                 }
-                catch (Exception exception)
-                {
-                    failedBatchCount++;
-                    Serilog.Modify.Log(exception, "{Type} refresh batch failed around last ID {LastId}", nameof(Building2DPostgreSQLConverter), lastProcessedId);
 
-                    if (records.Count > 0)
-                    {
-                        lastProcessedId = records[^1].Id;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                Serilog.Modify.Log(
+                    "{Type} refresh part {PartIndex}/{PartsTotal} {CountyId} done: {PartReadCount} read, {PartUpdatedCount} written, {PartFallbackCount} fallback",
+                    nameof(Building2DPostgreSQLConverter), partIndex, countyIds_Parts.Count, countyId, partReadCount, partUpdatedCount, partFallbackCount);
             }
 
             cancelled = cancelled || cancellationToken.IsCancellationRequested;

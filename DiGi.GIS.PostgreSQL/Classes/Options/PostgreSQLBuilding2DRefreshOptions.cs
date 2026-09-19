@@ -73,6 +73,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Gets or sets the starting building identifier anchor for keyset pagination.
+        /// <para>The refresh walks one county polygon part after another, so the anchor applies within each part: a part skips the rows at or below the anchor and visits the rest, and a part whose rows all end below the anchor is simply done. The default <c>0</c> skips nothing.</para>
         /// </summary>
         [JsonInclude, JsonPropertyName("StartId")]
         public long StartId { get; set; } = 0;
