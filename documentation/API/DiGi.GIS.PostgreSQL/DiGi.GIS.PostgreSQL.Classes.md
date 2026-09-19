@@ -14821,6 +14821,8 @@ Two stages, so no stage scans a parent table: stage 1 draws a county code from t
 
 Eligibility is strict on the user entries: a building holding a `PredictedYearBuilt` entry is eligible - predictions never affect it - while a `UserYearBuilt` of any relation is not, because a bound is still a verification. An `orto_datas` row with an empty `Values` array never produces a candidate, so the drawn building always carries at least one card.
 
+Draws from every covered part. See the `countyIds` overload to confine the draw to specific `building_2d` parts.
+
 ```csharp
 public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -14847,6 +14849,86 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the drawn [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference'), or null when the connection is null, either table is absent, or no covered county code yields a candidate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasPostgreSQLConverter\.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync\(NpgsqlConnection, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously draws one building that has orthophoto coverage and no user\-provided year built yet, optionally confined to specific `building_2d` parts\.
+
+Two stages, so no stage scans a parent table: stage 1 draws a county code from the parts that hold orthophotos, weighted by the estimated rows of the parts, and stage 2 draws one building inside that code's parts that joins the orthophoto coverage to the anti-join on user entries. A code whose parts yield nothing is removed and redrawn, so the loop is bounded by the number of codes; `null` is the answer when nothing is left.
+
+[countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)\.countyIds') are `building_2d` part ids, never county codes: a disconnected county is stored as one row per polygon part, and the filter keeps only the named parts, so a caller can draw from one part of a multi-part code. A code is then weighted by its surviving parts only. `null` or empty draws from every covered part and is behaviour-identical to the overload without the filter; an id that names no covered part simply falls out of the pool.
+
+Eligibility is strict on the user entries: a building holding a `PredictedYearBuilt` entry is eligible - predictions never affect it - while a `UserYearBuilt` of any relation is not, because a bound is still a verification. An `orto_datas` row with an empty `Values` array never produces a candidate, so the drawn building always carries at least one card.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The `building_2d` part ids to confine the draw to, or null/empty to draw from every covered part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the drawn [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference'), or null when the connection is null, either table is absent, or no covered \(and requested\) county part yields a candidate\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasPostgreSQLConverter\.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync\(IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously draws one building that has orthophoto coverage and no user\-provided year built yet, optionally confined to specific `building_2d` parts\.
+
+[countyIds](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)\.countyIds') are `building_2d` part ids, never county codes; `null` or empty draws from every covered part.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The `building_2d` part ids to confine the draw to, or null/empty to draw from every covered part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the drawn [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference'), or null when no connection could be built or no covered \(and requested\) county part yields a candidate\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetSubdivisionIdsByCountyIdAsync(int,int,System.Threading.CancellationToken)'></a>
 

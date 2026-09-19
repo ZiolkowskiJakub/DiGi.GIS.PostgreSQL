@@ -2051,12 +2051,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// Asynchronously draws one building that has orthophoto coverage and no user-provided year built yet.
         /// <para>Two stages, so no stage scans a parent table: stage 1 draws a county code from the parts that hold orthophotos, weighted by the estimated rows of the parts, and stage 2 draws one building inside that code's parts that joins the orthophoto coverage to the anti-join on user entries. A code whose parts yield nothing is removed and redrawn, so the loop is bounded by the number of codes; <c>null</c> is the answer when nothing is left.</para>
         /// <para>Eligibility is strict on the user entries: a building holding a <c>PredictedYearBuilt</c> entry is eligible - predictions never affect it - while a <c>UserYearBuilt</c> of any relation is not, because a bound is still a verification. An <c>orto_datas</c> row with an empty <c>Values</c> array never produces a candidate, so the drawn building always carries at least one card.</para>
+        /// <para>Draws from every covered part. See the <c>countyIds</c> overload to confine the draw to specific <c>building_2d</c> parts.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when the connection is null, either table is absent, or no covered county code yields a candidate.</returns>
         public static async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, null, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously draws one building that has orthophoto coverage and no user-provided year built yet, optionally confined to specific <c>building_2d</c> parts.
+        /// <para>Two stages, so no stage scans a parent table: stage 1 draws a county code from the parts that hold orthophotos, weighted by the estimated rows of the parts, and stage 2 draws one building inside that code's parts that joins the orthophoto coverage to the anti-join on user entries. A code whose parts yield nothing is removed and redrawn, so the loop is bounded by the number of codes; <c>null</c> is the answer when nothing is left.</para>
+        /// <para><paramref name="countyIds"/> are <c>building_2d</c> part ids, never county codes: a disconnected county is stored as one row per polygon part, and the filter keeps only the named parts, so a caller can draw from one part of a multi-part code. A code is then weighted by its surviving parts only. <c>null</c> or empty draws from every covered part and is behaviour-identical to the overload without the filter; an id that names no covered part simply falls out of the pool.</para>
+        /// <para>Eligibility is strict on the user entries: a building holding a <c>PredictedYearBuilt</c> entry is eligible - predictions never affect it - while a <c>UserYearBuilt</c> of any relation is not, because a bound is still a verification. An <c>orto_datas</c> row with an empty <c>Values</c> array never produces a candidate, so the drawn building always carries at least one card.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The <c>building_2d</c> part ids to confine the draw to, or null/empty to draw from every covered part.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when the connection is null, either table is absent, or no covered (and requested) county part yields a candidate.</returns>
+        public static async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -2100,6 +2117,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
 
                 parts.Add(countyReference.Id);
+            }
+
+            // An explicit part filter confines the draw to the named building_2d parts. null/empty is "every part",
+            // so the unfiltered call stays exactly the baseline. Filtering at the part level (not the code level) is
+            // what lets a caller draw from one part of a multi-part code; the code is then weighted by what survives.
+            HashSet<int>? countyIds_Filter = countyIds is null ? null : [.. countyIds];
+            if (countyIds_Filter is { Count: > 0 })
+            {
+                foreach (string code in parts_ByCode.Keys.ToList())
+                {
+                    parts_ByCode[code].RemoveAll(x => !countyIds_Filter.Contains(x));
+                    if (parts_ByCode[code].Count == 0)
+                    {
+                        parts_ByCode.Remove(code);
+                    }
+                }
             }
 
             if (parts_ByCode.Count == 0)
@@ -2217,6 +2250,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when no connection could be built or no covered county code yields a candidate.</returns>
         public async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(countyIds: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously draws one building that has orthophoto coverage and no user-provided year built yet, optionally confined to specific <c>building_2d</c> parts.
+        /// <para><paramref name="countyIds"/> are <c>building_2d</c> part ids, never county codes; <c>null</c> or empty draws from every covered part.</para>
+        /// </summary>
+        /// <param name="countyIds">The <c>building_2d</c> part ids to confine the draw to, or null/empty to draw from every covered part.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when no connection could be built or no covered (and requested) county part yields a candidate.</returns>
+        public async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(IEnumerable<int>? countyIds, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
             await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
             if (npgsqlConnection is null)
             {
@@ -2225,7 +2271,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, commandTimeout, cancellationToken);
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
         }
 
         /// <summary>
