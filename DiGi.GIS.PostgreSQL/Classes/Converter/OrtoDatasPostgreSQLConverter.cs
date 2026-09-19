@@ -2059,7 +2059,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when the connection is null, either table is absent, or no covered county code yields a candidate.</returns>
         public static async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, null, commandTimeout, cancellationToken);
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, null, commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -2271,7 +2271,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             await npgsqlConnection.OpenAsync(cancellationToken);
 
-            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken);
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, countyIds, commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
