@@ -1338,55 +1338,92 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 List<TBuilding2DReferencedObject> objectsInGroup = [.. grouping];
 
-                const int batchSize = 1000;
-                for (int i = 0; i < objectsInGroup.Count; i += batchSize)
+                PostgreSQLUpdateResult? result_Group = await UpdateAsync(npgsqlConnection, null, objectsInGroup, commandTimeout, cancellationToken: cancellationToken);
+                if (result_Group is not null)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    List<TBuilding2DReferencedObject> chunk = objectsInGroup.GetRange(i, Math.Min(batchSize, objectsInGroup.Count - i));
-
-                    await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection);
-                    npgsqlBatch.Timeout = commandTimeout;
-
-                    foreach (TBuilding2DReferencedObject countyReferencedObject in chunk)
-                    {
-                        NpgsqlBatchCommand npgsqlBatchCommand = new($@"
-                            INSERT INTO {TableName} (county_id, unique_id, reference, object)
-                            VALUES (@county_id, @unique_id, @reference, @object)
-                            ON CONFLICT (county_id, unique_id)
-                            DO UPDATE SET
-                                object = EXCLUDED.object,
-                                reference = EXCLUDED.reference
-                            RETURNING id;");
-
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyReferencedObject.CountyId });
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("unique_id", NpgsqlDbType.Text) { Value = countyReferencedObject.UniqueId });
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = countyReferencedObject.Reference ?? (object)DBNull.Value });
-                        npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb) { Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value });
-
-                        npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
-                    }
-
-                    await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
-                    int chunkIndex = 0;
-                    do
-                    {
-                        while (await npgsqlDataReader.ReadAsync(cancellationToken))
-                        {
-                            long id = npgsqlDataReader.GetInt64(0);
-                            result.Add(id);
-                            if (chunkIndex < chunk.Count)
-                            {
-                                chunk[chunkIndex].Id = id;
-                            }
-                            chunkIndex++;
-                        }
-                    }
-                    while (await npgsqlDataReader.NextResultAsync(cancellationToken));
+                    result.UnionWith(result_Group.Ids);
+                    rejections.AddRange(result_Group.Rejections);
                 }
             }
 
             return new PostgreSQLUpdateResult(result, rejections);
+        }
+
+        /// <summary>
+        /// Asynchronously upserts the specified referenced objects through an already-open connection, optionally inside a caller-owned transaction.
+        /// <para>This is the shared core of the upsert: the <c>INSERT … ON CONFLICT (county_id, unique_id) DO UPDATE</c> statement lives here, and the instance <see cref="UpdateAsync(System.Collections.Generic.IEnumerable{TBuilding2DReferencedObject}, int, System.Threading.CancellationToken)"/> delegates its batch loop to it. The caller ensures the table and the objects' partitions exist; this method performs no DDL, which is what allows it to run inside a transaction that must roll back as one unit.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The open <see cref="NpgsqlConnection"/> to execute the commands on.</param>
+        /// <param name="npgsqlTransaction">The transaction the commands join, or null for autocommit.</param>
+        /// <param name="building2DReferencedObjects">The referenced objects to be upserted, or <c>null</c>.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers written and the rows dropped before the database, or null when the connection or the collection is null.</returns>
+        public async Task<PostgreSQLUpdateResult?> UpdateAsync(NpgsqlConnection? npgsqlConnection, NpgsqlTransaction? npgsqlTransaction, IEnumerable<TBuilding2DReferencedObject>? building2DReferencedObjects, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || building2DReferencedObjects is null)
+            {
+                return null;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            List<TBuilding2DReferencedObject> building2DReferencedObjects_List = [.. building2DReferencedObjects.Where(x => x != null)];
+            if (building2DReferencedObjects_List.Count == 0)
+            {
+                return new PostgreSQLUpdateResult([], []);
+            }
+
+            HashSet<long> result = [];
+
+            const int batchSize = 1000;
+            for (int i = 0; i < building2DReferencedObjects_List.Count; i += batchSize)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<TBuilding2DReferencedObject> chunk = building2DReferencedObjects_List.GetRange(i, Math.Min(batchSize, building2DReferencedObjects_List.Count - i));
+
+                await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection, npgsqlTransaction);
+                npgsqlBatch.Timeout = commandTimeout;
+
+                foreach (TBuilding2DReferencedObject countyReferencedObject in chunk)
+                {
+                    NpgsqlBatchCommand npgsqlBatchCommand = new($@"
+                        INSERT INTO {TableName} (county_id, unique_id, reference, object)
+                        VALUES (@county_id, @unique_id, @reference, @object)
+                        ON CONFLICT (county_id, unique_id)
+                        DO UPDATE SET
+                            object = EXCLUDED.object,
+                            reference = EXCLUDED.reference
+                        RETURNING id;");
+
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyReferencedObject.CountyId });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("unique_id", NpgsqlDbType.Text) { Value = countyReferencedObject.UniqueId });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = countyReferencedObject.Reference ?? (object)DBNull.Value });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("object", NpgsqlDbType.Jsonb) { Value = (object?)countyReferencedObject.Object?.ToJsonString() ?? DBNull.Value });
+
+                    npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
+                }
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
+                int chunkIndex = 0;
+                do
+                {
+                    while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                    {
+                        long id = npgsqlDataReader.GetInt64(0);
+                        result.Add(id);
+                        if (chunkIndex < chunk.Count)
+                        {
+                            chunk[chunkIndex].Id = id;
+                        }
+                        chunkIndex++;
+                    }
+                }
+                while (await npgsqlDataReader.NextResultAsync(cancellationToken));
+            }
+
+            return new PostgreSQLUpdateResult(result, []);
         }
 
         /// <summary>

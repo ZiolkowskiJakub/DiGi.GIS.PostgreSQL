@@ -1,5 +1,6 @@
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.PostgreSQL.Constants;
+using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using DiGi.PostgreSQL.Classes;
 using Npgsql;
@@ -2044,6 +2045,345 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await npgsqlConnection.OpenAsync(cancellationToken);
 
             return await GetSubdivisionIdsByCountyIdAsync(npgsqlConnection, countyId, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously draws one building that has orthophoto coverage and no user-provided year built yet.
+        /// <para>Two stages, so no stage scans a parent table: stage 1 draws a county code from the parts that hold orthophotos, weighted by the estimated rows of the parts, and stage 2 draws one building inside that code's parts that joins the orthophoto coverage to the anti-join on user entries. A code whose parts yield nothing is removed and redrawn, so the loop is bounded by the number of codes; <c>null</c> is the answer when nothing is left.</para>
+        /// <para>Eligibility is strict on the user entries: a building holding a <c>PredictedYearBuilt</c> entry is eligible - predictions never affect it - while a <c>UserYearBuilt</c> of any relation is not, because a bound is still a verification. An <c>orto_datas</c> row with an empty <c>Values</c> array never produces a candidate, so the drawn building always carries at least one card.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when the connection is null, either table is absent, or no covered county code yields a candidate.</returns>
+        public static async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(NpgsqlConnection? npgsqlConnection, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            // A store that never held orthophotos has no candidates, and one that never held year-builts cannot be
+            // answered by this query's shape - both read as a plain "nothing is stored yet" rather than a server fault.
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.OrtoDatas)
+             || !await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, TableName.YearBuiltData))
+            {
+                return null;
+            }
+
+            string? userType = Core.Query.FullTypeName(typeof(GIS.Classes.UserYearBuilt));
+            if (string.IsNullOrWhiteSpace(userType))
+            {
+                return null;
+            }
+
+            // Stage 1 — the codes that hold orthophotos, weighted by the estimate of what their parts hold.
+            List<AdministrativeAreal2DReference>? countyReferences = await AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(npgsqlConnection, AdministrativeArealType.County, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            if (countyReferences is null)
+            {
+                return null;
+            }
+
+            Dictionary<string, List<int>> parts_ByCode = [];
+            foreach (AdministrativeAreal2DReference? countyReference in countyReferences)
+            {
+                if (countyReference is null || string.IsNullOrWhiteSpace(countyReference.Code))
+                {
+                    continue;
+                }
+
+                string code = countyReference.Code!;
+                if (!parts_ByCode.TryGetValue(code, out List<int>? parts))
+                {
+                    parts = [];
+                    parts_ByCode[code] = parts;
+                }
+
+                parts.Add(countyReference.Id);
+            }
+
+            if (parts_ByCode.Count == 0)
+            {
+                return null;
+            }
+
+            List<int> countyIds_All = [];
+            foreach (List<int> parts in parts_ByCode.Values)
+            {
+                countyIds_All.AddRange(parts);
+            }
+
+            Dictionary<int, long>? estimates = await GetEstimatedCountsAsync(npgsqlConnection, countyIds_All, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+            List<KeyValuePair<string, long>> candidates = [];
+            if (estimates is not null)
+            {
+                foreach (KeyValuePair<string, List<int>> partGroup in parts_ByCode)
+                {
+                    long weight = 0;
+                    foreach (int countyId in partGroup.Value)
+                    {
+                        // count <= 0 covers the absent partition and the never-analysed one (-1): neither is
+                        // evidence the part holds rows, so it stays out of the pool.
+                        if (estimates.TryGetValue(countyId, out long estimate) && estimate > 0)
+                        {
+                            weight += estimate;
+                        }
+                    }
+
+                    if (weight > 0)
+                    {
+                        candidates.Add(new KeyValuePair<string, long>(partGroup.Key, weight));
+                    }
+                }
+            }
+
+            // Stage 2 — one weighted draw per code; a code whose parts yield nothing is removed, so the loop is
+            // bounded by the number of codes.
+            while (candidates.Count > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                long total = 0;
+                foreach (KeyValuePair<string, long> candidate in candidates)
+                {
+                    total += candidate.Value;
+                }
+
+                long draw = Random.Shared.NextInt64(total);
+                int index = candidates.Count - 1;
+                for (int i = 0; i < candidates.Count; i++)
+                {
+                    if (draw < candidates[i].Value)
+                    {
+                        index = i;
+                        break;
+                    }
+
+                    draw -= candidates[i].Value;
+                }
+
+                string code_Drawn = candidates[index].Key;
+                candidates.RemoveAt(index);
+
+                List<int> countyIds_Drawn = parts_ByCode[code_Drawn];
+
+                string commandText = $@"
+                    SELECT b.id, b.county_id, b.reference, b.subdivision_id
+                    FROM {TableName.Building2D} b
+                    JOIN {TableName.OrtoDatas} o
+                      ON o.reference = b.reference
+                     AND o.county_id = ANY(@countyIds)
+                    WHERE b.county_id = ANY(@countyIds)
+                      AND jsonb_array_length(o.object->'Values') > 0
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM {TableName.YearBuiltData} y
+                          WHERE y.county_id = b.county_id
+                            AND y.reference = b.reference
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(y.object->'YearBuilts') AS entry(value)
+                                WHERE entry->>'_type' = @userType))
+                    ORDER BY random()
+                    LIMIT 1;";
+
+                await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+                npgsqlCommand.CommandTimeout = commandTimeout;
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Drawn.ToArray() });
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("userType", userType));
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+                if (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    return new Building2DReference
+                    {
+                        Id = npgsqlDataReader.GetInt64(0),
+                        CountyId = npgsqlDataReader.GetInt32(1),
+                        Reference = npgsqlDataReader.GetString(2),
+                        SubdivisionId = npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetInt32(3)
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Asynchronously draws one building that has orthophoto coverage and no user-provided year built yet.
+        /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the drawn <see cref="Building2DReference"/>, or null when no connection could be built or no covered county code yields a candidate.</returns>
+        public async Task<Building2DReference?> GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(npgsqlConnection, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the years that hold a photo for one building - the years that have a card, not every year of the <c>[min, max]</c> range.
+        /// <para>Projects the <c>DateTime</c> of the stored <c>Values</c> elements and never reads the <c>Bytes</c>, so listing a building's years stays cheap no matter how much imagery it carries.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="reference">The reference of the building to read the years of.</param>
+        /// <param name="countyId">The optional county identifier the read is pruned to.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to re-run the read by reference alone when nothing is held under the named county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the years that hold a photo, empty when the building holds none, or null when the connection or the reference is null.</returns>
+        public static async Task<List<short>?> GetYearsByReferenceAsync(NpgsqlConnection? npgsqlConnection, string reference, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            string commandText = countyId.HasValue ? $@"
+                SELECT DISTINCT EXTRACT(YEAR FROM (v->>'DateTime')::timestamp)::smallint
+                FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
+                WHERE o.reference = @reference
+                  AND o.county_id = @countyId
+                  AND (v->>'DateTime') IS NOT NULL
+                ORDER BY 1;" : $@"
+                SELECT DISTINCT EXTRACT(YEAR FROM (v->>'DateTime')::timestamp)::smallint
+                FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
+                WHERE o.reference = @reference
+                  AND (v->>'DateTime') IS NOT NULL
+                ORDER BY 1;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = reference });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
+
+            List<short> result = [];
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(npgsqlDataReader.GetInt16(0));
+            }
+
+            if (result.Count > 0 || !fallbackByReference || countyId is null)
+            {
+                return result;
+            }
+
+            return await GetYearsByReferenceAsync(npgsqlConnection, reference, null, false, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the years that hold a photo for one building - the years that have a card, not every year of the <c>[min, max]</c> range.
+        /// </summary>
+        /// <param name="reference">The reference of the building to read the years of.</param>
+        /// <param name="countyId">The optional county identifier the read is pruned to.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to re-run the read by reference alone when nothing is held under the named county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the years that hold a photo, empty when the building holds none, or null when no connection could be built.</returns>
+        public async Task<List<short>?> GetYearsByReferenceAsync(string reference, int? countyId, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetYearsByReferenceAsync(npgsqlConnection, reference, countyId, fallbackByReference, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the bytes of the photo one building holds for one exact year, or null when that year has no photo.
+        /// <para>Matches the stored <c>DateTime</c> of the <c>Values</c> elements against <c>make_date(@year, 1, 1)</c> - the shape the producer stores - so a year the building does not hold answers <c>null</c> instead of a neighbour's image. This is the exact-year counterpart of <see cref="GetYearsByReferenceAsync(NpgsqlConnection, string, int?, bool, int, System.Threading.CancellationToken)"/>.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="reference">The reference of the building to read the photo of.</param>
+        /// <param name="countyId">The optional county identifier the read is pruned to.</param>
+        /// <param name="year">The exact year the photo is requested for.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to re-run the read by reference alone when nothing is held under the named county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the photo bytes of the exact year, or null when the building holds no photo of that year or the connection is null.</returns>
+        public static async Task<byte[]?> GetBytesByReferenceAsync(NpgsqlConnection? npgsqlConnection, string reference, int? countyId, short year, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            string commandText = countyId.HasValue ? $@"
+                SELECT v->>'Bytes'
+                FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
+                WHERE o.reference = @reference
+                  AND o.county_id = @countyId
+                  AND (v->>'DateTime')::timestamp = make_date(@year, 1, 1)
+                LIMIT 1;" : $@"
+                SELECT v->>'Bytes'
+                FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
+                WHERE o.reference = @reference
+                  AND (v->>'DateTime')::timestamp = make_date(@year, 1, 1)
+                LIMIT 1;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("reference", NpgsqlDbType.Text) { Value = reference });
+            if (countyId.HasValue)
+            {
+                npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyId", NpgsqlDbType.Integer) { Value = countyId.Value });
+            }
+
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("year", NpgsqlDbType.Smallint) { Value = year });
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            if (await npgsqlDataReader.ReadAsync(cancellationToken) && !npgsqlDataReader.IsDBNull(0))
+            {
+                // v->>'Bytes' is the base64 form System.Text.Json gives a byte[].
+                return System.Convert.FromBase64String(npgsqlDataReader.GetString(0));
+            }
+
+            if (!fallbackByReference || countyId is null)
+            {
+                return null;
+            }
+
+            return await GetBytesByReferenceAsync(npgsqlConnection, reference, null, year, false, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously reads the bytes of the photo one building holds for one exact year, or null when that year has no photo.
+        /// </summary>
+        /// <param name="reference">The reference of the building to read the photo of.</param>
+        /// <param name="countyId">The optional county identifier the read is pruned to.</param>
+        /// <param name="year">The exact year the photo is requested for.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to re-run the read by reference alone when nothing is held under the named county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the photo bytes of the exact year, or null when the building holds no photo of that year or no connection could be built.</returns>
+        public async Task<byte[]?> GetBytesByReferenceAsync(string reference, int? countyId, short year, bool fallbackByReference = false, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBytesByReferenceAsync(npgsqlConnection, reference, countyId, year, fallbackByReference, commandTimeout, cancellationToken);
         }
 
         /// <summary>
