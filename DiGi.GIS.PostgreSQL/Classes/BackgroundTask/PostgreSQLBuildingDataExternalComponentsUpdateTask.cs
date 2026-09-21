@@ -14,6 +14,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <para>The run is driven by counties: for each one it reads the stored building models, classifies the components of every model into the wall, roof and floor buckets, and upserts one building data row per building keyed on county and reference.</para>
     /// <para>A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be classified - a component without a planar face, a model without a floor - is failed and logged with the exception, and the run keeps going over the other counties. <see cref="FailedCountyCount"/> is what tells the two apart, and a run with a failed county reports itself as not succeeded.</para>
     /// <para>A component that is valid but has no definable bucket - a wall whose normal is vertical - is skipped and counted in <see cref="SkippedComponentCount"/> rather than failing the county.</para>
+    /// <para>A model whose external envelope does not close is not failed either: its row is written with a null closing tolerance and counted in <see cref="OpenEnvelopeCount"/>, because the sector and tilt values of such a row may rest on an arbitrary face side - the count is the share of rows of the run to treat with that caution.</para>
     /// <para>The run is idempotent: the read is deterministic (the latest stored version of a model wins), the classification is pure, and the push upserts on county and reference, so a re-run writes the same values.</para>
     /// </summary>
     public class PostgreSQLBuildingDataExternalComponentsUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
@@ -42,6 +43,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// <para>Each one is logged with the exception that caused it, so this figure is a count of entries to go and read rather than the whole of what is known.</para>
         /// </summary>
         public long FailedCountyCount { get; private set; }
+
+        /// <summary>
+        /// Gets the number of classified models whose external envelope does not close on the tolerance ladder during the last run.
+        /// <para>Each such row is written with a null closing tolerance: the orientation of an envelope face is decided by ray parity, which is sound only for a closed face set, so the sector and tilt values of these rows may rest on an arbitrary face side.</para>
+        /// </summary>
+        public long OpenEnvelopeCount { get; private set; }
 
         /// <summary>
         /// Gets the number of counties that were processed during the last run.
@@ -76,6 +83,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             FailedCountyCount = 0;
+            OpenEnvelopeCount = 0;
             ProcessedCountyCount = 0;
             ProcessedModelCount = 0;
             SkippedComponentCount = 0;
@@ -237,9 +245,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Table table = new();
 
                 long countySkippedComponentCount = 0;
+                long countyOpenEnvelopeCount = 0;
                 try
                 {
-                    countySkippedComponentCount = Modify.Update_ExternalComponentsArea(table, models_Latest);
+                    ExternalComponentsAreaResult countyResult = Modify.Update_ExternalComponentsArea(table, models_Latest);
+                    countySkippedComponentCount = countyResult.SkippedComponentCount;
+                    countyOpenEnvelopeCount = countyResult.OpenEnvelopeCount;
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -284,21 +295,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
+                OpenEnvelopeCount += countyOpenEnvelopeCount;
                 SkippedComponentCount += countySkippedComponentCount;
                 ProcessedModelCount += models_Latest.Count;
                 UpdatedRowCount += table.RowCount;
                 ProcessedCountyCount++;
                 progress.Report(UpdatedRowCount);
 
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped", countyId, models_Latest.Count, table.RowCount, countySkippedComponentCount);
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped, {OpenEnvelopeCount} open envelopes", countyId, models_Latest.Count, table.RowCount, countySkippedComponentCount, countyOpenEnvelopeCount);
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {SkippedCount} components skipped, {RowCount} rows",
+                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {OpenEnvelopeCount} open envelopes, {SkippedCount} components skipped, {RowCount} rows",
                 nameof(PostgreSQLBuildingDataExternalComponentsUpdateTask),
                 ProcessedCountyCount,
                 FailedCountyCount,
                 ProcessedModelCount,
+                OpenEnvelopeCount,
                 SkippedComponentCount,
                 UpdatedRowCount);
 

@@ -1403,12 +1403,14 @@ A wall is filed under the sector of its outward normal’s azimuth, a roof under
 
 The wall outward and roof upward normals are the normals of the faces of the model’s external envelope, built by [DiGi\.Analytical\.Building\.Classes\.BuildingModel\.GetExternalShell\(System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Side\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Double\)](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel.getexternalshell#digi-analytical-building-classes-buildingmodel-getexternalshell(system-nullable{digi-geometry-core-enums-side}-system-nullable{digi-geometry-core-enums-orientation}-system-nullable{digi-geometry-core-enums-orientation}-system-double) 'DiGi\.Analytical\.Building\.Classes\.BuildingModel\.GetExternalShell\(System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Side\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Double\)') with [DiGi\.Geometry\.Core\.Enums\.Side\.External](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.core.enums.side.external 'DiGi\.Geometry\.Core\.Enums\.Side\.External'), so each face direction is resolved once over the envelope instead of being guessed from the component’s stored geometry. That method states the selection rule for every consumer: a component bounding exactly one space is external, one bounding two is an internal partition, one bounding none is part of no envelope. Every envelope face carries the [DiGi\.Core\.Interfaces\.IUniqueReference](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iuniquereference 'DiGi\.Core\.Interfaces\.IUniqueReference') of the component it was built from, which is how a face is matched back to its component; a component the envelope carries is classified from its face, one it does not carry is excluded from the external area and counted in the result when it bounds two spaces, and is a defect in the model’s space structure otherwise, so it throws - a component bounding one space that the envelope still leaves out has no polygonal face, or belongs to a model with fewer than the four external faces a closed solid needs.
 
+The finest tolerance at which the envelope edge-pairs into a closed surface is recorded beside the areas - the closing tolerance column, null when the envelope closes at no rung of the ladder 1e-6 to 0.2 m or the model carries no external components. Ray parity is sound only for a closed face set, so a null closing tolerance is the signal that the row’s sector and tilt values may rest on an arbitrary face side; such a model is counted in the result, not failed.
+
 A component the method cannot classify - a wall whose normal is vertical, so its azimuth is undefined - is skipped and counted in the result.
 
 A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.
 
 ```csharp
-public static long Update_ExternalComponentsArea(this DiGi.Core.IO.Table.Classes.Table? table, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.BuildingModel>? buildingModels);
+public static DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult Update_ExternalComponentsArea(this DiGi.Core.IO.Table.Classes.Table? table, System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.BuildingModel>? buildingModels);
 ```
 #### Parameters
 
@@ -1425,8 +1427,8 @@ The table to fill with the classification\.
 The envelopes of stored building models, most preferred record first\.
 
 #### Returns
-[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')  
-The number of components skipped because they bound two spaces or their target bucket is undefined; 0 when every component was classified\.
+[ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult')  
+The outcome of the classification: the number of components skipped because they bound two spaces or their target bucket is undefined, and the number of models whose external envelope does not close on the tolerance ladder \- both 0 when every component was classified over a closed envelope\.
 
 <a name='DiGi.GIS.PostgreSQL.Modify.Update_Id(thisDiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DReference_)'></a>
 

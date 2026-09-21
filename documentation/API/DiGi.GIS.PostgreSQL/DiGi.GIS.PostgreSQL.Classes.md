@@ -12845,6 +12845,111 @@ The cancellation token to monitor for cancellation requests\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a list of database identifiers for the inserted or updated records\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult'></a>
+
+## ExternalComponentsAreaResult Class
+
+The outcome of an external components area classification: what it classified, what it stepped over, and how much of it rests on an open envelope\.
+
+[SkippedComponentCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.SkippedComponentCount 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.SkippedComponentCount') counts components that bound two spaces (internal partitions) or whose target bucket is undefined - the same count this method has returned as a bare number since the classification was introduced.
+
+[OpenEnvelopeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.OpenEnvelopeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.OpenEnvelopeCount') counts models whose external envelope exists but does not close on the tolerance ladder. The orientation of an envelope face is decided by ray parity, which is sound only for a closed face set, so the sector and tilt values of those models may rest on an arbitrary face side; the count is the share of a run's rows a reader should treat with that caution, and each such row carries a null closing tolerance in the table.
+
+```csharp
+public class ExternalComponentsAreaResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → ExternalComponentsAreaResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult)'></a>
+
+## ExternalComponentsAreaResult\(ExternalComponentsAreaResult\) Constructor
+
+Initializes a new instance of the [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') class by copying an existing one\.
+
+```csharp
+public ExternalComponentsAreaResult(DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult? externalComponentsAreaResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult).externalComponentsAreaResult'></a>
+
+`externalComponentsAreaResult` [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult')
+
+The [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long)'></a>
+
+## ExternalComponentsAreaResult\(long, long\) Constructor
+
+Initializes a new instance of the [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') class\.
+
+```csharp
+public ExternalComponentsAreaResult(long skippedComponentCount, long openEnvelopeCount);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long).skippedComponentCount'></a>
+
+`skippedComponentCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of components skipped because they bound two spaces or their target bucket is undefined\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long).openEnvelopeCount'></a>
+
+`openEnvelopeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The number of models whose external envelope does not close on the tolerance ladder\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## ExternalComponentsAreaResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public ExternalComponentsAreaResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.OpenEnvelopeCount'></a>
+
+## ExternalComponentsAreaResult\.OpenEnvelopeCount Property
+
+Gets the number of models whose external envelope does not close on the tolerance ladder\.
+
+An open envelope is not a failure: the model is still classified and its row written, but the orientation of a face whose ray leaves through the gap is arbitrary, so the sector and tilt values of these rows carry a null closing tolerance and this count.
+
+```csharp
+public long OpenEnvelopeCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.SkippedComponentCount'></a>
+
+## ExternalComponentsAreaResult\.SkippedComponentCount Property
+
+Gets the number of components skipped because they bound two spaces or their target bucket is undefined\.
+
+```csharp
+public long SkippedComponentCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager'></a>
 
 ## GISPostgreSQLConverterManager Class
@@ -17539,6 +17644,8 @@ A county whose buildings carry no stored model is processed, not failed: there i
 
 A component that is valid but has no definable bucket - a wall whose normal is vertical - is skipped and counted in [SkippedComponentCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.SkippedComponentCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.SkippedComponentCount') rather than failing the county.
 
+A model whose external envelope does not close is not failed either: its row is written with a null closing tolerance and counted in [OpenEnvelopeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.OpenEnvelopeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.OpenEnvelopeCount'), because the sector and tilt values of such a row may rest on an arbitrary face side - the count is the share of rows of the run to treat with that caution.
+
 The run is idempotent: the read is deterministic (the latest stored version of a model wins), the classification is pure, and the push upserts on county and reference, so a re-run writes the same values.
 
 ```csharp
@@ -17592,6 +17699,21 @@ Each one is logged with the exception that caused it, so this figure is a count 
 
 ```csharp
 public long FailedCountyCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.OpenEnvelopeCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.OpenEnvelopeCount Property
+
+Gets the number of classified models whose external envelope does not close on the tolerance ladder during the last run\.
+
+Each such row is written with a null closing tolerance: the orientation of an envelope face is decided by ray parity, which is sound only for a closed face set, so the sector and tilt values of these rows may rest on an arbitrary face side.
+
+```csharp
+public long OpenEnvelopeCount { get; private set; }
 ```
 
 #### Property Value

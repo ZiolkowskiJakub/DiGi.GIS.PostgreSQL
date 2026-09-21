@@ -14,13 +14,14 @@ namespace DiGi.GIS.PostgreSQL
         /// Classifies the components of the stored <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/>s into the 35 “External Components Area” columns of the given table, keyed by county identifier and reference.
         /// <para>A wall is filed under the sector of its outward normal’s azimuth, a roof under its tilt band (flat below 5°, then [5°, 20°], (20°, 45°] and above 45°) crossed with the same sectors, and a floor under the floor column; the total column is the sum of the 34 breakdowns. A building that arrives with a stored model gets a row in which every empty bucket is 0, so a zero row and an absent row stay distinguishable.</para>
         /// <para>The wall outward and roof upward normals are the normals of the faces of the model’s external envelope, built by <see cref="DiGi.Analytical.Building.Classes.BuildingModel.GetExternalShell(DiGi.Geometry.Core.Enums.Side?, DiGi.Geometry.Core.Enums.Orientation?, DiGi.Geometry.Core.Enums.Orientation?, double)"/> with <see cref="DiGi.Geometry.Core.Enums.Side.External"/>, so each face direction is resolved once over the envelope instead of being guessed from the component’s stored geometry. That method states the selection rule for every consumer: a component bounding exactly one space is external, one bounding two is an internal partition, one bounding none is part of no envelope. Every envelope face carries the <see cref="DiGi.Core.Interfaces.IUniqueReference"/> of the component it was built from, which is how a face is matched back to its component; a component the envelope carries is classified from its face, one it does not carry is excluded from the external area and counted in the result when it bounds two spaces, and is a defect in the model’s space structure otherwise, so it throws - a component bounding one space that the envelope still leaves out has no polygonal face, or belongs to a model with fewer than the four external faces a closed solid needs.</para>
+        /// <para>The finest tolerance at which the envelope edge-pairs into a closed surface is recorded beside the areas - the closing tolerance column, null when the envelope closes at no rung of the ladder 1e-6 to 0.2 m or the model carries no external components. Ray parity is sound only for a closed face set, so a null closing tolerance is the signal that the row’s sector and tilt values may rest on an arbitrary face side; such a model is counted in the result, not failed.</para>
         /// <para>A component the method cannot classify - a wall whose normal is vertical, so its azimuth is undefined - is skipped and counted in the result.</para>
         /// <para>A reference can arrive several times (several stored versions of the model); the first record of a given county and reference is the one that is written and the rest are stepped over, so the collection has to reach this method in the caller’s order of preference - the converter returns the newest record first.</para>
         /// </summary>
         /// <param name="table">The table to fill with the classification.</param>
         /// <param name="buildingModels">The envelopes of stored building models, most preferred record first.</param>
-        /// <returns>The number of components skipped because they bound two spaces or their target bucket is undefined; 0 when every component was classified.</returns>
-        public static long Update_ExternalComponentsArea(this Table? table, IEnumerable<BuildingModel>? buildingModels)
+        /// <returns>The outcome of the classification: the number of components skipped because they bound two spaces or their target bucket is undefined, and the number of models whose external envelope does not close on the tolerance ladder - both 0 when every component was classified over a closed envelope.</returns>
+        public static ExternalComponentsAreaResult Update_ExternalComponentsArea(this Table? table, IEnumerable<BuildingModel>? buildingModels)
         {
             // Must stay in sync with the DiGi.GIS.IO column descriptions: flat is strictly below 5°,
             // the first tilted band is [5°, 20°], the second is (20°, 45°], the third above 45°.
@@ -88,17 +89,22 @@ namespace DiGi.GIS.PostgreSQL
             }
 
             long skippedComponentCount = 0;
+            long openEnvelopeCount = 0;
 
             if (table is null || buildingModels is null)
             {
-                return skippedComponentCount;
+                return new ExternalComponentsAreaResult(skippedComponentCount, openEnvelopeCount);
             }
 
             Column? column_CountyId = table.UpdateColumn<Column>(IO.Constants.Column.CountyId);
             Column? column_Reference = table.UpdateColumn<Column>(IO.Constants.Column.Reference);
+
+            // The base-typed accessor keeps this project free of a DiGi.Unit.IO reference: the field behind it is a UnitColumn,
+            // and referencing that assembly would make the DiGi.Unit namespace shadow DiGi.BDL.Classes.Unit everywhere here.
+            Column? column_ClosingTolerance = table.UpdateColumn<Column>(IO.Create.Column_ClosingTolerance());
             if (column_CountyId is null || column_Reference is null)
             {
-                return skippedComponentCount;
+                return new ExternalComponentsAreaResult(skippedComponentCount, openEnvelopeCount);
             }
 
             List<Column> columns_External = [];
@@ -115,8 +121,12 @@ namespace DiGi.GIS.PostgreSQL
             int count_Breakdown = columns_External.Count - 1;
             if (count_Breakdown < 1)
             {
-                return skippedComponentCount;
+                return new ExternalComponentsAreaResult(skippedComponentCount, openEnvelopeCount);
             }
+
+            // The closing-tolerance ladder of the #84 verification (IMPLEMENTATION_PLAN_issue84.md §8): the canonical
+            // Distance and MacroDistance rungs where they exist, and the measured candidate tolerances between and above them.
+            double[] tolerances_Closing = [DiGi.Core.Constants.Tolerance.Distance, 1e-5, 1e-4, DiGi.Core.Constants.Tolerance.MacroDistance, 0.01, 0.02, 0.05, 0.1, 0.2];
 
             // Column indexes, in that declared order: 8 wall sectors, then the flat roof at 8,
             // then the 24 tilted-roof bands (8 sectors x 3 bands), then the floor last among the breakdowns.
@@ -163,6 +173,13 @@ namespace DiGi.GIS.PostgreSQL
 
                 double[] areas = new double[count_Breakdown];
 
+                // The open-envelope signal of the row: ray parity is sound only for a closed face set, so the finest
+                // tolerance at which the envelope edge-pairs shut is what separates a trustworthy row from an
+                // arbitrary-side one. The manifold criterion stays at its default - parity needs the face set welded
+                // shut, not manifold - and a model whose envelope closes at no rung of the ladder is counted in the
+                // result rather than failed: its row is written with a null closing tolerance.
+                double? closingTolerance = null;
+
                 bool hasComponent = (walls is not null && walls.Count > 0) || (roofs is not null && roofs.Count > 0) || (floors is not null && floors.Count > 0);
                 if (hasComponent)
                 {
@@ -170,6 +187,12 @@ namespace DiGi.GIS.PostgreSQL
                     // so a stored normal that points into the building is flipped by topology rather than by guesswork (GetExternalShell states the selection rule).
                     // Null when the model has no space relation at all or fewer than four external faces; either way every component is then absent from the envelope.
                     DiGi.Analytical.Classes.Shell? shell = buildingModel.GetExternalShell(DiGi.Geometry.Core.Enums.Side.External);
+
+                    closingTolerance = DiGi.Geometry.Spatial.Query.ClosingTolerance(shell, tolerances_Closing);
+                    if (shell is not null && closingTolerance is null)
+                    {
+                        openEnvelopeCount++;
+                    }
 
                     // Every envelope face carries the GuidReference of the component it was built from; a component appears at most once.
                     Dictionary<Guid, DiGi.Analytical.Classes.Face> face_ByComponentGuid = [];
@@ -333,10 +356,15 @@ namespace DiGi.GIS.PostgreSQL
 
                 IO.Modify.SetValue(row, columns_External[count_Breakdown], (float)totalArea);
 
+                // Null is the signal - the open envelope or the absent one - so nothing is written for it: a cell left
+                // alone is null, and a sentinel would read as a tolerance.
+                float? value_ClosingTolerance = closingTolerance is null ? null : (float)closingTolerance.Value;
+                IO.Modify.SetValue(row, column_ClosingTolerance, value_ClosingTolerance);
+
                 table.AddRow(row, false);
             }
 
-            return skippedComponentCount;
+            return new ExternalComponentsAreaResult(skippedComponentCount, openEnvelopeCount);
         }
     }
 }
