@@ -4,6 +4,7 @@ using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -285,6 +286,104 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 Serilog.Modify.Log(exception, "{Type} user year built write for reference {Reference} of county part {CountyId} failed and rolled back", nameof(YearBuiltDataPostgreSQLConverter), reference, countyId_Part);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Asynchronously keeps, of the named references, the buildings of the named county parts that hold no user-provided year built yet.
+        /// <para>The main-database half of the random unverified-building draw (<c>Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync</c>): the references arrive from the orthophoto store, which lives in the other database, and are matched here against <c>building_2d</c> and anti-joined against <c>year_built_data</c>. A reference with no <c>building_2d</c> row under the parts drops out.</para>
+        /// <para>Eligibility is strict on the user entries: a building holding a <c>PredictedYearBuilt</c> entry stays eligible - predictions never affect it - while a <c>UserYearBuilt</c> of any relation excludes it, because a bound is still a verification.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
+        /// <param name="countyIds">The <c>building_2d</c> part ids the references are filed under.</param>
+        /// <param name="references">The references to keep or drop.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the eligible buildings in the order the references were given, or null when the connection, the parts or the references are missing or either table has never been created.</returns>
+        public static async Task<List<Building2DReference>?> GetBuilding2DReferencesWithoutUserYearBuiltAsync(NpgsqlConnection? npgsqlConnection, IEnumerable<int>? countyIds, IEnumerable<string>? references, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || countyIds is null || references is null)
+            {
+                return null;
+            }
+
+            int[] countyIds_Array = [.. countyIds.Distinct()];
+            string[] references_Array = [.. references.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct()];
+            if (countyIds_Array.Length == 0 || references_Array.Length == 0)
+            {
+                return null;
+            }
+
+            if (!await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.Building2D)
+             || !await DiGi.PostgreSQL.Query.TableExistsAsync(npgsqlConnection, Constants.TableName.YearBuiltData))
+            {
+                return null;
+            }
+
+            string? userType = Core.Query.FullTypeName(typeof(DiGi.GIS.Classes.UserYearBuilt));
+            if (string.IsNullOrWhiteSpace(userType))
+            {
+                return null;
+            }
+
+            // array_position keeps the caller's (random) order, so the first row is the first drawn survivor.
+            string commandText = $@"
+                SELECT b.id, b.county_id, b.reference, b.subdivision_id
+                FROM {Constants.TableName.Building2D} b
+                WHERE b.county_id = ANY(@countyIds)
+                  AND b.reference = ANY(@references)
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM {Constants.TableName.YearBuiltData} y
+                      WHERE y.county_id = b.county_id
+                        AND y.reference = b.reference
+                        AND EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(y.object->'YearBuilts') AS entry(value)
+                            WHERE entry->>'_type' = @userType))
+                ORDER BY array_position(@references, b.reference);";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandText, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("countyIds", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = countyIds_Array });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("references", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = references_Array });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("userType", NpgsqlDbType.Text) { Value = userType });
+
+            List<Building2DReference> result = [];
+
+            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
+            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+            {
+                result.Add(new Building2DReference
+                {
+                    Id = npgsqlDataReader.GetInt64(0),
+                    CountyId = npgsqlDataReader.GetInt32(1),
+                    Reference = npgsqlDataReader.GetString(2),
+                    SubdivisionId = npgsqlDataReader.IsDBNull(3) ? null : npgsqlDataReader.GetInt32(3)
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously keeps, of the named references, the buildings of the named county parts that hold no user-provided year built yet.
+        /// </summary>
+        /// <param name="countyIds">The <c>building_2d</c> part ids the references are filed under.</param>
+        /// <param name="references">The references to keep or drop.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the eligible buildings in the order the references were given, or null when no connection could be built, the parts or the references are missing or either table has never been created.</returns>
+        public async Task<List<Building2DReference>?> GetBuilding2DReferencesWithoutUserYearBuiltAsync(IEnumerable<int>? countyIds, IEnumerable<string>? references, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetBuilding2DReferencesWithoutUserYearBuiltAsync(npgsqlConnection, countyIds, references, commandTimeout, cancellationToken);
         }
     }
 }

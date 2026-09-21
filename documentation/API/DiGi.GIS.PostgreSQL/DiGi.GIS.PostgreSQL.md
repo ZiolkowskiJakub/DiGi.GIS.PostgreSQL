@@ -2427,6 +2427,73 @@ The statistical data collection containing demographic information\.
 [DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalyearlydoubledata 'DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData')  
 A [DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.statisticalyearlydoubledata 'DiGi\.GIS\.Classes\.StatisticalYearlyDoubleData') containing normalized yearly population counts, or null if no population series is found\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken)'></a>
+
+## Query\.RandomBuilding2DReferenceWithoutUserYearBuiltAsync\(this OrtoDatasPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, YearBuiltDataPostgreSQLConverter, IEnumerable\<int\>, int, int, int, CancellationToken\) Method
+
+Asynchronously draws one building that has orthophoto coverage and no user\-provided year built yet, optionally confined to specific `building_2d` parts\.
+
+The orthophoto rows live in the storage database and the building, year-built and administrative rows in the main one, so this cannot be a join and is not one (the same split [SubdivisionLinksAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.SubdivisionLinksAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.SubdivisionLinksAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, int, int, int, System\.Threading\.CancellationToken\)') works across). Stage 1 draws a county code from the parts that hold orthophotos, weighted by the estimated rows of the parts ([GetEstimatedCountsAsync\(IEnumerable&lt;int&gt;, bool, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetEstimatedCountsAsync(System.Collections.Generic.IEnumerable_int_,bool,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetEstimatedCountsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, bool, int, int, System\.Threading\.CancellationToken\)'), storage side) over the county references ([GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(AdministrativeArealType, Nullable&lt;int&gt;, bool, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,bool,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType, System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)'), main side). Stage 2 draws a batch of references from the code's parts without reading the imagery ([GetRandomReferencesByCountyIdsAsync\(IEnumerable&lt;int&gt;, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetRandomReferencesByCountyIdsAsync(System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetRandomReferencesByCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, int, int, System\.Threading\.CancellationToken\)')), keeps the ones that are buildings without a user entry ([GetBuilding2DReferencesWithoutUserYearBuiltAsync\(IEnumerable&lt;int&gt;, IEnumerable&lt;string&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetBuilding2DReferencesWithoutUserYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.GetBuilding2DReferencesWithoutUserYearBuiltAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, int, System\.Threading\.CancellationToken\)')), and answers the first survivor that holds at least one photo year ([GetYearsByReferenceAsync\(string, Nullable&lt;int&gt;, bool, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter.GetYearsByReferenceAsync(string,System.Nullable_int_,bool,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter\.GetYearsByReferenceAsync\(string, System\.Nullable\<int\>, bool, int, System\.Threading\.CancellationToken\)')), so the drawn building always carries a card.
+
+A code whose parts yield nothing within [maxBatchCount](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).maxBatchCount 'DiGi\.GIS\.PostgreSQL\.Query\.RandomBuilding2DReferenceWithoutUserYearBuiltAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, int, System\.Threading\.CancellationToken\)\.maxBatchCount') batches is removed and redrawn, so the loop is bounded by codes times batches; `null` is the answer when nothing is left. [countyIds](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.PostgreSQL\.Query\.RandomBuilding2DReferenceWithoutUserYearBuiltAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<int\>, int, int, int, System\.Threading\.CancellationToken\)\.countyIds') are `building_2d` part ids, never county codes; `null` or empty draws from every covered part, and an id that names no covered part simply falls out of the pool. A building holding only `PredictedYearBuilt` entries is eligible; a `UserYearBuilt` of any relation is not, because a bound is still a verification.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.Building2DReference?> RandomBuilding2DReferenceWithoutUserYearBuiltAsync(this DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter? ortoDatasPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter, System.Collections.Generic.IEnumerable<int>? countyIds=null, int batchSize=64, int maxBatchCount=4, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).ortoDatasPostgreSQLConverter'></a>
+
+`ortoDatasPostgreSQLConverter` [OrtoDatasPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.OrtoDatasPostgreSQLConverter')
+
+The converter reading the orthophoto store\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter reading the administrative areas, in the main store\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).yearBuiltDataPostgreSQLConverter'></a>
+
+`yearBuiltDataPostgreSQLConverter` [YearBuiltDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter')
+
+The converter reading the buildings and their year\-built rows, in the main store\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The `building_2d` part ids to confine the draw to, or null/empty to draw from every covered part\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+How many references one storage\-side draw takes before the main side filters them\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).maxBatchCount'></a>
+
+`maxBatchCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+How many batches a drawn code is given before it is removed from the pool\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the drawn [Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference'), or null when a converter is missing, either side could not be read, or no covered \(and requested\) county part yields a candidate\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.RandomSeed(int,int)'></a>
 
 ## Query\.RandomSeed\(int, int\) Method
