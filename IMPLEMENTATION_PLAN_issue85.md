@@ -30,8 +30,10 @@
 `DiGi.GIS.IO/Constants/Column.cs`, one member (pattern of the neighbouring `UnitColumn`s, unit of `BoundingBoxHeight` = `Unit.Enums.LengthUnit.Meter`):
 
 ```csharp
-public static UnitColumn ClosingTolerance = new("Closing tolerance", (Unit.Classes.Unit?)Unit.Enums.LengthUnit.Meter, Category.ExternalComponentsArea.Description(), "Coarsest distance tolerance at which the model's external envelope edge-pairs into a closed surface, over the candidate ladder 1e-6 to 0.2 m; NULL when the envelope does not close on the ladder or the model carries no external components - the signal that this row's sector and tilt values may rest on an arbitrary face side", Unit.Enums.UnitDataType.Float);
+public static UnitColumn ClosingTolerance = new("Closing tolerance", (Unit.Classes.Unit?)Unit.Enums.LengthUnit.Meter, Category.ExternalComponentsArea.Description(), "Finest distance tolerance at which the model's external envelope edge-pairs into a closed surface, over the candidate ladder 1e-6 to 0.2 m; NULL when the envelope does not close on the ladder or the model carries no external components - the signal that this row's sector and tilt values may rest on an arbitrary face side", Unit.Enums.UnitDataType.Float);
 ```
+
+- Worded as the **finest** closing rung, not the coarsest: the default closure criterion is monotone in tolerance (closed at a finer rung implies closed at every coarser one), so `Query.ClosingTolerance` answers the finest candidate that closes - the informative end of the ladder. Corrected after reading the query's own contract (`DiGi.Geometry/Spatial/Query/ClosingTolerance.cs`); the column and its description landed the coarsest wording first and were fixed in a follow-up DiGi.GIS.IO commit.
 
 - Not added to `Create.Columns_ExternalComponentsArea()` (`DiGi.GIS.IO/Create/Columns.cs:164`).
 - Build → `documentation/API/DiGi.GIS.IO/…` regenerates → commit on the current DiGi.GIS.IO SemVer branch, message referencing #85.
