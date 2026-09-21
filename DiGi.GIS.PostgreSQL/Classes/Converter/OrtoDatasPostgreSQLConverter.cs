@@ -2353,7 +2353,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
         /// <summary>
         /// Asynchronously reads the bytes of the photo one building holds for one exact year, or null when that year has no photo.
-        /// <para>Matches the stored <c>DateTime</c> of the <c>Values</c> elements against <c>make_date(@year, 1, 1)</c> - the shape the producer stores - so a year the building does not hold answers <c>null</c> instead of a neighbour's image. This is the exact-year counterpart of <see cref="GetYearsByReferenceAsync(NpgsqlConnection, string, int?, bool, int, System.Threading.CancellationToken)"/>.</para>
+        /// <para>Matches the stored <c>DateTime</c> of the <c>Values</c> elements against <c>make_date(@year, 1, 1)</c> - the shape the producer stores - so a year the building does not hold answers <c>null</c> instead of a neighbour's image. The stored <c>Bytes</c> member is a JSON array of numbers - the form the DiGi serializer writes for a <c>byte[]</c> - and is decoded with <see cref="Convert.ToSystem_Bytes(JsonNode)"/>. This is the exact-year counterpart of <see cref="GetYearsByReferenceAsync(NpgsqlConnection, string, int?, bool, int, System.Threading.CancellationToken)"/>.</para>
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> used to execute the command.</param>
         /// <param name="reference">The reference of the building to read the photo of.</param>
@@ -2370,14 +2370,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 return null;
             }
 
+            // v->'Bytes' (jsonb, not ->>): the stored member is a JSON array of numbers, which is what the DiGi
+            // serializer writes for a byte[]; the text form is parsed back below. Reading it with ->> as base64
+            // threw on every row (DiGi.GIS.PostgreSQL#90).
             string commandText = countyId.HasValue ? $@"
-                SELECT v->>'Bytes'
+                SELECT v->'Bytes'
                 FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
                 WHERE o.reference = @reference
                   AND o.county_id = @countyId
                   AND (v->>'DateTime')::timestamp = make_date(@year, 1, 1)
                 LIMIT 1;" : $@"
-                SELECT v->>'Bytes'
+                SELECT v->'Bytes'
                 FROM {TableName.OrtoDatas} o, jsonb_array_elements(o.object->'Values') v
                 WHERE o.reference = @reference
                   AND (v->>'DateTime')::timestamp = make_date(@year, 1, 1)
@@ -2397,8 +2400,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
             await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
             if (await npgsqlDataReader.ReadAsync(cancellationToken) && !npgsqlDataReader.IsDBNull(0))
             {
-                // v->>'Bytes' is the base64 form System.Text.Json gives a byte[].
-                return System.Convert.FromBase64String(npgsqlDataReader.GetString(0));
+                byte[]? bytes = JsonNode.Parse(npgsqlDataReader.GetString(0)).ToSystem_Bytes();
+                if (bytes is not null)
+                {
+                    return bytes;
+                }
             }
 
             if (!fallbackByReference || countyId is null)

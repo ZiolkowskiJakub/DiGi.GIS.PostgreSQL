@@ -284,6 +284,29 @@ The county identifier associated with the data\.
 [YearBuiltData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltData 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltData')  
 A [YearBuiltData](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltData 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltData') instance if [yearBuiltData](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Convert.ToPostgreSQL(thisDiGi.GIS.Interfaces.IYearBuiltData,System.Nullable_int_).yearBuiltData 'DiGi\.GIS\.PostgreSQL\.Convert\.ToPostgreSQL\(this DiGi\.GIS\.Interfaces\.IYearBuiltData, System\.Nullable\<int\>\)\.yearBuiltData') is not null; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Convert.ToSystem_Bytes(thisSystem.Text.Json.Nodes.JsonNode)'></a>
+
+## Convert\.ToSystem\_Bytes\(this JsonNode\) Method
+
+Converts the stored form of a `byte[]` member back to bytes\.
+
+The DiGi serializer writes a `byte[]` as a JSON array of numbers (`Core.Create.JsonNode` treats it as an enumerable), so that is the shape a projection such as `v->'Bytes'` reads out of a stored object. A base64 string - the form System.Text.Json gives a `byte[]` - is accepted as well, so a row written that way decodes rather than fails. Any other shape answers null.
+
+```csharp
+public static byte[]? ToSystem_Bytes(this System.Text.Json.Nodes.JsonNode? jsonNode);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Convert.ToSystem_Bytes(thisSystem.Text.Json.Nodes.JsonNode).jsonNode'></a>
+
+`jsonNode` [System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')
+
+The [System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode') holding the member\. This value can be null\.
+
+#### Returns
+[System\.Byte](https://learn.microsoft.com/en-us/dotnet/api/system.byte 'System\.Byte')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')  
+The bytes, or null when [jsonNode](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Convert.ToSystem_Bytes(thisSystem.Text.Json.Nodes.JsonNode).jsonNode 'DiGi\.GIS\.PostgreSQL\.Convert\.ToSystem\_Bytes\(this System\.Text\.Json\.Nodes\.JsonNode\)\.jsonNode') is null, an element is not a byte, or the node is neither an array nor a base64 string\.
+
 <a name='DiGi.GIS.PostgreSQL.Create'></a>
 
 ## Create Class
