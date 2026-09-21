@@ -35,6 +35,7 @@ namespace DiGi.GIS.PostgreSQL
             List<AdministrativeAreal2DReference>? countyReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(Enums.AdministrativeArealType.County, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (countyReferences is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RandomBuilding2DReferenceWithoutUserYearBuilt: county references could not be read (main store)");
                 return null;
             }
 
@@ -79,6 +80,7 @@ namespace DiGi.GIS.PostgreSQL
             Dictionary<int, long>? estimates = await ortoDatasPostgreSQLConverter.GetEstimatedCountsAsync(countyIds_All, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (estimates is null)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RandomBuilding2DReferenceWithoutUserYearBuilt: orthophoto estimates could not be read (storage)");
                 return null;
             }
 
@@ -101,6 +103,8 @@ namespace DiGi.GIS.PostgreSQL
                     candidates.Add(new KeyValuePair<string, long>(partGroup.Key, weight));
                 }
             }
+
+            Serilog.Modify.Log("RandomBuilding2DReferenceWithoutUserYearBuilt: {CodeCount} codes over {PartCount} parts, {CandidateCount} with a positive estimate", parts_ByCode.Count, countyIds_All.Count, candidates.Count);
 
             // Stage 2 - one weighted draw per code; a code whose parts yield nothing is removed, so the loop is
             // bounded by the number of codes.
@@ -139,14 +143,18 @@ namespace DiGi.GIS.PostgreSQL
                     List<string>? references = await ortoDatasPostgreSQLConverter.GetRandomReferencesByCountyIdsAsync(countyIds_Drawn, batchSize, commandTimeout, cancellationToken);
                     if (references is null || references.Count == 0)
                     {
+                        Serilog.Modify.Log("RandomBuilding2DReferenceWithoutUserYearBuilt: code {Code} parts {Parts} batch {Batch}: {Outcome}", code_Drawn, string.Join(",", countyIds_Drawn), i, references is null ? "storage side answered null" : "no orthophoto rows");
                         break;
                     }
 
                     List<Building2DReference>? building2DReferences = await yearBuiltDataPostgreSQLConverter.GetBuilding2DReferencesWithoutUserYearBuiltAsync(countyIds_Drawn, references, commandTimeout, cancellationToken);
                     if (building2DReferences is null)
                     {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RandomBuilding2DReferenceWithoutUserYearBuilt: code {Code} parts {Parts}: buildings without a user entry could not be read (main store)", code_Drawn, string.Join(",", countyIds_Drawn));
                         return null;
                     }
+
+                    Serilog.Modify.Log("RandomBuilding2DReferenceWithoutUserYearBuilt: code {Code} parts {Parts} batch {Batch}: {ReferenceCount} references drawn, {SurvivorCount} without a user entry", code_Drawn, string.Join(",", countyIds_Drawn), i, references.Count, building2DReferences.Count);
 
                     foreach (Building2DReference building2DReference in building2DReferences)
                     {

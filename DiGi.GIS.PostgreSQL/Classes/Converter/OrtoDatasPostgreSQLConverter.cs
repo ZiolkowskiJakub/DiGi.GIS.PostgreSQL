@@ -2168,10 +2168,15 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             List<short> result = [];
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-            while (await npgsqlDataReader.ReadAsync(cancellationToken))
+
+            // The reader is closed before the fallback re-runs: a second command on the same connection while
+            // the first reader is still open is NpgsqlOperationInProgressException (DiGi.GIS.PostgreSQL#91).
+            await using (NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken))
             {
-                result.Add(npgsqlDataReader.GetInt16(0));
+                while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                {
+                    result.Add(npgsqlDataReader.GetInt16(0));
+                }
             }
 
             if (result.Count > 0 || !fallbackByReference || countyId is null)
@@ -2250,13 +2255,17 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
             npgsqlCommand.Parameters.Add(new NpgsqlParameter("year", NpgsqlDbType.Smallint) { Value = year });
 
-            await using NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken);
-            if (await npgsqlDataReader.ReadAsync(cancellationToken) && !npgsqlDataReader.IsDBNull(0))
+            // The reader is closed before the fallback re-runs: a second command on the same connection while
+            // the first reader is still open is NpgsqlOperationInProgressException (DiGi.GIS.PostgreSQL#91).
+            await using (NpgsqlDataReader npgsqlDataReader = await npgsqlCommand.ExecuteReaderAsync(cancellationToken))
             {
-                byte[]? bytes = JsonNode.Parse(npgsqlDataReader.GetString(0)).ToSystem_Bytes();
-                if (bytes is not null)
+                if (await npgsqlDataReader.ReadAsync(cancellationToken) && !npgsqlDataReader.IsDBNull(0))
                 {
-                    return bytes;
+                    byte[]? bytes = JsonNode.Parse(npgsqlDataReader.GetString(0)).ToSystem_Bytes();
+                    if (bytes is not null)
+                    {
+                        return bytes;
+                    }
                 }
             }
 
