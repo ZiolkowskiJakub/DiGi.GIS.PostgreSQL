@@ -122,3 +122,33 @@ Mechanical: every `long skipped = Modify.Update_ExternalComponentsArea(...)` cal
 4. DiGi.Test: facts (GIS.PostgreSQL built first) → full `Update_ExternalComponentsArea` set green (11 runnable + 1 conf-skip).
 5. Deployed verifications: dev-DB fact (conf) + the 27-model harness → 6 open envelopes.
 6. Commits on `0.8.10` referencing #85 (DiGi.GIS.PostgreSQL implementation, DiGi.Test facts); tick #85's acceptance boxes; resolution comment (commits, changes, tests, deployed results, corrections if any measurement differs); close.
+
+## 11. Implementation record (2026-09-21)
+
+Landed on the branches below; the acceptance criteria are met.
+
+| Repository | Branch | Commits |
+|---|---|---|
+| DiGi.GIS.PostgreSQL | `0.8.10` | `17370be` plan · `1891c94` finest-rung wording · `8930745` implementation |
+| DiGi.GIS.IO | `0.8.8` | `7198bf4` column · `94eac99` finest-rung wording · `05aa2f7` base-typed accessor |
+| DiGi.Test | `0.8.11` | `5e5b328` facts |
+
+### Corrections made while implementing
+
+1. **The query answers the finest closing rung, not the coarsest.** `IsClosed` is monotone in tolerance, so a solid closed at a fine rung is closed at every coarser one; `ClosingTolerance` therefore returns the finest candidate that closes. The column, its description and §3's sketch were corrected in follow-up commits before any consumer existed.
+2. **A `DiGi.Unit.IO` assembly reference is not the way in.** `Constants.Column.ClosingTolerance` is a `UnitColumn`, so reading that field directly forced a reference to `DiGi.Unit.IO` — and merely referencing it made the `DiGi.Unit` namespace shadow `DiGi.BDL.Classes.Unit` in every file of `DiGi.GIS.PostgreSQL`, breaking twelve references in `UnitPostgreSQLConverter.cs` (`CS0118`). It would also have rippled the assembly into every deployed host. Added `Create.Column_ClosingTolerance()` in DiGi.GIS.IO returning the base-typed `Column` — the shape `Columns_ExternalComponentsArea()` already uses — and left the project's reference set unchanged.
+3. **The closure signal found a defect in a #84 fixture.** `Update_ExternalComponentsArea_SharedComponentIsInternalPartition` built its two-space model with each floor's origin corner at `y = 0`; for an outward `-z` normal the plane's local y axis runs along `-y`, so those floors sat at `y ∈ [-10, 0]` while the walls stood at `y ∈ [0, 10]`. Areas were unaffected (100 m² each), so every #84 assertion passed on a model that was not watertight. The floors now use the `y = s` corner the closed `Box()` helper uses, and the fact asserts a closed envelope.
+   - The `RoofTiltBands` fixture is open by geometry — a tilted plane over the walls' flat tops leaves the head wedges — and records that as its measured `OpenEnvelopeCount` of 1.
+
+### Facts
+
+`DiGi.GIS.PostgreSQL.xUnit` — 15 passed / 1 conf-driven skip (`Update_ExternalComponentsArea_DeployedBuildingModels`). New: `Update_ExternalComponentsArea_OpenEnvelopeSignal` (box minus roof → null cell, 1 open), `Update_ExternalComponentsArea_ClosedEnvelopeClosingTolerance` (closed box → `(float)Tolerance.Distance`), `ExternalComponentsAreaResult_Serialization`, `ExternalComponentsAreaResult_Closed`; the task constructor fact gained the `OpenEnvelopeCount == 0` default.
+
+### Deployed verification (read-only)
+
+`GET https://api.digiproject.uk/gis/buildingmodel/itemsbycircle?x=638000&y=486000&radius=100` — the 27-model sample of #84 §8, deserialized locally and classified with this build:
+
+- 27/27 models deserialized, 27 unique references, 27 rows, **6 open envelopes** — the acceptance figure.
+- The six are the rows with a null closing tolerance (references `…DF9F-…`, `…DEFB-…`, `…DEFC-…`, `…DDA9-…`, `…DE50-…`, `…DD0F-…`); `38F62225-DEFC-F520-E053-CA2BA8C0BE14` is among them, the open-envelope model #84 §8 named.
+- The closed envelopes record the rung set #84 reported: 1e-6, 0.001, 0.01, 0.02, 0.05.
+- Skip count **105** here against #84 §8's **104**; the counting code is shared with #84 (unchanged by this issue), so a one-component difference is data drift or a harness dedupe difference, not a behaviour change.
