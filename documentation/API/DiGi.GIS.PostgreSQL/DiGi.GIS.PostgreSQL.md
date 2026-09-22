@@ -1865,6 +1865,71 @@ The candidate county rows, normally every polygon part of one code\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 The identifier of the county row holding each reference\. Empty when nothing could be resolved\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken)'></a>
+
+## Query\.CountyIdsByReferencesWithSiblingFallbackAsync\(this Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>, AdministrativeArealType, int, CancellationToken\) Method
+
+Resolves each reference to the county part that holds its `building_2d` row, and \- when the caller named only a subset of a county's parts \- widens the unresolved ones to every part of the named code before giving up\.
+
+[CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') probes only the county rows the caller sent. That is the safe answer for a caller who named every part, but it is lossy for one who named a single part of a multi-part county: a datum whose 2D building is filed under a sibling part comes back unresolved and is left unwritten, even though the county the caller named does hold it.
+
+This method keeps that first pass exactly, then adds one bounded widening. The references the first pass leaves unresolved are re-resolved against every part of the codes the candidate rows name, so a reference held by any part of a named county lands under that part. A reference held by no part of a named county stays unresolved - the widening never crosses into a county the caller did not name.
+
+The [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') determinism contract is preserved: each pass probes its parts in ascending order and takes the first part that holds a reference, so a reference held by more than one part resolves to the same part on every run.
+
+It lives next to [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') rather than in a host because the Web API, the desktop application and any background task have to answer "which part of this county holds that reference" the same way; answering it per controller is how a batch came to be filed under one part in the first place. A caller who already named every part sees no difference - the first pass resolves everything, nothing is left to widen, and the second pass is not reached.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>> CountyIdsByReferencesWithSiblingFallbackAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType=DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.County, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter used to look the references up in `building_2d`\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter used to widen the candidate rows to every part of their codes\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references to resolve\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The candidate county rows the caller named, normally one or more polygon parts of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [AdministrativeArealType](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+
+The level the candidate rows name; the widening reads the parts of their codes at this level only\. [County](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.County 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.County') for the building\-keyed tables this serves\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the widening lookups\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The identifier of the county row holding each reference\. A reference no part of a named county holds is absent from the result\.
+
 <a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken)'></a>
 
 ## Query\.CoveragesAsync\(this OrtoDatasPostgreSQLConverter, Building2DPostgreSQLConverter, int, IReadOnlyDictionary\<int,PolygonalFace2D\>, double, int, CancellationToken\) Method
