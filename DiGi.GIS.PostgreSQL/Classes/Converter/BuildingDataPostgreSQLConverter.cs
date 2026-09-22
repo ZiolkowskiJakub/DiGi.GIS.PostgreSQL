@@ -452,6 +452,69 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously pulls one page of a county partition in physical (heap) order over an already open connection, continuing after the position the previous page ended at.
+        /// <para>This is the read to use for a whole partition. The keyset <see cref="PullAsync(NpgsqlConnection?, int, IEnumerable{string}?, string?, int, int, CancellationToken)"/> fetches every ~230-column row in reference order, one random heap read per row. For part 55417 (155 307 rows) that took 368-654 s on production, against about 15 s for a sequential read of a 100 543-row partition (DiGi.GIS.WebAPI.UI#29). Keep the keyset read for callers that need reference order.</para>
+        /// <para>The page carries the requested columns plus <see cref="IO.Constants.Column.Reference"/> and <see cref="IO.Constants.Column.CountyId"/>, so every row carries the primary key. Windowing, sizing and the position format are those of the base <c>TablePostgreSQLConverter.PullByPhysicalOrderAsync</c>.</para>
+        /// <para><b>Concurrent writes.</b> A row rewritten during a walk is read twice when its new version lands ahead of the walk, and missed when it lands behind. Callers dedup on <c>(county_id, reference)</c>. A walk on one connection inside one <c>REPEATABLE READ</c> transaction is exact, because the commands join the connection's transaction; <see cref="Create.TypologyAsync"/> does that.</para>
+        /// <para>A server older than PostgreSQL 14 cannot serve the read, and the pull answers <c>(null, null)</c> as for any other failure. Test <c>DiGi.PostgreSQL.Table.Query.IsPhysicalOrderSupported(npgsqlConnection)</c> first and fall back to the keyset read.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The open connection the pull is executed on.</param>
+        /// <param name="countyId">The partition key identifying the county part.</param>
+        /// <param name="columnUniqueIds">The optional list of column unique identifiers to project. Null projects every column.</param>
+        /// <param name="lastPosition">The position the previous page returned, or <see langword="null"/> to start at the beginning of the partition.</param>
+        /// <param name="pageSize">The maximum number of rows to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task whose result pairs the page with the position to continue from:
+        /// <list type="bullet">
+        /// <item>a position when the page came back full;</item>
+        /// <item><see cref="string.Empty"/> when the partition is exhausted (the table may still hold the last rows);</item>
+        /// <item><c>(null, null)</c> when the read failed or declined (no connection, a position that is not a tid, a server older than PostgreSQL 14).</item>
+        /// </list></returns>
+        public async Task<(Core.IO.Table.Classes.Table? Table, string? Position)> PullByPhysicalOrderAsync(NpgsqlConnection? npgsqlConnection, int countyId, IEnumerable<string>? columnUniqueIds, string? lastPosition, int pageSize = 250, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return (null, null);
+            }
+
+            HashSet<string>? columnUniqueIds_Temp = columnUniqueIds == null ? null : [.. columnUniqueIds];
+            List<Core.IO.Table.Classes.Column> columns = await GetColumnsByUniqueIdsAsync(npgsqlConnection, columnUniqueIds_Temp, commandTimeout, cancellationToken) ?? [];
+
+            Core.IO.Table.Classes.Table table_Result = new(columns);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.Reference);
+            table_Result.UpdateColumn<Core.IO.Table.Classes.Column>(IO.Constants.Column.CountyId);
+
+            string? position = await PullByPhysicalOrderAsync(npgsqlConnection, table_Result, lastPosition, pageSize, countyId, commandTimeout, cancellationToken);
+
+            return position is null ? (null, null) : (table_Result, position);
+        }
+
+        /// <summary>
+        /// Asynchronously pulls one page of a county partition in physical (heap) order, opening a connection of its own.
+        /// <para>Each call opens a connection and resolves the column metadata, so a caller walking a whole partition on one machine should open one connection and use the overload taking it. That overload's remarks cover the position contract and concurrent writes. A walk made of separate calls, such as one page per HTTP request, cannot share a snapshot, so it can repeat or miss rows written during the walk.</para>
+        /// </summary>
+        /// <param name="countyId">The partition key identifying the county part.</param>
+        /// <param name="columnUniqueIds">The optional list of column unique identifiers to project. Null projects every column.</param>
+        /// <param name="lastPosition">The position the previous page returned, or <see langword="null"/> to start at the beginning of the partition.</param>
+        /// <param name="pageSize">The maximum number of rows to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task whose result pairs the page with the position to continue from: a position when the page came back full, <see cref="string.Empty"/> when the partition is exhausted, <c>(null, null)</c> when the read failed or declined.</returns>
+        public async Task<(Core.IO.Table.Classes.Table? Table, string? Position)> PullByPhysicalOrderAsync(int countyId, IEnumerable<string>? columnUniqueIds, string? lastPosition, int pageSize = 250, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection_Db = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection_Db is null)
+            {
+                return (null, null);
+            }
+
+            await npgsqlConnection_Db.OpenAsync(cancellationToken);
+
+            return await PullByPhysicalOrderAsync(npgsqlConnection_Db, countyId, columnUniqueIds, lastPosition, pageSize, commandTimeout, cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously computes single-value aggregate statistics on a specific building data column inside a county partition or across all partitions, applying optional dynamic filters.
         /// </summary>
         /// <param name="columnUniqueId">The unique identifier of the column to aggregate.</param>

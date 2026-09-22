@@ -11352,6 +11352,128 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains a [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') instance if data is successfully retrieved; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataPostgreSQLConverter\.PullByPhysicalOrderAsync\(int, IEnumerable\<string\>, string, int, int, CancellationToken\) Method
+
+Asynchronously pulls one page of a county partition in physical \(heap\) order, opening a connection of its own\.
+
+Each call opens a connection and resolves the column metadata, so a caller walking a whole partition on one machine should open one connection and use the overload taking it. That overload's remarks cover the position contract and concurrent writes. A walk made of separate calls, such as one page per HTTP request, cannot share a snapshot, so it can repeat or miss rows written during the walk.
+
+```csharp
+public System.Threading.Tasks.Task<(DiGi.Core.IO.Table.Classes.Table? Table,string? Position)> PullByPhysicalOrderAsync(int countyId, System.Collections.Generic.IEnumerable<string>? columnUniqueIds, string? lastPosition, int pageSize=250, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The partition key identifying the county part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).columnUniqueIds'></a>
+
+`columnUniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The optional list of column unique identifiers to project\. Null projects every column\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).lastPosition'></a>
+
+`lastPosition` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The position the previous page returned, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') to start at the beginning of the partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).pageSize'></a>
+
+`pageSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of rows to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[,](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result pairs the page with the position to continue from: a position when the page came back full, [System\.String\.Empty](https://learn.microsoft.com/en-us/dotnet/api/system.string.empty 'System\.String\.Empty') when the partition is exhausted, `(null, null)` when the read failed or declined\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataPostgreSQLConverter\.PullByPhysicalOrderAsync\(NpgsqlConnection, int, IEnumerable\<string\>, string, int, int, CancellationToken\) Method
+
+Asynchronously pulls one page of a county partition in physical \(heap\) order over an already open connection, continuing after the position the previous page ended at\.
+
+This is the read to use for a whole partition. The keyset [PullAsync\(NpgsqlConnection, int, IEnumerable&lt;string&gt;, string, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter\.PullAsync\(Npgsql\.NpgsqlConnection, int, System\.Collections\.Generic\.IEnumerable\<string\>, string, int, int, System\.Threading\.CancellationToken\)') fetches every ~230-column row in reference order, one random heap read per row. For part 55417 (155 307 rows) that took 368-654 s on production, against about 15 s for a sequential read of a 100 543-row partition (DiGi.GIS.WebAPI.UI#29). Keep the keyset read for callers that need reference order.
+
+The page carries the requested columns plus [DiGi\.GIS\.IO\.Constants\.Column\.Reference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.io.constants.column.reference 'DiGi\.GIS\.IO\.Constants\.Column\.Reference') and [DiGi\.GIS\.IO\.Constants\.Column\.CountyId](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.io.constants.column.countyid 'DiGi\.GIS\.IO\.Constants\.Column\.CountyId'), so every row carries the primary key. Windowing, sizing and the position format are those of the base `TablePostgreSQLConverter.PullByPhysicalOrderAsync`.
+
+<b>Concurrent writes.</b> A row rewritten during a walk is read twice when its new version lands ahead of the walk, and missed when it lands behind. Callers dedup on `(county_id, reference)`. A walk on one connection inside one `REPEATABLE READ` transaction is exact, because the commands join the connection's transaction; [TypologyAsync\(this BuildingDataPostgreSQLConverter, ColumnTypologyFilter&lt;Column&gt;, IEnumerable&lt;int&gt;, Column, TypologyItem, bool, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Create.TypologyAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.Typology.Classes.ColumnTypologyFilter_DiGi.Core.IO.Table.Classes.Column_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.IO.Table.Classes.Column,DiGi.Typology.Classes.TypologyItem,bool,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Create\.TypologyAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter, DiGi\.Typology\.Classes\.ColumnTypologyFilter\<DiGi\.Core\.IO\.Table\.Classes\.Column\>, System\.Collections\.Generic\.IEnumerable\<int\>, DiGi\.Core\.IO\.Table\.Classes\.Column, DiGi\.Typology\.Classes\.TypologyItem, bool, int, int, System\.Threading\.CancellationToken\)') does that.
+
+A server older than PostgreSQL 14 cannot serve the read, and the pull answers `(null, null)` as for any other failure. Test `DiGi.PostgreSQL.Table.Query.IsPhysicalOrderSupported(npgsqlConnection)` first and fall back to the keyset read.
+
+```csharp
+public System.Threading.Tasks.Task<(DiGi.Core.IO.Table.Classes.Table? Table,string? Position)> PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, System.Collections.Generic.IEnumerable<string>? columnUniqueIds, string? lastPosition, int pageSize=250, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open connection the pull is executed on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The partition key identifying the county part\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).columnUniqueIds'></a>
+
+`columnUniqueIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The optional list of column unique identifiers to project\. Null projects every column\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).lastPosition'></a>
+
+`lastPosition` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The position the previous page returned, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') to start at the beginning of the partition\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).pageSize'></a>
+
+`pageSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of rows to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(Npgsql.NpgsqlConnection,int,System.Collections.Generic.IEnumerable_string_,string,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')[,](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple 'System\.ValueTuple')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task whose result pairs the page with the position to continue from:
+            
+- a position when the page came back full;
+- [System\.String\.Empty](https://learn.microsoft.com/en-us/dotnet/api/system.string.empty 'System\.String\.Empty') when the partition is exhausted (the table may still hold the last rows);
+- `(null, null)` when the read failed or declined (no connection, a position that is not a tid, a server older than PostgreSQL 14).
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter.RefreshCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int,System.Collections.Generic.IEnumerable_int_,int,int,System.Threading.CancellationToken)'></a>
 
 ## BuildingDataPostgreSQLConverter\.RefreshCountyIdsAsync\(IEnumerable\<string\>, int, IEnumerable\<int\>, int, int, CancellationToken\) Method
