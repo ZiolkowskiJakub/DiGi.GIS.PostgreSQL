@@ -95,11 +95,11 @@ Radial ratios \(Radial Building Coverage Ratio, Radial Floor Area Ratio\) update
 
 Statistical demographic data update\.
 
-<a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.PredictedYearBuilt'></a>
+<a name='DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.YearBuilt'></a>
 
-`PredictedYearBuilt` 5
+`YearBuilt` 5
 
-Predicted year built data update\.
+Year built data update: writes the predicted, user and calculated year\-built columns\.
 
 <a name='DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason'></a>
 

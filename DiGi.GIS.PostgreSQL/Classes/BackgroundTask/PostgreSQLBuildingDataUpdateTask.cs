@@ -20,7 +20,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <para>Buildings the subdivision loop cannot reach - those without a <c>subdivision_id</c>, and those whose subdivision belongs to a neighbouring county - are updated in a final per-county pass, deriving their shape, occupancy, database identifier, radial ratios and predicted year built. The population columns are written per subdivision group by resolving the group's own subdivision through <c>administrative_areal_2d</c>; buildings with no subdivision, or whose subdivision matches no statistical unit or carries no population series, have their population columns left unwritten and are logged rather than filled with zeros.</para>
     /// <para>A subdivision that fails is logged and stepped over rather than ending the run, so <see cref="BackgroundTask.IsSucceeded"/> alone does not say a run did everything it set out to do. <see cref="FailedSubdivisionCount"/> and <see cref="SkippedSubdivisionCount"/> are what tell those apart. A selected update type whose prerequisite is missing writes nothing at all while the rest of the run carries on; <see cref="UnfulfilledUpdateTypeCount"/> counts those, and the run is reported as not succeeded while it is above zero.</para>
     /// <para>The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. <see cref="RadialRatiosUnmeasuredSubdivisionCount"/> counts the subdivisions that happened to, and stops the run being reported as succeeded; <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/> counts the same miss on a county's unassigned buildings and is reported without failing the run, because at one or two buildings the miss cannot be told apart from a stored box that does not match its own geometry.</para>
-    /// <para>The predicted year built is the one update type that can legitimately write nothing: only the counties a prediction run has scored hold a <c>year_built_data</c> row to read. <see cref="PredictedYearBuiltWrittenCount"/> and <see cref="PredictedYearBuiltMissingBuildingCount"/> say how many buildings received a year and how many had no stored prediction, and every county in scope logs its own tally, so a run that omitted the update type and a run that found nothing to write no longer leave the same trace (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/81">DiGi.GIS.PostgreSQL#81</see>). Neither counter affects the result.</para>
+    /// <para>The year built update is the one update type that can legitimately write nothing: only the counties a prediction or user run has scored hold a <c>year_built_data</c> row to read. <see cref="YearBuiltWrittenCount"/> and <see cref="YearBuiltMissingBuildingCount"/> say how many buildings received a year and how many had no stored year built entry, and every county in scope logs its own tally, so a run that omitted the update type and a run that found nothing to write no longer leave the same trace (<see href="https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/81">DiGi.GIS.PostgreSQL#81</see>). Neither counter affects the result.</para>
     /// </summary>
     public class PostgreSQLBuildingDataUpdateTask : ReportableBackgroundTask<long>, IGISPostgreSQLObject
     {
@@ -98,23 +98,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long RadialRatiosUnmeasuredUnassignedCountyCount { get; private set; }
 
         /// <summary>
-        /// Gets the number of buildings given a predicted year built during the last run, over the subdivision pass and the pass over the buildings the subdivision loop cannot reach.
-        /// <para>Zero after a run that selected <see cref="BuildingDataUpdateType.PredictedYearBuilt"/> means no building in scope holds a stored prediction, which is the state of every county a prediction run has not scored - it is reported, per county and here, and does not fail the run. Zero after a run that did not select the update type means nothing; the two used to be indistinguishable.</para>
+        /// Gets the number of buildings given a year built during the last run, over the subdivision pass and the pass over the buildings the subdivision loop cannot reach.
+        /// <para>Zero after a run that selected <see cref="BuildingDataUpdateType.YearBuilt"/> means no building in scope holds a stored year built entry, which is the state of every county a prediction or user run has not scored - it is reported, per county and here, and does not fail the run. Zero after a run that did not select the update type means nothing; the two used to be indistinguishable.</para>
         /// </summary>
-        public long PredictedYearBuiltWrittenCount { get; private set; }
+        public long YearBuiltWrittenCount { get; private set; }
 
         /// <summary>
-        /// Gets the number of buildings in scope of a <see cref="BuildingDataUpdateType.PredictedYearBuilt"/> run for which no stored prediction was found during the last run, so their <c>Predicted year built</c> was left as it stood.
-        /// <para>Counted only when the update type was selected. A building without a <c>year_built_data</c> row, or whose rows carry user-entered years only, is counted here; it is the complement of <see cref="PredictedYearBuiltWrittenCount"/> over the buildings the run read.</para>
+        /// Gets the number of buildings in scope of a <see cref="BuildingDataUpdateType.YearBuilt"/> run for which no stored year built entry was found during the last run, so their year built columns were left as they stood.
+        /// <para>Counted only when the update type was selected. A building without a <c>year_built_data</c> row, or whose rows carry no usable predicted or exact user year, is counted here; it is the complement of <see cref="YearBuiltWrittenCount"/> over the buildings the run read.</para>
         /// </summary>
-        public long PredictedYearBuiltMissingBuildingCount { get; private set; }
+        public long YearBuiltMissingBuildingCount { get; private set; }
 
         /// <summary>
         /// Executes the background task to update building data from AdministrativeAreal2D and Building2D sources.
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of processed items.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/> or a subdivision against <see cref="RadialRatiosUnmeasuredSubdivisionCount"/>. A county's unassigned buildings whose radial ratios could not be measured are counted against <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/> and do not affect the result; neither do <see cref="PredictedYearBuiltWrittenCount"/> and <see cref="PredictedYearBuiltMissingBuildingCount"/>, since a county without stored predictions is not a fault of the run.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false - including when a selected update type was counted against <see cref="UnfulfilledUpdateTypeCount"/> or a subdivision against <see cref="RadialRatiosUnmeasuredSubdivisionCount"/>. A county's unassigned buildings whose radial ratios could not be measured are counted against <see cref="RadialRatiosUnmeasuredUnassignedCountyCount"/> and do not affect the result; neither do <see cref="YearBuiltWrittenCount"/> and <see cref="YearBuiltMissingBuildingCount"/>, since a county without stored year built entries is not a fault of the run.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
             FailedSubdivisionCount = 0;
@@ -126,8 +126,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
             UnfulfilledUpdateTypeCount = 0;
             RadialRatiosUnmeasuredSubdivisionCount = 0;
             RadialRatiosUnmeasuredUnassignedCountyCount = 0;
-            PredictedYearBuiltWrittenCount = 0;
-            PredictedYearBuiltMissingBuildingCount = 0;
+            YearBuiltWrittenCount = 0;
+            YearBuiltMissingBuildingCount = 0;
 
             PostgreSQLBuildingDataUpdateOptions ??= new();
 
@@ -142,7 +142,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             bool update_Occupancy = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Occupancy);
             bool update_RadialRatios = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.RadialRatios);
             bool update_Statistical = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.Statistical);
-            bool update_PredictedYearBuilt = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.PredictedYearBuilt);
+            bool update_YearBuilt = buildingDataUpdateTypes.Contains(BuildingDataUpdateType.YearBuilt);
 
             // The GIS conversion carries the outline of every building, so it is done only for the update types
             // that actually measure geometry or need domain models. A Database-only run reads identifiers and never touches an outline.
@@ -182,7 +182,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter = null;
-            if (update_PredictedYearBuilt)
+            if (update_YearBuilt)
             {
                 yearBuiltDataPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<YearBuiltDataPostgreSQLConverter>();
                 if (yearBuiltDataPostgreSQLConverter is null)
@@ -247,14 +247,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             HashSet<int> processedCountyIds = [];
 
             // Per county rather than per subdivision: a county is scored whole or not at all, so one line per
-            // county is what says whether the predictions were there to be read.
-            Dictionary<int, long> predictedYearBuiltWrittenCounts_ByCountyId = [];
-            Dictionary<int, long> predictedYearBuiltBuildingCounts_ByCountyId = [];
+            // county is what says whether the year built entries were there to be read.
+            Dictionary<int, long> yearBuiltWrittenCounts_ByCountyId = [];
+            Dictionary<int, long> yearBuiltBuildingCounts_ByCountyId = [];
 
-            void AddPredictedYearBuiltTally(int countyId_Tally, int writtenCount_Tally, int buildingCount_Tally)
+            void AddYearBuiltTally(int countyId_Tally, int writtenCount_Tally, int buildingCount_Tally)
             {
-                predictedYearBuiltWrittenCounts_ByCountyId[countyId_Tally] = predictedYearBuiltWrittenCounts_ByCountyId.GetValueOrDefault(countyId_Tally) + writtenCount_Tally;
-                predictedYearBuiltBuildingCounts_ByCountyId[countyId_Tally] = predictedYearBuiltBuildingCounts_ByCountyId.GetValueOrDefault(countyId_Tally) + buildingCount_Tally;
+                yearBuiltWrittenCounts_ByCountyId[countyId_Tally] = yearBuiltWrittenCounts_ByCountyId.GetValueOrDefault(countyId_Tally) + writtenCount_Tally;
+                yearBuiltBuildingCounts_ByCountyId[countyId_Tally] = yearBuiltBuildingCounts_ByCountyId.GetValueOrDefault(countyId_Tally) + buildingCount_Tally;
             }
             Dictionary<string, StatisticalDataCollection?> cachedStatisticalDataCollections = [];
             Dictionary<int, HashSet<int>> inScopeSubdivisionIds_ByCountyId = Query.InScopeSubdivisionIds(administrativeAreal2DReferences, siblingCountyGroups);
@@ -496,19 +496,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
                             }
                         }
 
-                        if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
+                        if (update_YearBuilt && yearBuiltDataPostgreSQLConverter is not null)
                         {
                             List<string> references = [.. building2Ds.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
 
                             // Fallback by reference: a stored year_built_data row may sit under a sibling polygon part
-                            // of the same county code. That is safe to write because Update_Building2D_PredictedYearBuilt
+                            // of the same county code. That is safe to write because Update_Building2D_YearBuilt
                             // keys the row on the run's county (its parameter), never on the record's. DiGi.GIS.PostgreSQL#70
                             List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, targetCountyId, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                             if (yearBuiltDatas is not null)
                             {
                                 List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
-                                int writtenCount = IO.Modify.Update_Building2D_PredictedYearBuilt(table, targetCountyId, yearBuiltDatas_GIS);
-                                AddPredictedYearBuiltTally(targetCountyId, writtenCount, references.Count);
+                                int writtenCount = IO.Modify.Update_Building2D_YearBuilt(table, targetCountyId, yearBuiltDatas_GIS);
+                                AddYearBuiltTally(targetCountyId, writtenCount, references.Count);
                             }
                         }
                     }
@@ -781,19 +781,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         }
                     }
 
-                    if (update_PredictedYearBuilt && yearBuiltDataPostgreSQLConverter is not null)
+                    if (update_YearBuilt && yearBuiltDataPostgreSQLConverter is not null)
                     {
                         List<string> references = [.. building2Ds_Unassigned.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
 
                         // Fallback by reference: a stored year_built_data row may sit under a sibling polygon part
-                        // of the same county code. That is safe to write because Update_Building2D_PredictedYearBuilt
+                        // of the same county code. That is safe to write because Update_Building2D_YearBuilt
                         // keys the row on the run's county (its parameter), never on the record's. DiGi.GIS.PostgreSQL#70
                         List<YearBuiltData>? yearBuiltDatas = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, fallbackByReference: true, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                         if (yearBuiltDatas is not null)
                         {
                             List<GIS.Classes.YearBuiltData> yearBuiltDatas_GIS = [.. yearBuiltDatas.Select(x => x.ToDiGi()).OfType<GIS.Classes.YearBuiltData>()];
-                            int writtenCount = IO.Modify.Update_Building2D_PredictedYearBuilt(table, countyId, yearBuiltDatas_GIS);
-                            AddPredictedYearBuiltTally(countyId, writtenCount, references.Count);
+                            int writtenCount = IO.Modify.Update_Building2D_YearBuilt(table, countyId, yearBuiltDatas_GIS);
+                            AddYearBuiltTally(countyId, writtenCount, references.Count);
                         }
                     }
                 }
@@ -842,21 +842,21 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 progress.Report(UpdatedRowCount);
             }
 
-            if (update_PredictedYearBuilt)
+            if (update_YearBuilt)
             {
-                foreach (KeyValuePair<int, long> keyValuePair in predictedYearBuiltBuildingCounts_ByCountyId)
+                foreach (KeyValuePair<int, long> keyValuePair in yearBuiltBuildingCounts_ByCountyId)
                 {
                     long buildingCount = keyValuePair.Value;
-                    long writtenCount = predictedYearBuiltWrittenCounts_ByCountyId.GetValueOrDefault(keyValuePair.Key);
+                    long writtenCount = yearBuiltWrittenCounts_ByCountyId.GetValueOrDefault(keyValuePair.Key);
 
-                    PredictedYearBuiltWrittenCount += writtenCount;
-                    PredictedYearBuiltMissingBuildingCount += buildingCount - writtenCount;
+                    YearBuiltWrittenCount += writtenCount;
+                    YearBuiltMissingBuildingCount += buildingCount - writtenCount;
 
-                    // A county with buildings and not one stored prediction is the state DiGi.GIS.PostgreSQL#81 could not
-                    // see: the run wrote every other column and the year column stayed empty without a word.
+                    // A county with buildings and not one stored year built entry is the state DiGi.GIS.PostgreSQL#81 could not
+                    // see: the run wrote every other column and the year columns stayed empty without a word.
                     Serilog.Modify.Log(
                         writtenCount == 0 && buildingCount > 0 ? Serilog.Enums.LogEventLevel.Warning : Serilog.Enums.LogEventLevel.Information,
-                        "Building data predicted year built - county {CountyId}, {WrittenCount} of {BuildingCount} buildings carry a stored prediction",
+                        "Building data year built - county {CountyId}, {WrittenCount} of {BuildingCount} buildings carry a stored year built entry",
                         keyValuePair.Key,
                         writtenCount,
                         buildingCount);
@@ -864,7 +864,7 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled, {UnmeasuredSubdivisionCount} subdivisions and {UnmeasuredUnassignedCountyCount} unassigned buckets left without radial ratios, {PredictedYearBuiltWrittenCount} buildings given a predicted year built and {PredictedYearBuiltMissingCount} without a stored prediction",
+                "{Type}: finished - {ProcessedCount} subdivisions written, {UnassignedCount} unassigned buildings written, {CrossCountyCount} cross-county buildings written, {RowCount} total rows, {FailedCount} failed, {SkippedCount} skipped for want of a parent county, {UnfulfilledCount} update types unfulfilled, {UnmeasuredSubdivisionCount} subdivisions and {UnmeasuredUnassignedCountyCount} unassigned buckets left without radial ratios, {YearBuiltWrittenCount} buildings given a year built and {YearBuiltMissingCount} without a stored year built entry",
                 nameof(PostgreSQLBuildingDataUpdateTask),
                 ProcessedSubdivisionCount,
                 UnassignedSubdivisionBuildingCount,
@@ -875,8 +875,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 UnfulfilledUpdateTypeCount,
                 RadialRatiosUnmeasuredSubdivisionCount,
                 RadialRatiosUnmeasuredUnassignedCountyCount,
-                PredictedYearBuiltWrittenCount,
-                PredictedYearBuiltMissingBuildingCount);
+                YearBuiltWrittenCount,
+                YearBuiltMissingBuildingCount);
 
             return FailedSubdivisionCount == 0 && UnfulfilledUpdateTypeCount == 0 && RadialRatiosUnmeasuredSubdivisionCount == 0;
         }

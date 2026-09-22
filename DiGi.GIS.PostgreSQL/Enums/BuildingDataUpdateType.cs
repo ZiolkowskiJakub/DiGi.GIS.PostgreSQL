@@ -34,8 +34,8 @@ namespace DiGi.GIS.PostgreSQL.Enums
         [Description("Statistical")] Statistical,
 
         /// <summary>
-        /// Predicted year built data update.
+        /// Year built data update: writes the predicted, user and calculated year-built columns.
         /// </summary>
-        [Description("Predicted Year Built")] PredictedYearBuilt,
+        [Description("Year Built")] YearBuilt,
     }
 }

@@ -17909,7 +17909,7 @@ A subdivision that fails is logged and stepped over rather than ending the run, 
 
 The radial ratios are the one update type measured against data outside the buildings being written - the surroundings within the largest radius - so they can fail on their own while every other column of the same row is written normally. [RadialRatiosUnmeasuredSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount') counts the subdivisions that happened to, and stops the run being reported as succeeded; [RadialRatiosUnmeasuredUnassignedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredUnassignedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredUnassignedCountyCount') counts the same miss on a county's unassigned buildings and is reported without failing the run, because at one or two buildings the miss cannot be told apart from a stored box that does not match its own geometry.
 
-The predicted year built is the one update type that can legitimately write nothing: only the counties a prediction run has scored hold a `year_built_data` row to read. [PredictedYearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltWrittenCount') and [PredictedYearBuiltMissingBuildingCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltMissingBuildingCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltMissingBuildingCount') say how many buildings received a year and how many had no stored prediction, and every county in scope logs its own tally, so a run that omitted the update type and a run that found nothing to write no longer leave the same trace ([DiGi\.GIS\.PostgreSQL\#81](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/81 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/81')). Neither counter affects the result.
+The year built update is the one update type that can legitimately write nothing: only the counties a prediction or user run has scored hold a `year_built_data` row to read. [YearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.YearBuiltWrittenCount') and [YearBuiltMissingBuildingCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltMissingBuildingCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.YearBuiltMissingBuildingCount') say how many buildings received a year and how many had no stored year built entry, and every county in scope logs its own tally, so a run that omitted the update type and a run that found nothing to write no longer leave the same trace ([DiGi\.GIS\.PostgreSQL\#81](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/81 'https://github\.com/ZiolkowskiJakub/DiGi\.GIS\.PostgreSQL/issues/81')). Neither counter affects the result.
 
 ```csharp
 public class PostgreSQLBuildingDataUpdateTask : DiGi.Core.Classes.ReportableBackgroundTask<long>, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLObject, DiGi.Core.Interfaces.IObject
@@ -17994,36 +17994,6 @@ public DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions PostgreSQ
 
 #### Property Value
 [PostgreSQLBuildingDataUpdateOptions](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateOptions')
-
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltMissingBuildingCount'></a>
-
-## PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltMissingBuildingCount Property
-
-Gets the number of buildings in scope of a [PredictedYearBuilt](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.PredictedYearBuilt 'DiGi\.GIS\.PostgreSQL\.Enums\.BuildingDataUpdateType\.PredictedYearBuilt') run for which no stored prediction was found during the last run, so their `Predicted year built` was left as it stood\.
-
-Counted only when the update type was selected. A building without a `year_built_data` row, or whose rows carry user-entered years only, is counted here; it is the complement of [PredictedYearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltWrittenCount') over the buildings the run read.
-
-```csharp
-public long PredictedYearBuiltMissingBuildingCount { get; private set; }
-```
-
-#### Property Value
-[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
-
-<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltWrittenCount'></a>
-
-## PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltWrittenCount Property
-
-Gets the number of buildings given a predicted year built during the last run, over the subdivision pass and the pass over the buildings the subdivision loop cannot reach\.
-
-Zero after a run that selected [PredictedYearBuilt](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.PredictedYearBuilt 'DiGi\.GIS\.PostgreSQL\.Enums\.BuildingDataUpdateType\.PredictedYearBuilt') means no building in scope holds a stored prediction, which is the state of every county a prediction run has not scored - it is reported, per county and here, and does not fail the run. Zero after a run that did not select the update type means nothing; the two used to be indistinguishable.
-
-```csharp
-public long PredictedYearBuiltWrittenCount { get; private set; }
-```
-
-#### Property Value
-[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.ProcessedSubdivisionCount'></a>
 
@@ -18129,6 +18099,36 @@ public long UpdatedRowCount { get; private set; }
 
 #### Property Value
 [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltMissingBuildingCount'></a>
+
+## PostgreSQLBuildingDataUpdateTask\.YearBuiltMissingBuildingCount Property
+
+Gets the number of buildings in scope of a [YearBuilt](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.YearBuilt 'DiGi\.GIS\.PostgreSQL\.Enums\.BuildingDataUpdateType\.YearBuilt') run for which no stored year built entry was found during the last run, so their year built columns were left as they stood\.
+
+Counted only when the update type was selected. A building without a `year_built_data` row, or whose rows carry no usable predicted or exact user year, is counted here; it is the complement of [YearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.YearBuiltWrittenCount') over the buildings the run read.
+
+```csharp
+public long YearBuiltMissingBuildingCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltWrittenCount'></a>
+
+## PostgreSQLBuildingDataUpdateTask\.YearBuiltWrittenCount Property
+
+Gets the number of buildings given a year built during the last run, over the subdivision pass and the pass over the buildings the subdivision loop cannot reach\.
+
+Zero after a run that selected [YearBuilt](DiGi.GIS.PostgreSQL.Enums.md#DiGi.GIS.PostgreSQL.Enums.BuildingDataUpdateType.YearBuilt 'DiGi\.GIS\.PostgreSQL\.Enums\.BuildingDataUpdateType\.YearBuilt') means no building in scope holds a stored year built entry, which is the state of every county a prediction or user run has not scored - it is reported, per county and here, and does not fail the run. Zero after a run that did not select the update type means nothing; the two used to be indistinguishable.
+
+```csharp
+public long YearBuiltWrittenCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 ### Methods
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.ExecuteAsync(System.IProgress_long_,System.Threading.CancellationToken)'></a>
@@ -18156,7 +18156,7 @@ A cancellation token that can be used to cancel the operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false \- including when a selected update type was counted against [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount') or a subdivision against [RadialRatiosUnmeasuredSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount')\. A county's unassigned buildings whose radial ratios could not be measured are counted against [RadialRatiosUnmeasuredUnassignedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredUnassignedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredUnassignedCountyCount') and do not affect the result; neither do [PredictedYearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltWrittenCount') and [PredictedYearBuiltMissingBuildingCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.PredictedYearBuiltMissingBuildingCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.PredictedYearBuiltMissingBuildingCount'), since a county without stored predictions is not a fault of the run\.
+A task representing the asynchronous operation\. Returns true when the run could be attempted, every subdivision in scope was updated without error, every selected update type was written and every subdivision the radial ratios were asked for could be measured; otherwise, false \- including when a selected update type was counted against [UnfulfilledUpdateTypeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.UnfulfilledUpdateTypeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.UnfulfilledUpdateTypeCount') or a subdivision against [RadialRatiosUnmeasuredSubdivisionCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredSubdivisionCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredSubdivisionCount')\. A county's unassigned buildings whose radial ratios could not be measured are counted against [RadialRatiosUnmeasuredUnassignedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.RadialRatiosUnmeasuredUnassignedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.RadialRatiosUnmeasuredUnassignedCountyCount') and do not affect the result; neither do [YearBuiltWrittenCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltWrittenCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.YearBuiltWrittenCount') and [YearBuiltMissingBuildingCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateTask.YearBuiltMissingBuildingCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataUpdateTask\.YearBuiltMissingBuildingCount'), since a county without stored year built entries is not a fault of the run\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLOrtoDatasCreateDatabaseTask'></a>
 
