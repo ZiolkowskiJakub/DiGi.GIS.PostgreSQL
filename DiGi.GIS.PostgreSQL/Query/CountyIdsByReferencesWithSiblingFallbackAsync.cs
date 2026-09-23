@@ -26,7 +26,7 @@ namespace DiGi.GIS.PostgreSQL
         /// <returns>The identifier of the county row holding each resolved reference; a reference no part of a named county holds is absent from the result. An empty map when nothing was asked or nothing resolved; <c>null</c> when any lookup could not run - never read <c>null</c> as nothing resolved.</returns>
         public static async Task<Dictionary<string, int>?> CountyIdsByReferencesWithSiblingFallbackAsync(this Building2DPostgreSQLConverter? building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, IEnumerable<string?>? references, IEnumerable<int>? countyIds, Enums.AdministrativeArealType administrativeArealType = Enums.AdministrativeArealType.County, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
-            Dictionary<string, int>? result = await CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references, countyIds, commandTimeout, cancellationToken);
+            Dictionary<string, int>? result = await CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references, countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
             if (result is null)
             {
@@ -96,7 +96,7 @@ namespace DiGi.GIS.PostgreSQL
                 }
             }
 
-            Dictionary<string, int>? result_Fallback = await CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_Unresolved, countyIds_Expanded, commandTimeout, cancellationToken);
+            Dictionary<string, int>? result_Fallback = await CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_Unresolved, countyIds_Expanded, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
 
             if (result_Fallback is null)
             {
