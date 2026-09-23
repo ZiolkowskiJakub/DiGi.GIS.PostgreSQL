@@ -48,9 +48,9 @@ namespace DiGi.GIS.PostgreSQL
 
             if (reference_Temp is not ComplexReference complexReference)
             {
-                // Core.Query.TryParse accepts a bare, discriminator-less string by reading it as a legacy
-                // TypeReference (see Core.Query.TryParseLegacy), so a plain building reference parses to a
-                // non-unique, non-complex reference. Treat such a string as the plain building reference it is.
+                // A structured reference that is neither unique nor complex - e.g. a bare TypeReference resolved
+                // through its discriminator - carries no building identifier of its own. Treat the string as the
+                // plain building reference it is.
                 buildingModelReference = reference;
                 return true;
             }

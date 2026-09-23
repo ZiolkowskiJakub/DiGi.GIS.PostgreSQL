@@ -1,9 +1,3 @@
-// TODO [ReferencedObjectIndexes]: this file carries the one-off index migration for issue #6.
-// Two things in it are temporary and go away together, once every deployed database has run this
-// DDL at least once: the DROP INDEX statement in TableAsync_Building2DReferencedObject, and the
-// raised commandTimeout default on that method and on
-// TableAsync_AdministrativeArea2DReferencedObject. Nothing else in this file is temporary.
-
 using DiGi.GIS.PostgreSQL.Classes;
 using Npgsql;
 using System;
@@ -93,10 +87,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
         /// <param name="tableName">The name of the table associated with the administrative area 2D referenced object.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public static async Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -379,10 +373,10 @@ namespace DiGi.GIS.PostgreSQL
         /// </summary>
         /// <param name="npgsqlConnection">The <see cref="NpgsqlConnection"/> instance used to execute the command.</param>
         /// <param name="tableName">The <see cref="System.String"/> representing the name of the table to be created.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. TODO [ReferencedObjectIndexes]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index across every partition before it returns. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.</param>
         /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. The task result is a <see cref="System.Boolean"/> value indicating whether the table was created successfully; otherwise, false.</returns>
-        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public static async Task<bool> TableAsync_Building2DReferencedObject(this NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             if (npgsqlConnection is null)
             {
@@ -402,16 +396,6 @@ namespace DiGi.GIS.PostgreSQL
                     PRIMARY KEY (id, county_id),
                     UNIQUE (county_id, unique_id)
                 ) PARTITION BY LIST (county_id);
-
-                -- TODO [ReferencedObjectIndexes]: temporary migration statement for issue #6, remove it
-                -- once every deployed database has run this DDL at least once. It is here rather than in
-                -- the CREATE TABLE because CREATE TABLE IF NOT EXISTS leaves an already-created table
-                -- with the index set it was created with, and a table created from this version of the
-                -- DDL never has idx_*_unique_id_county in the first place. What it drops duplicated
-                -- UNIQUE (county_id, unique_id), which PostgreSQL already backs with a unique index on
-                -- exactly those columns in that order; that one is auto-named
-                -- {tableName}_county_id_unique_id_key, so this statement cannot reach it.
-                DROP INDEX IF EXISTS idx_{tableName}_unique_id_county;
 
                 -- The primary access path of the table. Deliberately not unique: a building holds one
                 -- row per stored object, so several rows share a (county_id, reference). county_id

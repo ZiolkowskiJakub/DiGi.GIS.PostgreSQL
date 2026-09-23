@@ -466,7 +466,7 @@ Asynchronously creates the AdministrativeArea2DReferencedObject table for the sp
 `reference` is what every read of this table filters on, so it carries an index of its own. `unique_id` needs none: the `UNIQUE` constraint on it is already an index, and a second one on the same column would only cost storage and write time.
 
 ```csharp
-public static System.Threading.Tasks.Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this Npgsql.NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<bool> TableAsync_AdministrativeArea2DReferencedObject(this Npgsql.NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -486,7 +486,7 @@ The name of the table associated with the administrative area 2D referenced obje
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. TODO \[ReferencedObjectIndexes\]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index before it returns\. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
 <a name='DiGi.GIS.PostgreSQL.Create.TableAsync_AdministrativeArea2DReferencedObject(thisNpgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -616,7 +616,7 @@ Do not add a unique constraint on `(county_id, reference)` to stop the table gro
 Indexes: `(county_id, reference)` is the primary access path and every read filters on it, so it carries an index. `(county_id, unique_id)` carries none of its own, because the `UNIQUE` constraint is already an index on exactly those columns in that order.
 
 ```csharp
-public static System.Threading.Tasks.Task<bool> TableAsync_Building2DReferencedObject(this Npgsql.NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<bool> TableAsync_Building2DReferencedObject(this Npgsql.NpgsqlConnection? npgsqlConnection, string tableName, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -636,7 +636,7 @@ The [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. TODO \[ReferencedObjectIndexes\]: the default is 600 rather than the 30 used elsewhere in this class, because on a table that predates the reference index the command has to build that index across every partition before it returns\. Once no deployed table needs a first build this is a catalog lookup again, and the default goes back to 30\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
 
 <a name='DiGi.GIS.PostgreSQL.Create.TableAsync_Building2DReferencedObject(thisNpgsql.NpgsqlConnection,string,int,System.Threading.CancellationToken).cancellationToken'></a>
 
