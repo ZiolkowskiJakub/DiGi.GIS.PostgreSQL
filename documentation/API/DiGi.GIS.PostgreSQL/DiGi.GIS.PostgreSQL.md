@@ -1828,9 +1828,9 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 One sorted group of part identifiers per county code, ordered by lowest identifier, or null when the parts or their codes could not be read \- an unreadable scope must not silently narrow to the named parts and file a whole county under one of them\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_)'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
 
-## Query\.CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>\) Method
+## Query\.CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable\<string\>, IEnumerable\<int\>, int, CancellationToken\) Method
 
 Reads which county row each reference belongs to, from the `building_2d` row that holds it\.
 
@@ -1840,32 +1840,48 @@ The parts are probed in ascending order, one batched lookup each, and a referenc
 
 A reference no part holds is simply absent from the result: nothing states where it belongs, and the caller decides whether to drop it or resolve it some other way.
 
+The lookup not running at all is a different answer from running and resolving nothing. A null converter, or a part lookup that could not execute, answers `null` for the whole call: reading that as an empty map is what turned a broken connection into items silently dropped while the caller reported success.
+
+It lives here rather than in a host because it is a question about `building_2d` and nothing else: the Web API, the desktop application and any background task all have to answer it the same way, and each answering it for itself is how a batch came to be filed under one part in the first place.
+
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>> CountyIdsByReferencesAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds);
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>?> CountyIdsByReferencesAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).building2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
 
 `building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
 
 The converter used to look the references up\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).references'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).references'></a>
 
 `references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 The references to resolve\.
 
-<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_).countyIds'></a>
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 The candidate county rows, normally every polygon part of one code\.
 
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each part lookup\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-The identifier of the county row holding each reference\. Empty when nothing could be resolved\.
+The identifier of the county row holding each resolved reference; a reference no part holds is absent from the result\. An empty map when nothing was asked or no part holds any reference; `null` when the lookup could not run \- never read `null` as nothing resolved\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken)'></a>
 
@@ -1873,16 +1889,18 @@ The identifier of the county row holding each reference\. Empty when nothing cou
 
 Resolves each reference to the county part that holds its `building_2d` row, and \- when the caller named only a subset of a county's parts \- widens the unresolved ones to every part of the named code before giving up\.
 
-[CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') probes only the county rows the caller sent. That is the safe answer for a caller who named every part, but it is lossy for one who named a single part of a multi-part county: a datum whose 2D building is filed under a sibling part comes back unresolved and is left unwritten, even though the county the caller named does hold it.
+[CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)') probes only the county rows the caller sent. That is the safe answer for a caller who named every part, but it is lossy for one who named a single part of a multi-part county: a datum whose 2D building is filed under a sibling part comes back unresolved and is left unwritten, even though the county the caller named does hold it.
 
 This method keeps that first pass exactly, then adds one bounded widening. The references the first pass leaves unresolved are re-resolved against every part of the codes the candidate rows name, so a reference held by any part of a named county lands under that part. A reference held by no part of a named county stays unresolved - the widening never crosses into a county the caller did not name.
 
-The [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') determinism contract is preserved: each pass probes its parts in ascending order and takes the first part that holds a reference, so a reference held by more than one part resolves to the same part on every run.
+The [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)') determinism contract is preserved: each pass probes its parts in ascending order and takes the first part that holds a reference, so a reference held by more than one part resolves to the same part on every run.
 
-It lives next to [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>\)') rather than in a host because the Web API, the desktop application and any background task have to answer "which part of this county holds that reference" the same way; answering it per controller is how a batch came to be filed under one part in the first place. A caller who already named every part sees no difference - the first pass resolves everything, nothing is left to widen, and the second pass is not reached.
+A lookup that could not run - the first pass, the widening, or the second pass - answers `null` for the whole call: a partial map cannot be told apart from a complete one over fewer parts. Degenerate input (no references, no candidate rows) answers an empty map, decided before the widening so that nothing being asked is never classified as a failure.
+
+It lives next to [CountyIdsByReferencesAsync\(this Building2DPostgreSQLConverter, IEnumerable&lt;string&gt;, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Query\.CountyIdsByReferencesAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)') rather than in a host because the Web API, the desktop application and any background task all have to answer "which part of this county holds that reference" the same way; answering it per controller is how a batch came to be filed under one part in the first place. A caller who already named every part sees no difference - the first pass resolves everything, nothing is left to widen, and the second pass is not reached.
 
 ```csharp
-public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>> CountyIdsByReferencesWithSiblingFallbackAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType=DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.County, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public static System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<string,int>?> CountyIdsByReferencesWithSiblingFallbackAsync(this DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<string?>? references, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType=DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType.County, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
@@ -1920,7 +1938,7 @@ The level the candidate rows name; the widening reads the parts of their codes a
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the widening lookups\. A value of 0 disables the timeout\.
+The timeout in seconds for the lookups\. A value of 0 disables the timeout\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(thisDiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_int_,DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1930,7 +1948,7 @@ The cancellation token to observe\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-The identifier of the county row holding each reference\. A reference no part of a named county holds is absent from the result\.
+The identifier of the county row holding each resolved reference; a reference no part of a named county holds is absent from the result\. An empty map when nothing was asked or nothing resolved; `null` when any lookup could not run \- never read `null` as nothing resolved\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.CoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,int,System.Collections.Generic.IReadOnlyDictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,double,int,System.Threading.CancellationToken)'></a>
 
