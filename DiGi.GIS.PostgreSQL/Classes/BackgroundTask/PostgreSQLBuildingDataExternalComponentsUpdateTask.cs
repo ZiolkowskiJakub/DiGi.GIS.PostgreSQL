@@ -69,6 +69,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long SkippedComponentCount { get; private set; }
 
         /// <summary>
+        /// Gets the number of references stepped over during the last run because their building data row already carried an external components area total.
+        /// <para>Always 0 unless <see cref="PostgreSQLBuildingDataExternalComponentsUpdateOptions.SkipCompleted"/> is set.</para>
+        /// </summary>
+        public long SkippedReferenceCount { get; private set; }
+
+        /// <summary>
         /// Gets the number of building data rows written during the last run.
         /// <para>Rows rather than buildings: the same building is counted again on a later run.</para>
         /// </summary>
@@ -87,11 +93,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
             ProcessedCountyCount = 0;
             ProcessedModelCount = 0;
             SkippedComponentCount = 0;
+            SkippedReferenceCount = 0;
             UpdatedRowCount = 0;
 
             PostgreSQLBuildingDataExternalComponentsUpdateOptions ??= new();
 
             int commandTimeout = PostgreSQLBuildingDataExternalComponentsUpdateOptions.CommandTimeout;
+            int batchSize = Math.Max(1, PostgreSQLBuildingDataExternalComponentsUpdateOptions.BatchSize);
+            bool skipCompleted = PostgreSQLBuildingDataExternalComponentsUpdateOptions.SkipCompleted;
 
             BuildingModelPostgreSQLConverter? buildingModelPostgreSQLConverter = gISPostgreSQLConverterManager.GetPostgreSQLConverter<BuildingModelPostgreSQLConverter>();
             if (buildingModelPostgreSQLConverter is null)
@@ -124,12 +133,20 @@ namespace DiGi.GIS.PostgreSQL.Classes
             HashSet<int>? countyIds = PostgreSQLBuildingDataExternalComponentsUpdateOptions.CountyIds;
 
             Serilog.Modify.Log(
-                "{Type}: starting over {CountyCount} counties, scope {CountyScope}",
+                "{Type}: starting over {CountyCount} counties, scope {CountyScope}, batch size {BatchSize}, skip completed {SkipCompleted}",
                 nameof(PostgreSQLBuildingDataExternalComponentsUpdateTask),
                 countyReferences.Count,
-                countyIds is null ? "all" : string.Join(", ", countyIds));
+                countyIds is null ? "all" : string.Join(", ", countyIds),
+                batchSize,
+                skipCompleted);
 
-            const int batchSize = 1000;
+            // The columns the resume check reads. The reference column is asked for explicitly so the rows can be
+            // matched back; the total is non-null only on a row a run has written.
+            string? uniqueId_Reference = Core.IO.Query.UniqueId(IO.Constants.Column.Reference);
+            // Through the base-typed list, whose last entry is the total: the constant is a UnitColumn, and naming it
+            // would need a DiGi.Unit.IO reference this project stays free of (see Modify.Update_ExternalComponentsArea).
+            List<Column> columns_ExternalComponentsArea = IO.Create.Columns_ExternalComponentsArea();
+            string? uniqueId_Total = columns_ExternalComponentsArea.Count == 0 ? null : Core.IO.Query.UniqueId(columns_ExternalComponentsArea[^1]);
 
             foreach (AdministrativeAreal2DReference? countyReference in countyReferences)
             {
@@ -150,8 +167,6 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 }
 
                 bool countyFailed = false;
-
-                List<BuildingModel> models_Deduped = [];
 
                 List<string> references_List = [];
                 try
@@ -180,26 +195,109 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                if (references_List.Count > 0)
+                // One batch is read, classified and written before the next is read, so memory follows the batch
+                // size rather than the county: holding every stored model of a city county at once starved the
+                // production host (DiGi.GIS.PostgreSQL#97). A county is therefore no longer written in one
+                // push, and a failed batch leaves the batches before it written - harmless, the run is idempotent.
+                long countyModelCount = 0;
+                long countyRowCount = 0;
+                long countySkippedComponentCount = 0;
+                long countyOpenEnvelopeCount = 0;
+                long countySkippedReferenceCount = 0;
+
+                for (int offset = 0; offset < references_List.Count && !countyFailed; offset += batchSize)
                 {
-                    for (int offset = 0; offset < references_List.Count && !countyFailed; offset += batchSize)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    List<string> references_Batch = references_List.GetRange(offset, Math.Min(batchSize, references_List.Count - offset));
+
+                    if (skipCompleted)
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
+                        HashSet<string>? references_Completed = await CompletedReferencesAsync(references_Batch, countyId);
+                        if (references_Completed is not null && references_Completed.Count > 0)
+                        {
+                            countySkippedReferenceCount += references_Batch.RemoveAll(references_Completed.Contains);
+                        }
 
-                        List<string> references_Batch = references_List.GetRange(offset, Math.Min(batchSize, references_List.Count - offset));
+                        if (references_Batch.Count == 0)
+                        {
+                            continue;
+                        }
+                    }
 
-                        List<BuildingModel>? models_Batch = null;
+                    List<BuildingModel>? models_Batch = null;
+                    try
+                    {
+                        // No fallback by reference: a reference the county does not hold is answered out of some
+                        // other county, and the record that comes back carries that county's identifier. Writing
+                        // it would file a building data row under a county this run is not processing.
+                        models_Batch = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references_Batch, countyId, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                        if (models_Batch is null)
+                        {
+                            countyFailed = true;
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "External components county failed - county {CountyId}, offset {Offset}, the read of the {ReferenceCount} references came back empty", countyId, offset, references_Batch.Count);
+                        }
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        countyFailed = true;
+                        Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, offset {Offset}, the stored models of {ReferenceCount} references could not be read", countyId, offset, references_Batch.Count);
+                    }
+
+                    if (countyFailed || models_Batch is null)
+                    {
+                        break;
+                    }
+
+                    // The read is ordered created_at DESC, id DESC, so the first record of a reference is the latest
+                    // stored version - and every version of a reference arrives in the batch that asked for it.
+                    HashSet<string> references_Written = [];
+                    List<BuildingModel> models_Latest = [];
+                    foreach (BuildingModel? model in models_Batch)
+                    {
+                        if (model is null)
+                        {
+                            continue;
+                        }
+
+                        if (model.Reference is string reference_Model && !string.IsNullOrWhiteSpace(reference_Model) && references_Written.Add(reference_Model))
+                        {
+                            models_Latest.Add(model);
+                        }
+                    }
+
+                    models_Batch = null;
+
+                    Table table = new();
+
+                    ExternalComponentsAreaResult batchResult;
+                    try
+                    {
+                        batchResult = Modify.Update_ExternalComponentsArea(table, models_Latest);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        // A model the classification refuses is a defect in the stored data, and the method names the
+                        // building in the exception. The county fails visibly instead of writing partial rows.
+                        countyFailed = true;
+                        Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, offset {Offset}, the {ModelCount} stored models could not be classified", countyId, offset, models_Latest.Count);
+                        break;
+                    }
+
+                    if (table.RowCount > 0)
+                    {
+                        bool updated;
                         try
                         {
-                            // No fallback by reference: a reference the county does not hold is answered out of some
-                            // other county, and the record that comes back carries that county's identifier. Writing
-                            // it would file a building data row under a county this run is not processing.
-                            models_Batch = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references_Batch, countyId, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                            if (models_Batch is null)
-                            {
-                                countyFailed = true;
-                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "External components county failed - county {CountyId}, the read of the {ReferenceCount} references came back empty", countyId, references_Batch.Count);
-                            }
+                            updated = await buildingDataPostgreSQLConverter.PushAsync(table, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                         {
@@ -208,17 +306,31 @@ namespace DiGi.GIS.PostgreSQL.Classes
                         catch (Exception exception)
                         {
                             countyFailed = true;
-                            Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, the stored models of {ReferenceCount} references could not be read", countyId, references_Batch.Count);
-                        }
-
-                        if (countyFailed || models_Batch is null)
-                        {
+                            Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, offset {Offset}, the {RowCount} rows built could not be written", countyId, offset, table.RowCount);
                             break;
                         }
 
-                        models_Deduped.AddRange(models_Batch);
+                        if (!updated)
+                        {
+                            countyFailed = true;
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "External components county failed - county {CountyId}, offset {Offset}, the write of {RowCount} rows was rolled back", countyId, offset, table.RowCount);
+                            break;
+                        }
                     }
+
+                    countyModelCount += models_Latest.Count;
+                    countyRowCount += table.RowCount;
+                    countySkippedComponentCount += batchResult.SkippedComponentCount;
+                    countyOpenEnvelopeCount += batchResult.OpenEnvelopeCount;
+
+                    OpenEnvelopeCount += batchResult.OpenEnvelopeCount;
+                    SkippedComponentCount += batchResult.SkippedComponentCount;
+                    ProcessedModelCount += models_Latest.Count;
+                    UpdatedRowCount += table.RowCount;
+                    progress.Report(UpdatedRowCount);
                 }
+
+                SkippedReferenceCount += countySkippedReferenceCount;
 
                 if (countyFailed)
                 {
@@ -226,96 +338,104 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     continue;
                 }
 
-                // The read is ordered created_at DESC, id DESC, so the first record of a reference is the latest stored version.
-                HashSet<string> references_Written = [];
-                List<BuildingModel> models_Latest = [];
-                foreach (BuildingModel? model in models_Deduped)
-                {
-                    if (model is null)
-                    {
-                        continue;
-                    }
-
-                    if (model.Reference is string reference_Model && !string.IsNullOrWhiteSpace(reference_Model) && references_Written.Add(reference_Model))
-                    {
-                        models_Latest.Add(model);
-                    }
-                }
-
-                Table table = new();
-
-                long countySkippedComponentCount = 0;
-                long countyOpenEnvelopeCount = 0;
-                try
-                {
-                    ExternalComponentsAreaResult countyResult = Modify.Update_ExternalComponentsArea(table, models_Latest);
-                    countySkippedComponentCount = countyResult.SkippedComponentCount;
-                    countyOpenEnvelopeCount = countyResult.OpenEnvelopeCount;
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception exception)
-                {
-                    // A model the classification refuses is a defect in the stored data, and the method names the
-                    // building in the exception. The county fails visibly instead of writing partial rows.
-                    FailedCountyCount++;
-                    Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, the {ModelCount} stored models could not be classified", countyId, models_Latest.Count);
-                    continue;
-                }
-
-                if (table.RowCount == 0)
-                {
-                    ProcessedCountyCount++;
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models read, none of them produced a row", countyId, models_Latest.Count);
-                    continue;
-                }
-
-                bool updated;
-                try
-                {
-                    updated = await buildingDataPostgreSQLConverter.PushAsync(table, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception exception)
-                {
-                    FailedCountyCount++;
-                    Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, the {RowCount} rows built could not be written", countyId, table.RowCount);
-                    continue;
-                }
-
-                if (!updated)
-                {
-                    FailedCountyCount++;
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "External components county failed - county {CountyId}, the write of {RowCount} rows was rolled back", countyId, table.RowCount);
-                    continue;
-                }
-
-                OpenEnvelopeCount += countyOpenEnvelopeCount;
-                SkippedComponentCount += countySkippedComponentCount;
-                ProcessedModelCount += models_Latest.Count;
-                UpdatedRowCount += table.RowCount;
                 ProcessedCountyCount++;
-                progress.Report(UpdatedRowCount);
 
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped, {OpenEnvelopeCount} open envelopes", countyId, models_Latest.Count, table.RowCount, countySkippedComponentCount, countyOpenEnvelopeCount);
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped, {OpenEnvelopeCount} open envelopes, {SkippedReferenceCount} references already done", countyId, countyModelCount, countyRowCount, countySkippedComponentCount, countyOpenEnvelopeCount, countySkippedReferenceCount);
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {OpenEnvelopeCount} open envelopes, {SkippedCount} components skipped, {RowCount} rows",
+                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {OpenEnvelopeCount} open envelopes, {SkippedCount} components skipped, {SkippedReferenceCount} references already done, {RowCount} rows",
                 nameof(PostgreSQLBuildingDataExternalComponentsUpdateTask),
                 ProcessedCountyCount,
                 FailedCountyCount,
                 ProcessedModelCount,
                 OpenEnvelopeCount,
                 SkippedComponentCount,
+                SkippedReferenceCount,
                 UpdatedRowCount);
 
             return FailedCountyCount == 0;
+
+            // The references of the batch whose building data row already carries a total - the work an earlier,
+            // interrupted run finished. Null when the check cannot be made: the batch is then processed in full,
+            // because recomputing a building costs time and skipping one wrongly costs its data.
+            async Task<HashSet<string>?> CompletedReferencesAsync(List<string> references, int countyId)
+            {
+                if (string.IsNullOrWhiteSpace(uniqueId_Reference) || string.IsNullOrWhiteSpace(uniqueId_Total))
+                {
+                    return null;
+                }
+
+                Table? table_Existing;
+                try
+                {
+                    table_Existing = await buildingDataPostgreSQLConverter.PullAsync(references, countyId, columnUniqueIds: [uniqueId_Reference!, uniqueId_Total!], batchSize: batchSize, fallbackByReference: false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    Serilog.Modify.Log(exception, "External components resume check failed - county {CountyId}, the {ReferenceCount} references are processed in full", countyId, references.Count);
+                    return null;
+                }
+
+                if (table_Existing is null)
+                {
+                    return null;
+                }
+
+                Column? column_Reference = null;
+                Column? column_Total = null;
+                foreach (Column column in table_Existing.Columns)
+                {
+                    string? uniqueId_Column = Core.IO.Query.UniqueId(column);
+                    if (uniqueId_Column == uniqueId_Reference)
+                    {
+                        column_Reference = column;
+                    }
+                    else if (uniqueId_Column == uniqueId_Total)
+                    {
+                        column_Total = column;
+                    }
+                }
+
+                HashSet<string> result = [];
+                if (column_Reference is null || column_Total is null)
+                {
+                    return result;
+                }
+
+                int count = table_Existing.RowCount;
+                for (int i = 0; i < count; i++)
+                {
+                    Row? row = table_Existing.GetRow(i);
+                    if (row is null)
+                    {
+                        continue;
+                    }
+
+                    if (!row.TryGetValue(column_Reference.Index, out string? reference_Row) || string.IsNullOrWhiteSpace(reference_Row))
+                    {
+                        continue;
+                    }
+
+                    // The raw cell first: whether a null converts to a number is the converter's business, and a
+                    // NULL total must never read as a 0 that marks the building done.
+                    if (!row.TryGetValue(column_Total.Index, out object? value_Total) || value_Total is null || value_Total is DBNull)
+                    {
+                        continue;
+                    }
+
+                    if (Core.Query.TryConvert(value_Total, out double total_Row) && !double.IsNaN(total_Row))
+                    {
+                        result.Add(reference_Row!);
+                    }
+                }
+
+                return result;
+            }
         }
     }
 }

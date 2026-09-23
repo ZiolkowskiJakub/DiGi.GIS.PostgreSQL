@@ -17666,6 +17666,21 @@ public PostgreSQLBuildingDataExternalComponentsUpdateOptions(System.Text.Json.No
 The JSON object containing the configuration settings\.
 ### Properties
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.BatchSize'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\.BatchSize Property
+
+Gets or sets the number of references read, classified and written together\. Values below 1 are treated as 1\.
+
+This bounds the memory of the run: only one batch of stored building models is held at a time, so a county of any size costs the same. Lower it when a batch of large models still weighs too much.
+
+```csharp
+public int BatchSize { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.CommandTimeout'></a>
 
 ## PostgreSQLBuildingDataExternalComponentsUpdateOptions\.CommandTimeout Property
@@ -17695,6 +17710,21 @@ public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
 
 #### Property Value
 [System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.SkipCompleted'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateOptions\.SkipCompleted Property
+
+Gets or sets a value indicating whether references whose building data row already carries an external components area total are stepped over\.
+
+This resumes an interrupted run without recomputing what it finished. It is sound only while a non-null total means "written by this kind of run", that is, when the columns were empty before the first run. After the classification changes, clear it to rewrite every row.
+
+```csharp
+public bool SkipCompleted { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask'></a>
 
@@ -17836,6 +17866,21 @@ A wall whose normal is vertical, so its azimuth is undefined, or whose orientati
 
 ```csharp
 public long SkippedComponentCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.SkippedReferenceCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.SkippedReferenceCount Property
+
+Gets the number of references stepped over during the last run because their building data row already carried an external components area total\.
+
+Always 0 unless [SkipCompleted](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateOptions.SkipCompleted 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateOptions\.SkipCompleted') is set.
+
+```csharp
+public long SkippedReferenceCount { get; private set; }
 ```
 
 #### Property Value

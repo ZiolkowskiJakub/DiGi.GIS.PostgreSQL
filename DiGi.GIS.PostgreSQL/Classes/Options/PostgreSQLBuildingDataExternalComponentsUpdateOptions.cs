@@ -36,7 +36,9 @@ namespace DiGi.GIS.PostgreSQL.Classes
         {
             if (postgreSQLBuildingDataExternalComponentsUpdateOptions is not null)
             {
+                BatchSize = postgreSQLBuildingDataExternalComponentsUpdateOptions.BatchSize;
                 CommandTimeout = postgreSQLBuildingDataExternalComponentsUpdateOptions.CommandTimeout;
+                SkipCompleted = postgreSQLBuildingDataExternalComponentsUpdateOptions.SkipCompleted;
                 CountyIds = postgreSQLBuildingDataExternalComponentsUpdateOptions.CountyIds == null ? null : [.. postgreSQLBuildingDataExternalComponentsUpdateOptions.CountyIds];
             }
         }
@@ -54,5 +56,19 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(CountyIds))]
         public HashSet<int>? CountyIds { get; set; } = null;
+
+        /// <summary>
+        /// Gets or sets the number of references read, classified and written together. Values below 1 are treated as 1.
+        /// <para>This bounds the memory of the run: only one batch of stored building models is held at a time, so a county of any size costs the same. Lower it when a batch of large models still weighs too much.</para>
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(BatchSize))]
+        public int BatchSize { get; set; } = 1000;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether references whose building data row already carries an external components area total are stepped over.
+        /// <para>This resumes an interrupted run without recomputing what it finished. It is sound only while a non-null total means "written by this kind of run", that is, when the columns were empty before the first run. After the classification changes, clear it to rewrite every row.</para>
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(SkipCompleted))]
+        public bool SkipCompleted { get; set; } = false;
     }
 }
