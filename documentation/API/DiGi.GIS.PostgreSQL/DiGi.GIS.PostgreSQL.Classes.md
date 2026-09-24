@@ -12971,11 +12971,15 @@ A task that represents the asynchronous operation\. The task result contains a l
 
 ## ExternalComponentsAreaResult Class
 
-The outcome of an external components area classification: what it classified, what it stepped over, and how much of it rests on an open envelope\.
+The outcome of an external components area classification: what it classified, what it stepped over, how much of it rests on an open envelope, and which models it could not classify\.
 
 [SkippedComponentCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.SkippedComponentCount 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.SkippedComponentCount') counts components that bound two spaces (internal partitions) or whose target bucket is undefined - the same count this method has returned as a bare number since the classification was introduced.
 
 [OpenEnvelopeCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.OpenEnvelopeCount 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.OpenEnvelopeCount') counts models whose external envelope exists but does not close on the tolerance ladder. The orientation of an envelope face is decided by ray parity, which is sound only for a closed face set, so the sector and tilt values of those models may rest on an arbitrary face side; the count is the share of a run's rows a reader should treat with that caution, and each such row carries a null closing tolerance in the table.
+
+[DegenerateReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.DegenerateReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.DegenerateReferences') names the models that carry components but no external envelope at all - fewer than the four external faces a closed solid needs, typically a sliver footprint with walls and no roof or floor. No row is written for them and they are not a failure.
+
+[FailedReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.FailedReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.FailedReferences') names the models the classification refused as a defect in their space structure, each with the reason; no row is written for them, and the other models of the same call are classified regardless.
 
 ```csharp
 public class ExternalComponentsAreaResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
@@ -13003,28 +13007,40 @@ public ExternalComponentsAreaResult(DiGi.GIS.PostgreSQL.Classes.ExternalComponen
 
 The [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') to copy from\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long)'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_)'></a>
 
-## ExternalComponentsAreaResult\(long, long\) Constructor
+## ExternalComponentsAreaResult\(long, long, IEnumerable\<string\>, IEnumerable\<string\>\) Constructor
 
 Initializes a new instance of the [ExternalComponentsAreaResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult') class\.
 
 ```csharp
-public ExternalComponentsAreaResult(long skippedComponentCount, long openEnvelopeCount);
+public ExternalComponentsAreaResult(long skippedComponentCount, long openEnvelopeCount, System.Collections.Generic.IEnumerable<string>? degenerateReferences=null, System.Collections.Generic.IEnumerable<string>? failedReferences=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long).skippedComponentCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).skippedComponentCount'></a>
 
 `skippedComponentCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of components skipped because they bound two spaces or their target bucket is undefined\.
 
-<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long).openEnvelopeCount'></a>
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).openEnvelopeCount'></a>
 
 `openEnvelopeCount` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 
 The number of models whose external envelope does not close on the tolerance ladder\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).degenerateReferences'></a>
+
+`degenerateReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the models that carry components but no external envelope; null or empty when there were none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(long,long,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).failedReferences'></a>
+
+`failedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The models the classification refused, each as `"reference: reason"`; null or empty when there were none\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.ExternalComponentsAreaResult(System.Text.Json.Nodes.JsonObject)'></a>
 
@@ -13043,6 +13059,60 @@ public ExternalComponentsAreaResult(System.Text.Json.Nodes.JsonObject? jsonObjec
 
 The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
 ### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.DegenerateModelCount'></a>
+
+## ExternalComponentsAreaResult\.DegenerateModelCount Property
+
+Gets the number of models that carry components but no external envelope \- the count of [DegenerateReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.DegenerateReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.DegenerateReferences')\.
+
+```csharp
+public long DegenerateModelCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.DegenerateReferences'></a>
+
+## ExternalComponentsAreaResult\.DegenerateReferences Property
+
+Gets a copy of the references of the models that carry components but no external envelope, so no row was written for them\.
+
+[DiGi\.Analytical\.Building\.Classes\.BuildingModel\.GetExternalShell\(System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Side\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Double\)](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel.getexternalshell#digi-analytical-building-classes-buildingmodel-getexternalshell(system-nullable{digi-geometry-core-enums-side}-system-nullable{digi-geometry-core-enums-orientation}-system-nullable{digi-geometry-core-enums-orientation}-system-double) 'DiGi\.Analytical\.Building\.Classes\.BuildingModel\.GetExternalShell\(System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Side\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Nullable\{DiGi\.Geometry\.Core\.Enums\.Orientation\},System\.Double\)') answers null for such a model - fewer than four external faces - so no component has an outward normal to classify by. It is a property of the stored data, not a defect of the run.
+
+```csharp
+public System.Collections.Generic.List<string>? DegenerateReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.FailedModelCount'></a>
+
+## ExternalComponentsAreaResult\.FailedModelCount Property
+
+Gets the number of models the classification refused \- the count of [FailedReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.FailedReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.ExternalComponentsAreaResult\.FailedReferences')\.
+
+```csharp
+public long FailedModelCount { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.FailedReferences'></a>
+
+## ExternalComponentsAreaResult\.FailedReferences Property
+
+Gets a copy of the models the classification refused as a defect in their space structure, each as `"reference: reason"`; no row was written for them\.
+
+```csharp
+public System.Collections.Generic.List<string>? FailedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
 <a name='DiGi.GIS.PostgreSQL.Classes.ExternalComponentsAreaResult.OpenEnvelopeCount'></a>
 
@@ -17734,7 +17804,9 @@ Represents a background task that fills the external components area columns of 
 
 The run is driven by counties: for each one it reads the stored building models, classifies the components of every model into the wall, roof and floor buckets, and upserts one building data row per building keyed on county and reference.
 
-A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be classified - a component without a planar face, a model without a floor - is failed and logged with the exception, and the run keeps going over the other counties. [FailedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedCountyCount') is what tells the two apart, and a run with a failed county reports itself as not succeeded.
+A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be read or whose rows cannot be written is failed and logged with the exception, and the run keeps going over the other counties. [FailedCountyCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedCountyCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedCountyCount') is what tells the two apart, and a run with a failed county reports itself as not succeeded.
+
+A model the classification refuses as a defect in its space structure costs that model alone: it gets no row, is logged as an error with its reference and reason, and counted in [FailedModelCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedModelCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedModelCount'); the rest of its batch and county is still written, and the run reports itself as not succeeded. A degenerate model - components but no external envelope, typically a sliver footprint with walls and no roof or floor - gets no row either, but is logged as a warning and counted in [DegenerateModelCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.DegenerateModelCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.DegenerateModelCount') without failing the run.
 
 A component that is valid but has no definable bucket - a wall whose normal is vertical - is skipped and counted in [SkippedComponentCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.SkippedComponentCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.SkippedComponentCount') rather than failing the county.
 
@@ -17783,6 +17855,21 @@ protected readonly GISPostgreSQLConverterManager gISPostgreSQLConverterManager;
 [GISPostgreSQLConverterManager](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.GISPostgreSQLConverterManager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
 ### Properties
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.DegenerateModelCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.DegenerateModelCount Property
+
+Gets the number of models that carry components but no external envelope, so no row was written for them, during the last run\.
+
+Each one is logged as a warning with its reference. It is a property of the stored data rather than a defect of the run, so it does not fail the run.
+
+```csharp
+public long DegenerateModelCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedCountyCount'></a>
 
 ## PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedCountyCount Property
@@ -17793,6 +17880,21 @@ Each one is logged with the exception that caused it, so this figure is a count 
 
 ```csharp
 public long FailedCountyCount { get; private set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedModelCount'></a>
+
+## PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedModelCount Property
+
+Gets the number of models the classification refused as a defect in their space structure during the last run\.
+
+Each one is logged as an error with its reference and reason and gets no row; the other models of its batch and county are still written. A non-zero count makes the run report itself as not succeeded.
+
+```csharp
+public long FailedModelCount { get; private set; }
 ```
 
 #### Property Value
@@ -17845,7 +17947,7 @@ public long ProcessedCountyCount { get; private set; }
 
 ## PostgreSQLBuildingDataExternalComponentsUpdateTask\.ProcessedModelCount Property
 
-Gets the number of building models read and classified during the last run\.
+Gets the number of building models read for classification during the last run, degenerate and refused models included\.
 
 Models rather than records: a reference with several stored versions is read as the latest one only, and that one is what is counted.
 
@@ -17862,7 +17964,7 @@ public long ProcessedModelCount { get; private set; }
 
 Gets the number of components skipped because their target bucket is undefined during the last run\.
 
-A wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the building interior is degenerate. A component that cannot be classified at all does not count here - that is a data defect and fails the county.
+A wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the building interior is degenerate. A component that cannot be classified at all does not count here - that is a data defect and fails its model ([FailedModelCount](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataExternalComponentsUpdateTask.FailedModelCount 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLBuildingDataExternalComponentsUpdateTask\.FailedModelCount')).
 
 ```csharp
 public long SkippedComponentCount { get; private set; }
@@ -17927,7 +18029,7 @@ A cancellation token that can be used to cancel the operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation\. Returns true when every county in scope was processed without error; otherwise, false \- including when a county’s stored models cannot be classified\.
+A task representing the asynchronous operation\. Returns true when every county in scope was processed without error and no model was refused by the classification; otherwise, false\. Degenerate models do not make it false\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.PostgreSQLBuildingDataUpdateOptions'></a>
 

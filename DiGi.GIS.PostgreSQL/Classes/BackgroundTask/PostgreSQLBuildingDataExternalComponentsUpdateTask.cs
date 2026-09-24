@@ -12,7 +12,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
     /// <summary>
     /// Represents a background task that fills the external components area columns of the building data table from the stored building models.
     /// <para>The run is driven by counties: for each one it reads the stored building models, classifies the components of every model into the wall, roof and floor buckets, and upserts one building data row per building keyed on county and reference.</para>
-    /// <para>A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be classified - a component without a planar face, a model without a floor - is failed and logged with the exception, and the run keeps going over the other counties. <see cref="FailedCountyCount"/> is what tells the two apart, and a run with a failed county reports itself as not succeeded.</para>
+    /// <para>A county whose buildings carry no stored model is processed, not failed: there is simply nothing to classify there, and the buildings keep their current values. A county whose stored models cannot be read or whose rows cannot be written is failed and logged with the exception, and the run keeps going over the other counties. <see cref="FailedCountyCount"/> is what tells the two apart, and a run with a failed county reports itself as not succeeded.</para>
+    /// <para>A model the classification refuses as a defect in its space structure costs that model alone: it gets no row, is logged as an error with its reference and reason, and counted in <see cref="FailedModelCount"/>; the rest of its batch and county is still written, and the run reports itself as not succeeded. A degenerate model - components but no external envelope, typically a sliver footprint with walls and no roof or floor - gets no row either, but is logged as a warning and counted in <see cref="DegenerateModelCount"/> without failing the run.</para>
     /// <para>A component that is valid but has no definable bucket - a wall whose normal is vertical - is skipped and counted in <see cref="SkippedComponentCount"/> rather than failing the county.</para>
     /// <para>A model whose external envelope does not close is not failed either: its row is written with a null closing tolerance and counted in <see cref="OpenEnvelopeCount"/>, because the sector and tilt values of such a row may rest on an arbitrary face side - the count is the share of rows of the run to treat with that caution.</para>
     /// <para>The run is idempotent: the read is deterministic (the latest stored version of a model wins), the classification is pure, and the push upserts on county and reference, so a re-run writes the same values.</para>
@@ -39,10 +40,22 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Gets the number of models that carry components but no external envelope, so no row was written for them, during the last run.
+        /// <para>Each one is logged as a warning with its reference. It is a property of the stored data rather than a defect of the run, so it does not fail the run.</para>
+        /// </summary>
+        public long DegenerateModelCount { get; private set; }
+
+        /// <summary>
         /// Gets the number of counties that failed outright and were stepped over during the last run.
         /// <para>Each one is logged with the exception that caused it, so this figure is a count of entries to go and read rather than the whole of what is known.</para>
         /// </summary>
         public long FailedCountyCount { get; private set; }
+
+        /// <summary>
+        /// Gets the number of models the classification refused as a defect in their space structure during the last run.
+        /// <para>Each one is logged as an error with its reference and reason and gets no row; the other models of its batch and county are still written. A non-zero count makes the run report itself as not succeeded.</para>
+        /// </summary>
+        public long FailedModelCount { get; private set; }
 
         /// <summary>
         /// Gets the number of classified models whose external envelope does not close on the tolerance ladder during the last run.
@@ -57,14 +70,14 @@ namespace DiGi.GIS.PostgreSQL.Classes
         public long ProcessedCountyCount { get; private set; }
 
         /// <summary>
-        /// Gets the number of building models read and classified during the last run.
+        /// Gets the number of building models read for classification during the last run, degenerate and refused models included.
         /// <para>Models rather than records: a reference with several stored versions is read as the latest one only, and that one is what is counted.</para>
         /// </summary>
         public long ProcessedModelCount { get; private set; }
 
         /// <summary>
         /// Gets the number of components skipped because their target bucket is undefined during the last run.
-        /// <para>A wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the building interior is degenerate. A component that cannot be classified at all does not count here - that is a data defect and fails the county.</para>
+        /// <para>A wall whose normal is vertical, so its azimuth is undefined, or whose orientation against the building interior is degenerate. A component that cannot be classified at all does not count here - that is a data defect and fails its model (<see cref="FailedModelCount"/>).</para>
         /// </summary>
         public long SkippedComponentCount { get; private set; }
 
@@ -85,10 +98,12 @@ namespace DiGi.GIS.PostgreSQL.Classes
         /// </summary>
         /// <param name="progress">A progress reporter for reporting the number of rows written.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation. Returns true when every county in scope was processed without error; otherwise, false - including when a county’s stored models cannot be classified.</returns>
+        /// <returns>A task representing the asynchronous operation. Returns true when every county in scope was processed without error and no model was refused by the classification; otherwise, false. Degenerate models do not make it false.</returns>
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
+            DegenerateModelCount = 0;
             FailedCountyCount = 0;
+            FailedModelCount = 0;
             OpenEnvelopeCount = 0;
             ProcessedCountyCount = 0;
             ProcessedModelCount = 0;
@@ -204,6 +219,8 @@ namespace DiGi.GIS.PostgreSQL.Classes
                 long countySkippedComponentCount = 0;
                 long countyOpenEnvelopeCount = 0;
                 long countySkippedReferenceCount = 0;
+                long countyDegenerateModelCount = 0;
+                long countyFailedModelCount = 0;
 
                 for (int offset = 0; offset < references_List.Count && !countyFailed; offset += batchSize)
                 {
@@ -285,11 +302,29 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     }
                     catch (Exception exception)
                     {
-                        // A model the classification refuses is a defect in the stored data, and the method names the
-                        // building in the exception. The county fails visibly instead of writing partial rows.
+                        // A model the classification refuses is caught per model inside the method; reaching this is an
+                        // unexpected fault, so the county fails visibly instead of writing partial rows.
                         countyFailed = true;
                         Serilog.Modify.Log(exception, "External components county failed - county {CountyId}, offset {Offset}, the {ModelCount} stored models could not be classified", countyId, offset, models_Latest.Count);
                         break;
+                    }
+
+                    List<string>? references_Degenerate = batchResult.DegenerateReferences;
+                    if (references_Degenerate is not null)
+                    {
+                        foreach (string reference_Degenerate in references_Degenerate)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "External components model skipped - county {CountyId}, building {Reference}: the model carries components but no external envelope, so no row is written", countyId, reference_Degenerate);
+                        }
+                    }
+
+                    List<string>? references_Failed = batchResult.FailedReferences;
+                    if (references_Failed is not null)
+                    {
+                        foreach (string reference_Failed in references_Failed)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "External components model failed - county {CountyId}, {Failure}", countyId, reference_Failed);
+                        }
                     }
 
                     if (table.RowCount > 0)
@@ -322,7 +357,11 @@ namespace DiGi.GIS.PostgreSQL.Classes
                     countyRowCount += table.RowCount;
                     countySkippedComponentCount += batchResult.SkippedComponentCount;
                     countyOpenEnvelopeCount += batchResult.OpenEnvelopeCount;
+                    countyDegenerateModelCount += batchResult.DegenerateModelCount;
+                    countyFailedModelCount += batchResult.FailedModelCount;
 
+                    DegenerateModelCount += batchResult.DegenerateModelCount;
+                    FailedModelCount += batchResult.FailedModelCount;
                     OpenEnvelopeCount += batchResult.OpenEnvelopeCount;
                     SkippedComponentCount += batchResult.SkippedComponentCount;
                     ProcessedModelCount += models_Latest.Count;
@@ -340,21 +379,23 @@ namespace DiGi.GIS.PostgreSQL.Classes
 
                 ProcessedCountyCount++;
 
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped, {OpenEnvelopeCount} open envelopes, {SkippedReferenceCount} references already done", countyId, countyModelCount, countyRowCount, countySkippedComponentCount, countyOpenEnvelopeCount, countySkippedReferenceCount);
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Information, "External components county processed - county {CountyId}, {ModelCount} models, {RowCount} rows, {SkippedCount} components skipped, {OpenEnvelopeCount} open envelopes, {DegenerateModelCount} degenerate models, {FailedModelCount} models failed, {SkippedReferenceCount} references already done", countyId, countyModelCount, countyRowCount, countySkippedComponentCount, countyOpenEnvelopeCount, countyDegenerateModelCount, countyFailedModelCount, countySkippedReferenceCount);
             }
 
             Serilog.Modify.Log(
-                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {OpenEnvelopeCount} open envelopes, {SkippedCount} components skipped, {SkippedReferenceCount} references already done, {RowCount} rows",
+                "{Type}: finished - {ProcessedCount} counties, {FailedCount} counties failed, {ModelCount} models, {DegenerateModelCount} degenerate models, {FailedModelCount} models failed, {OpenEnvelopeCount} open envelopes, {SkippedCount} components skipped, {SkippedReferenceCount} references already done, {RowCount} rows",
                 nameof(PostgreSQLBuildingDataExternalComponentsUpdateTask),
                 ProcessedCountyCount,
                 FailedCountyCount,
                 ProcessedModelCount,
+                DegenerateModelCount,
+                FailedModelCount,
                 OpenEnvelopeCount,
                 SkippedComponentCount,
                 SkippedReferenceCount,
                 UpdatedRowCount);
 
-            return FailedCountyCount == 0;
+            return FailedCountyCount == 0 && FailedModelCount == 0;
 
             // The references of the batch whose building data row already carries a total - the work an earlier,
             // interrupted run finished. Null when the check cannot be made: the batch is then processed in full,
