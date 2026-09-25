@@ -8596,6 +8596,116 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TBuilding2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.TBuilding2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.TBuilding2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the matching \<seeref name="TBuilding2DReferencedObject" /\> if found; otherwise, null\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByIdRangeAsync\(int, long, long, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the stored objects of a county partition within an identifier range, ordered by identifier, on a connection opened for the call\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<TBuilding2DReferencedObject>?> GetItemsByIdRangeAsync(int countyId, long idAfter, long idMax, int limit=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).idAfter'></a>
+
+`idAfter` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The exclusive lower bound of the range; zero for the first page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).idMax'></a>
+
+`idMax` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The inclusive upper bound of the range \- the partition's largest identifier when the part started\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of rows to return\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(int,long,long,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TBuilding2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.TBuilding2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.TBuilding2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the page of stored objects in identifier order, or null when the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByIdRangeAsync\(NpgsqlConnection, int, long, long, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the stored objects of a county partition within an identifier range, ordered by identifier\.
+
+The key is `id` rather than `ctid` because the caller updates the rows it walks: an update writes a new tuple version elsewhere in the heap, which a `ctid` walk would read twice or miss, while the identifier never changes on update. The partition's primary key leads with `id`, so the range reads the index. The upper bound is read once by the caller when the part starts, so rows a concurrent regeneration inserts afterwards are not chased - they are stamped by the creation path that wrote them.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<TBuilding2DReferencedObject>?> GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, long idAfter, long idMax, int limit=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The PostgreSQL connection instance used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).idAfter'></a>
+
+`idAfter` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The exclusive lower bound of the range; zero for the first page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).idMax'></a>
+
+`idMax` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The inclusive upper bound of the range \- the partition's largest identifier when the part started\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of rows to return\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TBuilding2DReferencedObject](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.TBuilding2DReferencedObject 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.TBuilding2DReferencedObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the page of stored objects in identifier order, or null when the connection is null\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_long_,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByIdsAsync\(NpgsqlConnection, IEnumerable\<long\>, Nullable\<int\>, int, CancellationToken\) Method
@@ -8912,6 +9022,80 @@ The cancellation token used to propagate notification that the operation should 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.DateTimeOffset](https://learn.microsoft.com/en-us/dotnet/api/system.datetimeoffset 'System\.DateTimeOffset')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result is the latest creation stamp in UTC, or null when no connection could be made, the table or partition does not exist, or it holds no rows\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetMaxIdAsync\(int, int, CancellationToken\) Method
+
+Asynchronously retrieves the largest `id` held in the county partition of the table, on a connection opened for the call\.
+
+```csharp
+public System.Threading.Tasks.Task<System.Nullable<long>> GetMaxIdAsync(int countyId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the largest identifier of the partition, or null when the connection could not be created or the partition holds no rows\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetMaxIdAsync\(NpgsqlConnection, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the largest `id` held in the county partition of the table\.
+
+The upper bound for [GetItemsByIdRangeAsync\(NpgsqlConnection, int, long, long, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection,int,long,long,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.GetItemsByIdRangeAsync\(Npgsql\.NpgsqlConnection, int, long, long, int, int, System\.Threading\.CancellationToken\)') keyset paging: the caller reads it once when the part starts, so rows a concurrent regeneration inserts afterwards are not chased by the walk - they are stamped by the creation path that wrote them.
+
+```csharp
+public System.Threading.Tasks.Task<System.Nullable<long>> GetMaxIdAsync(Npgsql.NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The PostgreSQL connection instance used to execute the command\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to read\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetMaxIdAsync(Npgsql.NpgsqlConnection,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the largest identifier of the partition, or null when the connection is null or the partition holds no rows\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.GetReferencesAsync(Npgsql.NpgsqlConnection,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -9714,6 +9898,112 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PostgreSQLUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the identifiers written and the rows dropped before the database, or null when the update could not be attempted at all \- no connection, or the table could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UpdateObjectPropertiesAsync\(int, string, IEnumerable\<KeyValuePair\<long,JsonNode\>\>, int, CancellationToken\) Method
+
+Asynchronously replaces one JSONB property of the stored objects of a county partition, addressed by identifier, on a connection opened for the call\.
+
+Each batch commits on its own: the connection the call opens carries no transaction, so a failure between two batches leaves the earlier batches written. For a page that must stand or fall together, use the overload that joins the caller's transaction.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateObjectPropertiesAsync(int countyId, string propertyName, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<long,System.Text.Json.Nodes.JsonNode?>>? values, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to update\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).propertyName'></a>
+
+`propertyName` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The name of the JSONB property to replace, as stored in the object JSON\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).values'></a>
+
+`values` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Collections\.Generic\.KeyValuePair&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifier to new property value pairs to update, or `null`\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the statement\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers the statement updated, or null when the collection is null or the connection could not be created\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken)'></a>
+
+## Building2DReferencedObjectPostgreSQLConverter\<TBuilding2DReferencedObject,TUniqueObject\>\.UpdateObjectPropertiesAsync\(NpgsqlConnection, NpgsqlTransaction, int, string, IEnumerable\<KeyValuePair\<long,JsonNode\>\>, int, CancellationToken\) Method
+
+Asynchronously replaces one JSONB property of the stored objects of a county partition, addressed by identifier\.
+
+The property is one key of the `object` JSONB, set with `jsonb_set` with the missing-key flag, so exactly that key changes and the rest of the stored object - including members older code wrote that the current class no longer declares - is untouched. The property name travels as a value parameter, not an identifier, so no whitelist applies. The statement never inserts and never touches `county_id`, so a row a concurrent run removed between the read and the write answers with no identifier rather than coming back as a fresh row, and the identifiers the statement actually updated are returned so the caller sees which of the ones it asked for are gone. Pairs whose value is null are skipped, so a SQL NULL can never reach `jsonb_set` and delete the key it names. The caller ensures the table exists - the statement runs no DDL - and joins the caller's transaction when one is given.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.HashSet<long>?> UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection? npgsqlConnection, Npgsql.NpgsqlTransaction? npgsqlTransaction, int countyId, string propertyName, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<long,System.Text.Json.Nodes.JsonNode?>>? values, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open PostgreSQL connection the statement executes on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).npgsqlTransaction'></a>
+
+`npgsqlTransaction` [Npgsql\.NpgsqlTransaction](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqltransaction 'Npgsql\.NpgsqlTransaction')
+
+The transaction the statement joins, or null for autocommit\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to update\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).propertyName'></a>
+
+`propertyName` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The name of the JSONB property to replace, as stored in the object JSON\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).values'></a>
+
+`values` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Collections\.Generic\.KeyValuePair&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[System\.Text\.Json\.Nodes\.JsonNode](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonnode 'System\.Text\.Json\.Nodes\.JsonNode')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.keyvaluepair-2 'System\.Collections\.Generic\.KeyValuePair\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifier to new property value pairs to update, or `null`\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds applied to the statement\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectPostgreSQLConverter_TBuilding2DReferencedObject,TUniqueObject_.UpdateObjectPropertiesAsync(Npgsql.NpgsqlConnection,Npgsql.NpgsqlTransaction,int,string,System.Collections.Generic.IEnumerable_System.Collections.Generic.KeyValuePair_long,System.Text.Json.Nodes.JsonNode__,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result contains the identifiers the statement updated, or null when the connection or the collection is null\.
 
 <a name='DiGi.GIS.PostgreSQL.Classes.Building2DReferencedObjectStrayResult'></a>
 

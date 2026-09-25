@@ -420,6 +420,121 @@ namespace DiGi.GIS.PostgreSQL.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the largest <c>id</c> held in the county partition of the table.
+        /// <para>The upper bound for <see cref="GetItemsByIdRangeAsync(Npgsql.NpgsqlConnection?, int, long, long, int, int, System.Threading.CancellationToken)"/> keyset paging: the caller reads it once when the part starts, so rows a concurrent regeneration inserts afterwards are not chased by the walk - they are stamped by the creation path that wrote them.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the largest identifier of the partition, or null when the connection is null or the partition holds no rows.</returns>
+        public async Task<long?> GetMaxIdAsync(NpgsqlConnection? npgsqlConnection, int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandQuery = $@"
+                SELECT max(id)
+                FROM {TableName}
+                WHERE county_id = @county_id;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandQuery, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+
+            object? value = await npgsqlCommand.ExecuteScalarAsync(cancellationToken);
+            if (value is not long id)
+            {
+                return null;
+            }
+
+            return id;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the largest <c>id</c> held in the county partition of the table, on a connection opened for the call.
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the largest identifier of the partition, or null when the connection could not be created or the partition holds no rows.</returns>
+        public async Task<long?> GetMaxIdAsync(int countyId, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetMaxIdAsync(npgsqlConnection, countyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the stored objects of a county partition within an identifier range, ordered by identifier.
+        /// <para>The key is <c>id</c> rather than <c>ctid</c> because the caller updates the rows it walks: an update writes a new tuple version elsewhere in the heap, which a <c>ctid</c> walk would read twice or miss, while the identifier never changes on update. The partition's primary key leads with <c>id</c>, so the range reads the index. The upper bound is read once by the caller when the part starts, so rows a concurrent regeneration inserts afterwards are not chased - they are stamped by the creation path that wrote them.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The PostgreSQL connection instance used to execute the command.</param>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="idAfter">The exclusive lower bound of the range; zero for the first page.</param>
+        /// <param name="idMax">The inclusive upper bound of the range - the partition's largest identifier when the part started.</param>
+        /// <param name="limit">The maximum number of rows to return.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the page of stored objects in identifier order, or null when the connection is null.</returns>
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdRangeAsync(NpgsqlConnection? npgsqlConnection, int countyId, long idAfter, long idMax, int limit = 1000, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            string commandQuery = $@"
+                SELECT id, county_id, unique_id, reference, object, created_at
+                FROM {TableName}
+                WHERE county_id = @county_id
+                  AND id > @id_after
+                  AND id <= @id_max
+                ORDER BY id
+                LIMIT @limit;";
+
+            await using NpgsqlCommand npgsqlCommand = new(commandQuery, npgsqlConnection);
+            npgsqlCommand.CommandTimeout = commandTimeout;
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("id_after", NpgsqlDbType.Bigint) { Value = idAfter });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("id_max", NpgsqlDbType.Bigint) { Value = idMax });
+            npgsqlCommand.Parameters.Add(new NpgsqlParameter("limit", NpgsqlDbType.Integer) { Value = limit });
+
+            return await ReadAsync(npgsqlCommand, cancellationToken);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the stored objects of a county partition within an identifier range, ordered by identifier, on a connection opened for the call.
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to read.</param>
+        /// <param name="idAfter">The exclusive lower bound of the range; zero for the first page.</param>
+        /// <param name="idMax">The inclusive upper bound of the range - the partition's largest identifier when the part started.</param>
+        /// <param name="limit">The maximum number of rows to return.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the page of stored objects in identifier order, or null when the connection could not be created.</returns>
+        public async Task<List<TBuilding2DReferencedObject>?> GetItemsByIdRangeAsync(int countyId, long idAfter, long idMax, int limit = 1000, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await GetItemsByIdRangeAsync(npgsqlConnection, countyId, idAfter, idMax, limit, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a list of building 2D referenced objects based on the specified reference and optional filters.
         /// </summary>
         /// <param name="reference">The string reference used to identify the items.</param>
@@ -1485,6 +1600,107 @@ namespace DiGi.GIS.PostgreSQL.Classes
             }
 
             return new PostgreSQLUpdateResult(result, []);
+        }
+
+        /// <summary>
+        /// Asynchronously replaces one JSONB property of the stored objects of a county partition, addressed by identifier.
+        /// <para>The property is one key of the <c>object</c> JSONB, set with <c>jsonb_set</c> with the missing-key flag, so exactly that key changes and the rest of the stored object - including members older code wrote that the current class no longer declares - is untouched. The property name travels as a value parameter, not an identifier, so no whitelist applies. The statement never inserts and never touches <c>county_id</c>, so a row a concurrent run removed between the read and the write answers with no identifier rather than coming back as a fresh row, and the identifiers the statement actually updated are returned so the caller sees which of the ones it asked for are gone. Pairs whose value is null are skipped, so a SQL NULL can never reach <c>jsonb_set</c> and delete the key it names. The caller ensures the table exists - the statement runs no DDL - and joins the caller's transaction when one is given.</para>
+        /// </summary>
+        /// <param name="npgsqlConnection">The open PostgreSQL connection the statement executes on.</param>
+        /// <param name="npgsqlTransaction">The transaction the statement joins, or null for autocommit.</param>
+        /// <param name="countyId">The identifier of the county partition to update.</param>
+        /// <param name="propertyName">The name of the JSONB property to replace, as stored in the object JSON.</param>
+        /// <param name="values">The identifier to new property value pairs to update, or <c>null</c>.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the statement. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers the statement updated, or null when the connection or the collection is null.</returns>
+        public async Task<HashSet<long>?> UpdateObjectPropertiesAsync(NpgsqlConnection? npgsqlConnection, NpgsqlTransaction? npgsqlTransaction, int countyId, string propertyName, IEnumerable<KeyValuePair<long, JsonNode?>>? values, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            if (npgsqlConnection is null || values is null)
+            {
+                return null;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            List<KeyValuePair<long, JsonNode>> values_List = [];
+            foreach (KeyValuePair<long, JsonNode?> pair in values)
+            {
+                if (pair.Value is not null)
+                {
+                    values_List.Add(new KeyValuePair<long, JsonNode>(pair.Key, pair.Value));
+                }
+            }
+
+            if (values_List.Count == 0)
+            {
+                return [];
+            }
+
+            HashSet<long> result = [];
+
+            const int batchSize = 1000;
+            for (int i = 0; i < values_List.Count; i += batchSize)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<KeyValuePair<long, JsonNode>> chunk = values_List.GetRange(i, Math.Min(batchSize, values_List.Count - i));
+
+                await using NpgsqlBatch npgsqlBatch = new(npgsqlConnection, npgsqlTransaction);
+                npgsqlBatch.Timeout = commandTimeout;
+
+                foreach (KeyValuePair<long, JsonNode> pair in chunk)
+                {
+                    NpgsqlBatchCommand npgsqlBatchCommand = new($@"
+                        UPDATE {TableName}
+                        SET object = jsonb_set(object, ARRAY[@property_name], @value::jsonb, true)
+                        WHERE county_id = @county_id
+                          AND id = @id
+                        RETURNING id;");
+
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("property_name", NpgsqlDbType.Text) { Value = propertyName });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("value", NpgsqlDbType.Jsonb) { Value = pair.Value.ToJsonString() });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("county_id", NpgsqlDbType.Integer) { Value = countyId });
+                    npgsqlBatchCommand.Parameters.Add(new NpgsqlParameter("id", NpgsqlDbType.Bigint) { Value = pair.Key });
+
+                    npgsqlBatch.BatchCommands.Add(npgsqlBatchCommand);
+                }
+
+                await using NpgsqlDataReader npgsqlDataReader = await npgsqlBatch.ExecuteReaderAsync(cancellationToken);
+                do
+                {
+                    while (await npgsqlDataReader.ReadAsync(cancellationToken))
+                    {
+                        result.Add(npgsqlDataReader.GetInt64(0));
+                    }
+                }
+                while (await npgsqlDataReader.NextResultAsync(cancellationToken));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously replaces one JSONB property of the stored objects of a county partition, addressed by identifier, on a connection opened for the call.
+        /// <para>Each batch commits on its own: the connection the call opens carries no transaction, so a failure between two batches leaves the earlier batches written. For a page that must stand or fall together, use the overload that joins the caller's transaction.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to update.</param>
+        /// <param name="propertyName">The name of the JSONB property to replace, as stored in the object JSON.</param>
+        /// <param name="values">The identifier to new property value pairs to update, or <c>null</c>.</param>
+        /// <param name="commandTimeout">The timeout in seconds applied to the statement. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the identifiers the statement updated, or null when the collection is null or the connection could not be created.</returns>
+        public async Task<HashSet<long>?> UpdateObjectPropertiesAsync(int countyId, string propertyName, IEnumerable<KeyValuePair<long, JsonNode?>>? values, int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            await using NpgsqlConnection? npgsqlConnection = DiGi.PostgreSQL.Create.NpgsqlConnection(ConnectionData);
+            if (npgsqlConnection is null)
+            {
+                return null;
+            }
+
+            await npgsqlConnection.OpenAsync(cancellationToken);
+
+            return await UpdateObjectPropertiesAsync(npgsqlConnection, null, countyId, propertyName, values, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
         }
 
         /// <summary>
