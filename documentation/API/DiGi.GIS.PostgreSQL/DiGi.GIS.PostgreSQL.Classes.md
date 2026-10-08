@@ -11819,6 +11819,126 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the references that had at least one row moved, or null when no references were given or the connection could not be created\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult'></a>
+
+## BuildingDataYearBuiltUpdateResult Class
+
+The outcome of recomputing the three derived year built columns of `building_data` \- predicted, user and calculated \- from the stored year built history\. See `Modify.UpdateBuildingDataYearBuiltAsync`\.
+
+[Updated](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Updated 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult\.Updated') and [Cleared](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Cleared 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult\.Cleared') are the buildings written; the rest of [Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult\.Matched') were not written at all, because they hold no `building_data` row and their history holds no value, so writing them would only add empty rows.
+
+```csharp
+public class BuildingDataYearBuiltUpdateResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → BuildingDataYearBuiltUpdateResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult)'></a>
+
+## BuildingDataYearBuiltUpdateResult\(BuildingDataYearBuiltUpdateResult\) Constructor
+
+Initializes a new instance of the [BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult') class by copying an existing one\.
+
+```csharp
+public BuildingDataYearBuiltUpdateResult(DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult? buildingDataYearBuiltUpdateResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult).buildingDataYearBuiltUpdateResult'></a>
+
+`buildingDataYearBuiltUpdateResult` [BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult')
+
+The [BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(int,int,int)'></a>
+
+## BuildingDataYearBuiltUpdateResult\(int, int, int\) Constructor
+
+Initializes a new instance of the [BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult') class\.
+
+```csharp
+public BuildingDataYearBuiltUpdateResult(int matched, int updated, int cleared);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(int,int,int).matched'></a>
+
+`matched` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of buildings considered\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(int,int,int).updated'></a>
+
+`updated` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of buildings written with at least one of the three values\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(int,int,int).cleared'></a>
+
+`cleared` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of buildings written with none, so all three columns were set to NULL\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## BuildingDataYearBuiltUpdateResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public BuildingDataYearBuiltUpdateResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.BuildingDataYearBuiltUpdateResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Cleared'></a>
+
+## BuildingDataYearBuiltUpdateResult\.Cleared Property
+
+Gets the number of buildings written with none of the three values, so their three columns were set to NULL\.
+
+```csharp
+public int Cleared { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Matched'></a>
+
+## BuildingDataYearBuiltUpdateResult\.Matched Property
+
+Gets the number of buildings considered\.
+
+```csharp
+public int Matched { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult.Updated'></a>
+
+## BuildingDataYearBuiltUpdateResult\.Updated Property
+
+Gets the number of buildings written with at least one of the three values\.
+
+```csharp
+public int Updated { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.BuildingModel'></a>
 
 ## BuildingModel Class
@@ -21162,6 +21282,341 @@ public System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.Rejection> Re
 #### Property Value
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Rejection](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Rejection 'DiGi\.GIS\.PostgreSQL\.Classes\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult'></a>
+
+## PredictedYearBuiltRemoveResult Class
+
+The outcome of removing one prediction run \- the predicted year built entries carrying one stamp \- from the stored year built data objects of explicit county parts\. See `YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync`\.
+
+An object holds at most one entry per stamp, because entries are keyed by source and a prediction's source is its stamp, so [Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.Matched') counts objects and entries alike. An object the removal leaves without any entry is kept, and listed in [EmptiedReferences](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.EmptiedReferences 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.EmptiedReferences') so the caller can delete it explicitly.
+
+```csharp
+public class PredictedYearBuiltRemoveResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PredictedYearBuiltRemoveResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_)'></a>
+
+## PredictedYearBuiltRemoveResult\(bool, int, long, int, int, IEnumerable\<string\>, IEnumerable\<string\>\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult') class\.
+
+```csharp
+public PredictedYearBuiltRemoveResult(bool dryRun, int limit, long ticks, int matched, int removed, System.Collections.Generic.IEnumerable<string>? references, System.Collections.Generic.IEnumerable<string>? emptiedReferences);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the call only counted, leaving every object as it was\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of objects the call was allowed to rewrite\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).ticks'></a>
+
+`ticks` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The stamp of the removed run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).matched'></a>
+
+`matched` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of objects carrying an entry with the stamp\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).removed'></a>
+
+`removed` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of entries removed\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the matched objects, or null for none\. Left empty when [matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).matched 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.PredictedYearBuiltRemoveResult\(bool, int, long, int, int, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<string\>\)\.matched') exceeds [limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).limit 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.PredictedYearBuiltRemoveResult\(bool, int, long, int, int, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Collections\.Generic\.IEnumerable\<string\>\)\.limit')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(bool,int,long,int,int,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).emptiedReferences'></a>
+
+`emptiedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the matched objects the removal leaves without any entry, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult)'></a>
+
+## PredictedYearBuiltRemoveResult\(PredictedYearBuiltRemoveResult\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult') class by copying an existing one\.
+
+```csharp
+public PredictedYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult? predictedYearBuiltRemoveResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult).predictedYearBuiltRemoveResult'></a>
+
+`predictedYearBuiltRemoveResult` [PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult')
+
+The [PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PredictedYearBuiltRemoveResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PredictedYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.PredictedYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.DryRun'></a>
+
+## PredictedYearBuiltRemoveResult\.DryRun Property
+
+Gets a value indicating whether the call only counted, leaving every object as it was\.
+
+```csharp
+public bool DryRun { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.EmptiedReferences'></a>
+
+## PredictedYearBuiltRemoveResult\.EmptiedReferences Property
+
+Gets the references of the matched objects the removal leaves without any entry\. Those objects are kept; deleting them is a separate, explicit call\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> EmptiedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Limit'></a>
+
+## PredictedYearBuiltRemoveResult\.Limit Property
+
+Gets the largest number of objects the call was allowed to rewrite\.
+
+```csharp
+public int Limit { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Matched'></a>
+
+## PredictedYearBuiltRemoveResult\.Matched Property
+
+Gets the number of objects carrying an entry with the stamp\.
+
+```csharp
+public int Matched { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.References'></a>
+
+## PredictedYearBuiltRemoveResult\.References Property
+
+Gets the references of the matched objects \- the buildings whose derived year built columns a removal makes stale\. Empty when [Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.Matched') exceeds [Limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Limit 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.Limit')\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> References { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Removed'></a>
+
+## PredictedYearBuiltRemoveResult\.Removed Property
+
+Gets the number of entries removed\. Zero on a dry run and when [Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.Matched') exceeds [Limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Limit 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.Limit')\.
+
+```csharp
+public int Removed { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult.Ticks'></a>
+
+## PredictedYearBuiltRemoveResult\.Ticks Property
+
+Gets the stamp of the removed run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\.
+
+```csharp
+public long Ticks { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult'></a>
+
+## PredictedYearBuiltRunResult Class
+
+One prediction run as stored under one county part: the stamp, the model that produced it when recorded, and how many stored year built data objects carry an entry with it\.
+
+The stamp is carried as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks') - the same value the entry is keyed by - rather than as text, because a formatted date follows the culture and the kind of the value and is not an identity.
+
+```csharp
+public class PredictedYearBuiltRunResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → PredictedYearBuiltRunResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult)'></a>
+
+## PredictedYearBuiltRunResult\(PredictedYearBuiltRunResult\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult') class by copying an existing one\.
+
+```csharp
+public PredictedYearBuiltRunResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult? predictedYearBuiltRunResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult).predictedYearBuiltRunResult'></a>
+
+`predictedYearBuiltRunResult` [PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult')
+
+The [PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(int,long,string,int)'></a>
+
+## PredictedYearBuiltRunResult\(int, long, string, int\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult') class\.
+
+```csharp
+public PredictedYearBuiltRunResult(int countyId, long ticks, string? modelId, int count);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(int,long,string,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The county part the objects are stored under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(int,long,string,int).ticks'></a>
+
+`ticks` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The stamp of the run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(int,long,string,int).modelId'></a>
+
+`modelId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The identifier of the model that produced the entries, or null when it was not recorded\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(int,long,string,int).count'></a>
+
+`count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of stored objects carrying an entry with the stamp and model\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## PredictedYearBuiltRunResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public PredictedYearBuiltRunResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.PredictedYearBuiltRunResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.Count'></a>
+
+## PredictedYearBuiltRunResult\.Count Property
+
+Gets the number of stored objects carrying an entry with the stamp and model\.
+
+```csharp
+public int Count { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.CountyId'></a>
+
+## PredictedYearBuiltRunResult\.CountyId Property
+
+Gets the county part the objects are stored under\.
+
+```csharp
+public int CountyId { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.ModelId'></a>
+
+## PredictedYearBuiltRunResult\.ModelId Property
+
+Gets the identifier of the model that produced the entries, or null when it was not recorded\.
+
+```csharp
+public string? ModelId { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult.Ticks'></a>
+
+## PredictedYearBuiltRunResult\.Ticks Property
+
+Gets the stamp of the run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\.
+
+```csharp
+public long Ticks { get; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.ReferencedObject_TUniqueObject_'></a>
 
 ## ReferencedObject\<TUniqueObject\> Class
@@ -27229,6 +27684,145 @@ The cancellation token\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 True if population succeeded; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult'></a>
+
+## UserYearBuiltRemoveResult Class
+
+The outcome of withdrawing user\-provided year built entries from the stored year built data objects of explicit county parts\. See `YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync`\.
+
+Every requested reference lands in exactly one of the three sets. A building is decided as a whole: when an owner is required and any of its objects holds a user entry of someone else, none of its objects is touched.
+
+```csharp
+public class UserYearBuiltRemoveResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → UserYearBuiltRemoveResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(bool,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_)'></a>
+
+## UserYearBuiltRemoveResult\(bool, IEnumerable\<string\>, IEnumerable\<string\>, IEnumerable\<string\>\) Constructor
+
+Initializes a new instance of the [UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult') class\.
+
+```csharp
+public UserYearBuiltRemoveResult(bool dryRun, System.Collections.Generic.IEnumerable<string>? removedReferences, System.Collections.Generic.IEnumerable<string>? notOwnedReferences, System.Collections.Generic.IEnumerable<string>? notFoundReferences);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(bool,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the call only classified the references, leaving every object as it was\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(bool,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).removedReferences'></a>
+
+`removedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references whose user entry was withdrawn, or would be on a dry run; null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(bool,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).notOwnedReferences'></a>
+
+`notOwnedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references holding a user entry of another user, left untouched; null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(bool,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_,System.Collections.Generic.IEnumerable_string_).notFoundReferences'></a>
+
+`notFoundReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references holding no user entry under the given parts; null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult)'></a>
+
+## UserYearBuiltRemoveResult\(UserYearBuiltRemoveResult\) Constructor
+
+Initializes a new instance of the [UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult') class by copying an existing one\.
+
+```csharp
+public UserYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult? userYearBuiltRemoveResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult).userYearBuiltRemoveResult'></a>
+
+`userYearBuiltRemoveResult` [UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult')
+
+The [UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## UserYearBuiltRemoveResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public UserYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.UserYearBuiltRemoveResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.DryRun'></a>
+
+## UserYearBuiltRemoveResult\.DryRun Property
+
+Gets a value indicating whether the call only classified the references, leaving every object as it was\.
+
+```csharp
+public bool DryRun { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.NotFoundReferences'></a>
+
+## UserYearBuiltRemoveResult\.NotFoundReferences Property
+
+Gets the references holding no user entry under the given parts\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> NotFoundReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.NotOwnedReferences'></a>
+
+## UserYearBuiltRemoveResult\.NotOwnedReferences Property
+
+Gets the references holding a user entry of another user\. None of their objects was touched\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> NotOwnedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult.RemovedReferences'></a>
+
+## UserYearBuiltRemoveResult\.RemovedReferences Property
+
+Gets the references whose user entry was withdrawn, or would be on a dry run\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> RemovedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+
 <a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltData'></a>
 
 ## YearBuiltData Class
@@ -27470,6 +28064,519 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Building2DReference](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DReference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result contains the eligible buildings in the order the references were given, or null when no connection could be built, the parts or the references are missing or either table has never been created\.
 
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.GetPredictedYearBuiltRunsAsync\(NpgsqlConnection, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously lists the prediction runs stored under the given county parts: one entry per part, stamp and model identifier, with the number of objects carrying it\.
+
+The stored text of each stamp is turned back into [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks') by deserializing it exactly as an entry is, so the reported value is the key the entry is stored under and can be handed to [RemovePredictedYearBuiltsAsync\(IEnumerable&lt;int&gt;, DateTime, IEnumerable&lt;string&gt;, bool, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)') as it is.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult>?> GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') the query runs on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to list, or null for every county\. The estate\-wide listing reads every stored object\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the query\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result lists the runs ordered by part, stamp and model \- empty when there are none or the table has never been created \- or is null when the connection is null\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.GetPredictedYearBuiltRunsAsync\(IEnumerable\<int\>, int, CancellationToken\) Method
+
+Asynchronously lists the prediction runs stored under the given county parts\.
+
+See [GetPredictedYearBuiltRunsAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.GetPredictedYearBuiltRunsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, int, System\.Threading\.CancellationToken\)'); this overload opens its own connection.
+
+```csharp
+public System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult>?> GetPredictedYearBuiltRunsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to list, or null for every county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the query\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[PredictedYearBuiltRunResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result lists the runs, or is null when no connection could be built\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.LockAsync\(NpgsqlConnection, int\[\], string\[\], int, CancellationToken\) Method
+
+Locks the stored rows of the named buildings under the named parts for the rest of the open transaction\.
+
+```csharp
+private System.Threading.Tasks.Task LockAsync(Npgsql.NpgsqlConnection npgsqlConnection, int[] countyIds, string[] references, int commandTimeout, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open connection whose transaction takes the locks\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts the rows are stored under\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The references of the buildings to lock\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the statement\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.LockAsync(Npgsql.NpgsqlConnection,int[],string[],int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task 'System\.Threading\.Tasks\.Task')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(NpgsqlConnection, IEnumerable\<int\>, IEnumerable\<string\>, bool, bool, int, int, int, CancellationToken\) Method
+
+Asynchronously deletes stored year built data objects of explicit county parts, in one transaction\.
+
+The scope is always a set of county parts - a reference is unique only per `county_id`, and the inherited `RemoveAsync` with no county deletes across every county. [references](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).references 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.references') narrows it to those buildings; leaving it out is accepted only together with [emptyOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.emptyOnly'), so the widest call this method makes deletes the objects of a county that hold no entry at all.
+
+An object is empty when its `YearBuilts` is missing, not an array, or an empty array. The scoped rows are selected `FOR UPDATE`; when more match than [limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.limit') the transaction is rolled back and nothing is deleted - a delete cut short at the limit would leave the caller unable to tell which rows went. A dry run selects and counts the same rows and rolls back.
+
+It removes data and has no undo - read `AI Guidelines/Coding - GIS Administrative Data.md` before calling it.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult?> RemoveItemsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, bool emptyOnly, bool dryRun, int limit, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') the transaction runs on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to delete from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings whose objects are deleted, or null for every building of the parts \(only with [emptyOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.emptyOnly')\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly'></a>
+
+`emptyOnly` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether only objects holding no entry are deleted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the rows are only counted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of rows the call may delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows deleted per statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result describes what matched and what was deleted, or is null when the connection is null, no county part is named, [limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.limit') is not positive, or [references](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).references 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.references') is null without [emptyOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.emptyOnly')\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(IEnumerable\<int\>, IEnumerable\<string\>, bool, bool, int, int, int, CancellationToken\) Method
+
+Asynchronously deletes stored year built data objects of explicit county parts, in one transaction\.
+
+See [RemoveItemsAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, IEnumerable&lt;string&gt;, bool, bool, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)'); this overload opens its own connection.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult?> RemoveItemsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, bool emptyOnly, bool dryRun, int limit, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to delete from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings whose objects are deleted, or null for every building of the parts \(only with [emptyOnly](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)\.emptyOnly')\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).emptyOnly'></a>
+
+`emptyOnly` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether only objects holding no entry are deleted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the rows are only counted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of rows the call may delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows deleted per statement\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result describes what matched and what was deleted, or is null when no connection could be built or the arguments are refused\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(NpgsqlConnection, IEnumerable\<int\>, DateTime, IEnumerable\<string\>, bool, int, int, int, CancellationToken\) Method
+
+Asynchronously removes one prediction run \- the predicted year built entries stamped [dateTime](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).dateTime 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)\.dateTime') \- from the stored year built data objects of explicit county parts, in one transaction\.
+
+Only objects carrying a predicted entry are read, `FOR UPDATE` and in pages of [batchSize](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).batchSize 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)\.batchSize'); the entry is matched by [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks'), the key it is stored under, so the kind of the value plays no part. Each changed object is rewritten under the county part it was read from and keeps its `unique_id`, so it replaces its own row. Other stamps and the user entry are untouched, and an object left with no entry is kept and reported - deleting it is [RemoveItemsAsync\(IEnumerable&lt;int&gt;, IEnumerable&lt;string&gt;, bool, bool, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveItemsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveItemsAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, int, System\.Threading\.CancellationToken\)')'s job.
+
+When more objects carry the stamp than [limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)\.limit'), or on a dry run, the transaction is rolled back and nothing is written.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult?> RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, System.DateTime dateTime, System.Collections.Generic.IEnumerable<string>? references, bool dryRun, int limit, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') the transaction runs on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to remove the run from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).dateTime'></a>
+
+`dateTime` [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')
+
+The stamp of the run to remove\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to remove the run from, or null for every building of the parts\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the entries are only counted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of objects the call may rewrite\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows read per page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result describes what matched and what was removed, or is null when the connection is null, no county part is named, [limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)\.limit') is not positive, or the rewrite failed \(the transaction is then rolled back\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(IEnumerable\<int\>, DateTime, IEnumerable\<string\>, bool, int, int, int, CancellationToken\) Method
+
+Asynchronously removes one prediction run from the stored year built data objects of explicit county parts, in one transaction\.
+
+See [RemovePredictedYearBuiltsAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, DateTime, IEnumerable&lt;string&gt;, bool, int, int, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemovePredictedYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.DateTime, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, int, int, System\.Threading\.CancellationToken\)'); this overload opens its own connection.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult?> RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, System.DateTime dateTime, System.Collections.Generic.IEnumerable<string>? references, bool dryRun, int limit, int batchSize=1000, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to remove the run from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).dateTime'></a>
+
+`dateTime` [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')
+
+The stamp of the run to remove\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to remove the run from, or null for every building of the parts\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the entries are only counted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of objects the call may rewrite\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows read per page\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.DateTime,System.Collections.Generic.IEnumerable_string_,bool,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[PredictedYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result describes what matched and what was removed, or is null when no connection could be built, the arguments are refused or the rewrite failed\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemoveUserYearBuiltsAsync\(NpgsqlConnection, IEnumerable\<int\>, IEnumerable\<string\>, string, bool, int, CancellationToken\) Method
+
+Asynchronously withdraws the user\-provided year built entry of the named buildings of explicit county parts, in one transaction\.
+
+Every object of a building holds the same user entry ([UpdateUserYearBuiltAsync\(int, string, UserYearBuilt, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.UpdateUserYearBuiltAsync(int,string,DiGi.GIS.Classes.UserYearBuilt,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.UpdateUserYearBuiltAsync\(int, string, DiGi\.GIS\.Classes\.UserYearBuilt, int, System\.Threading\.CancellationToken\)') writes it to each), so the entry is removed from all of them. With [userName](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).userName 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveUserYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, string, bool, int, System\.Threading\.CancellationToken\)\.userName') set, a building is withdrawn only when every user entry it holds was recorded by that user (compared without regard to case); a building holding someone else's is left whole and reported - this is the signed-in visitor's own-entry path. With [userName](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).userName 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveUserYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, string, bool, int, System\.Threading\.CancellationToken\)\.userName') null any entry is withdrawn - the moderation path.
+
+An object left with no entry is kept. The rows are read `FOR UPDATE`, the same lock [UpdateUserYearBuiltAsync\(int, string, UserYearBuilt, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.UpdateUserYearBuiltAsync(int,string,DiGi.GIS.Classes.UserYearBuilt,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.UpdateUserYearBuiltAsync\(int, string, DiGi\.GIS\.Classes\.UserYearBuilt, int, System\.Threading\.CancellationToken\)') takes, so a write and a withdrawal of one building never interleave. A dry run classifies and rolls back.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult?> RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection? npgsqlConnection, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, string? userName, bool dryRun, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).npgsqlConnection'></a>
+
+`npgsqlConnection` [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection')
+
+The open [Npgsql\.NpgsqlConnection](https://learn.microsoft.com/en-us/dotnet/api/npgsql.npgsqlconnection 'Npgsql\.NpgsqlConnection') the transaction runs on\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts the buildings are stored under\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to withdraw the user entry of\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).userName'></a>
+
+`userName` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The user whose entries may be withdrawn, or null to withdraw any entry\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the buildings are only classified\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result classifies every requested reference, or is null when the connection, the parts or the references are missing, or the rewrite failed \(the transaction is then rolled back\)\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataPostgreSQLConverter\.RemoveUserYearBuiltsAsync\(IEnumerable\<int\>, IEnumerable\<string\>, string, bool, int, CancellationToken\) Method
+
+Asynchronously withdraws the user\-provided year built entry of the named buildings of explicit county parts, in one transaction\.
+
+See [RemoveUserYearBuiltsAsync\(NpgsqlConnection, IEnumerable&lt;int&gt;, IEnumerable&lt;string&gt;, string, bool, int, CancellationToken\)](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(Npgsql.NpgsqlConnection,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken) 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter\.RemoveUserYearBuiltsAsync\(Npgsql\.NpgsqlConnection, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, string, bool, int, System\.Threading\.CancellationToken\)'); this overload opens its own connection.
+
+```csharp
+public System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult?> RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, string? userName, bool dryRun, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts the buildings are stored under\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to withdraw the user entry of\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).userName'></a>
+
+`userName` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The user whose entries may be withdrawn, or null to withdraw any entry\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the buildings are only classified\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,string,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[UserYearBuiltRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result classifies every requested reference, or is null when no connection could be built, the arguments are missing or the rewrite failed\.
+
 <a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter.UpdateUserYearBuiltAsync(int,string,DiGi.GIS.Classes.UserYearBuilt,int,System.Threading.CancellationToken)'></a>
 
 ## YearBuiltDataPostgreSQLConverter\.UpdateUserYearBuiltAsync\(int, string, UserYearBuilt, int, CancellationToken\) Method
@@ -27518,3 +28625,161 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. The task result is `true` when the write committed, `false` when it failed and rolled back, and `null` when the building is unknown or the write could not be attempted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult'></a>
+
+## YearBuiltDataRemoveResult Class
+
+The outcome of deleting stored year built data objects of explicit county parts \- see `YearBuiltDataPostgreSQLConverter.RemoveItemsAsync`\.
+
+[Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult\.Matched') is what the scope selected and [Removed](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Removed 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult\.Removed') what was actually deleted. They differ only when nothing was deleted: on a dry run, and when more rows matched than [Limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult\.Limit') allows, in which case the delete is refused as a whole rather than cut short - a partial delete would leave a caller unable to tell which rows went.
+
+```csharp
+public class YearBuiltDataRemoveResult : DiGi.Core.Classes.SerializableResult, DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → YearBuiltDataRemoveResult
+
+Implements [IGISPostgreSQLSerializableObject](DiGi.GIS.PostgreSQL.Interfaces.md#DiGi.GIS.PostgreSQL.Interfaces.IGISPostgreSQLSerializableObject 'DiGi\.GIS\.PostgreSQL\.Interfaces\.IGISPostgreSQLSerializableObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+### Constructors
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_)'></a>
+
+## YearBuiltDataRemoveResult\(bool, int, int, int, IEnumerable\<string\>\) Constructor
+
+Initializes a new instance of the [YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult') class\.
+
+```csharp
+public YearBuiltDataRemoveResult(bool dryRun, int limit, int matched, int removed, System.Collections.Generic.IEnumerable<string>? unmatchedReferences);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the call only counted, leaving every row in place\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of rows the call was allowed to delete\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_).matched'></a>
+
+`matched` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows the scope selected\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_).removed'></a>
+
+`removed` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows deleted\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(bool,int,int,int,System.Collections.Generic.IEnumerable_string_).unmatchedReferences'></a>
+
+`unmatchedReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The requested references no selected row holds, or null for none\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult)'></a>
+
+## YearBuiltDataRemoveResult\(YearBuiltDataRemoveResult\) Constructor
+
+Initializes a new instance of the [YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult') class by copying an existing one\.
+
+```csharp
+public YearBuiltDataRemoveResult(DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult? yearBuiltDataRemoveResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult).yearBuiltDataRemoveResult'></a>
+
+`yearBuiltDataRemoveResult` [YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult')
+
+The [YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult') to copy from\.
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## YearBuiltDataRemoveResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [YearBuiltDataRemoveResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult') class from a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')\.
+
+```csharp
+public YearBuiltDataRemoveResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.YearBuiltDataRemoveResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the serialized data\.
+### Properties
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.DryRun'></a>
+
+## YearBuiltDataRemoveResult\.DryRun Property
+
+Gets a value indicating whether the call only counted, leaving every row in place\.
+
+```csharp
+public bool DryRun { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Limit'></a>
+
+## YearBuiltDataRemoveResult\.Limit Property
+
+Gets the largest number of rows the call was allowed to delete\.
+
+```csharp
+public int Limit { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Matched'></a>
+
+## YearBuiltDataRemoveResult\.Matched Property
+
+Gets the number of rows the scope selected\.
+
+```csharp
+public int Matched { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Removed'></a>
+
+## YearBuiltDataRemoveResult\.Removed Property
+
+Gets the number of rows deleted\. Zero on a dry run and when [Matched](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Matched 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult\.Matched') exceeds [Limit](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.Limit 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult\.Limit')\.
+
+```csharp
+public int Removed { get; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult.UnmatchedReferences'></a>
+
+## YearBuiltDataRemoveResult\.UnmatchedReferences Property
+
+Gets the requested references no selected row holds \- either no row is stored for them under the given parts, or, when only empty objects were selected, every row they hold still carries an entry\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> UnmatchedReferences { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')

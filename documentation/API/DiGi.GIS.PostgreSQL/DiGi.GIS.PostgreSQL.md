@@ -1354,6 +1354,73 @@ The source administrative areal object providing the ID and type\.
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 True if the ID was successfully set; otherwise, false\.
 
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken)'></a>
+
+## Modify\.UpdateBuildingDataYearBuiltAsync\(this BuildingDataPostgreSQLConverter, YearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter, IEnumerable\<int\>, IEnumerable\<string\>, int, int, CancellationToken\) Method
+
+Recomputes the three derived year built columns of `building_data` \- predicted, user and calculated \- from the stored year built history of explicit county parts, writing NULL where the history no longer holds a value\.
+
+The columns are derived, so after a prediction run or a user entry is removed they are stale until something derives them again. The building data run cannot clear them: it emits no row for a building with no value left. This names every building in scope through `IO.Modify.Update_Building2D_YearBuilt`'s references parameter instead, so a building whose history is now empty is written with three unset cells and `PushAsync` stores NULL in each.
+
+The buildings in scope are [references](DiGi.GIS.PostgreSQL.md#DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).references 'DiGi\.GIS\.PostgreSQL\.Modify\.UpdateBuildingDataYearBuiltAsync\(this DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter, DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, int, int, System\.Threading\.CancellationToken\)\.references'), or, when it is null, every building holding a `year_built_data` row or a `building_data` row under the parts. The history is read from the main database and the rows from the storage one - no join crosses them. Each building is written under the part its `building_data` row is filed under; one with no such row is resolved through `building_2d` and written only when its history holds a value, so a recompute never adds empty rows.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult?> UpdateBuildingDataYearBuiltAsync(this DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter? buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter? building2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, int batchSize=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).buildingDataPostgreSQLConverter'></a>
+
+`buildingDataPostgreSQLConverter` [BuildingDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
+
+The converter of the building data table, in the storage database\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).yearBuiltDataPostgreSQLConverter'></a>
+
+`yearBuiltDataPostgreSQLConverter` [YearBuiltDataPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter')
+
+The converter of the stored year built history, in the main database\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [Building2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter used to resolve the part of a building that holds no building data row yet\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts in scope\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to recompute, or null for every building of the parts\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).batchSize'></a>
+
+`batchSize` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of references read per statement and rows written per batch\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[BuildingDataYearBuiltUpdateResult](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result counts the buildings considered, written with a value and cleared, or is null when a converter or the parts are missing, or a read or the write could not run\.
+
 <a name='DiGi.GIS.PostgreSQL.Modify.UpdateIds(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2D)'></a>
 
 ## Modify\.UpdateIds\(this AdministrativeAreal2D, AdministrativeAreal2D\) Method
@@ -2713,6 +2780,47 @@ County references to group\. May be [null](https://docs.microsoft.com/en-us/dotn
 #### Returns
 [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')  
 A map from each county part `Id` to the set of part `Id`s sharing its code; a code\-less part maps to itself\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SiblingCountyIdsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## Query\.SiblingCountyIdsAsync\(this AdministrativeAreal2DPostgreSQLConverter, IEnumerable\<int\>, int, CancellationToken\) Method
+
+Widens county rows to every polygon part of the codes they name\.
+
+A county whose territory is disconnected is stored as one row per part, and a building's data is filed under the part holding its `building_2d` row - so a caller naming one part, such as a visitor whose building view carries a single county id, may be looking at data stored under a sibling. The answer never crosses into a county the caller did not name.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> SiblingCountyIdsAsync(this DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter? administrativeAreal2DPostgreSQLConverter, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.PostgreSQL.Query.SiblingCountyIdsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [AdministrativeAreal2DPostgreSQLConverter](DiGi.GIS.PostgreSQL.Classes.md#DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter used to read the codes of the rows and the parts of the codes\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SiblingCountyIdsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county rows to widen\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SiblingCountyIdsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the lookups\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.PostgreSQL.Query.SiblingCountyIdsAsync(thisDiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The given rows together with every part of their codes; an empty set when no row is given; `null` when a lookup could not run\.
 
 <a name='DiGi.GIS.PostgreSQL.Query.SubdivisionCoveragesAsync(thisDiGi.GIS.PostgreSQL.Classes.OrtoDatasPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,int,double,int,System.Threading.CancellationToken)'></a>
 
